@@ -30,18 +30,30 @@
   a:hover { color: var(--color-accent-900); }
   input, select, button, textarea { font: inherit; color: inherit; }
   [data-nurdruck] { display: none; }
+  [data-nurschmal] { display: none; }
   @media (max-width: 900px) {
+    [data-nurbreit] { display: none !important; }
+    [data-nurschmal] { display: inline !important; }
+    [data-tabelle] { min-width: 0 !important; width: 100% !important; table-layout: fixed; }
+    [data-tabelle] th, [data-tabelle] td { padding: 4px 2px !important; font-size: 12px !important; white-space: normal !important; }
+    [data-zahlfeld] { width: 100% !important; min-width: 0 !important; padding: 4px 0 !important; font-size: 13px !important; }
+    [data-erstespalte] { width: 16% !important; }
+    [data-scrollbox] { overflow-x: visible !important; }
     [data-zweispaltig] { grid-template-columns: minmax(0, 1fr) !important; }
     [data-seitenspalte] { position: static !important; top: auto !important; order: -1; }
     [data-kopf] { padding: 10px 14px !important; gap: 12px !important; }
     [data-kopf] [data-tabs] { width: 100%; margin-left: 0 !important; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 20px !important; }
     [data-kopf] [data-status] { min-width: 0 !important; text-align: left !important; }
     [data-inhalt] { padding: 14px !important; }
-    [data-tagfeld] { min-height: 40px !important; font-size: 14px !important; }
     [data-monat] { padding: 12px !important; }
+    [data-tagfeld] { min-height: 40px !important; font-size: 14px !important; }
     [data-katliste] { flex-direction: row !important; flex-wrap: wrap; gap: 6px !important; }
     [data-katliste] > button { width: auto !important; flex: 0 0 auto; padding: 6px 10px !important; }
     [data-katliste] > button > span:nth-child(3) { display: none; }
+    [data-katbox] { position: fixed !important; left: 0; right: 0; bottom: 0; z-index: 30; padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)) !important; background: var(--color-bg); border-top: 1px solid var(--color-text); max-height: 40vh; overflow-y: auto; }
+    [data-katbox] > .corner { display: none; }
+    [data-katkopf] { display: none !important; }
+    [data-inhalt] { padding-bottom: 150px !important; }
   }
   @media print {
     @page { size: A4 landscape; margin: 12mm; }
@@ -68,7 +80,8 @@
         <h2 style="margin:0;font-family:var(--font-heading);font-size:26px">Gesperrt</h2>
         <p class="text-muted" style="margin:0 0 var(--space-3);font-size:13px">Die Daten auf diesem Gerät sind verschlüsselt.</p>
         <form onSubmit="{{ pinAbsenden }}" style="display:flex;flex-direction:column;gap:var(--space-2)">
-          <input class="input" type="password" inputMode="numeric" autoComplete="current-password" placeholder="PIN" value="{{ pinEingabe }}" onChange="{{ pinTippen }}" style="min-height:44px;letter-spacing:0.25em">
+          <input type="text" name="username" autoComplete="username" value="steuerakte" readOnly="{{ true }}" tabIndex="-1" aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;border:0;opacity:0;pointer-events:none">
+          <input class="input" id="pin-entsperren" name="password" type="password" autoComplete="current-password" enterKeyHint="go" placeholder="PIN" value="{{ pinEingabe }}" onChange="{{ pinTippen }}" style="min-height:44px;letter-spacing:0.25em">
           <button class="btn btn-primary blueprint" type="submit" style="position:relative;min-height:44px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             Entsperren
@@ -86,9 +99,10 @@
           <h2 style="margin:0;font-family:var(--font-heading);font-size:24px;letter-spacing:0.02em;text-transform:uppercase">Erstmalige Einrichtung</h2>
           <p class="text-muted" style="margin:0 0 var(--space-4);font-size:13px">{{ einrichtenText }}</p>
           <form onSubmit="{{ einrichten }}" style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <input type="text" name="username" autoComplete="username" value="steuerakte" readOnly="{{ true }}" tabIndex="-1" aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;border:0;opacity:0;pointer-events:none">
             <div class="field">
-              <label>PIN</label>
-              <input class="input" type="password" autoComplete="current-password" placeholder="PIN oder Passphrase" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="min-height:42px;border-radius:0;letter-spacing:0.18em">
+              <label for="pin-einrichten">PIN</label>
+              <input class="input" id="pin-einrichten" name="password" type="password" autoComplete="current-password" enterKeyHint="go" placeholder="PIN oder Passphrase" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="min-height:42px;border-radius:0;letter-spacing:0.18em">
             </div>
             <sc-if value="{{ nie }}" hint-placeholder-val="{{ false }}">
               <div class="field">
@@ -112,7 +126,7 @@
     </sc-if>
 
   <header class="nav" data-nodruck="1" style="position:sticky;top:0;z-index:20;background:var(--color-bg);border-bottom:1px solid var(--color-divider)">
-    <div data-kopf="1" style="max-width:1400px;margin:0 auto;padding:var(--space-3) var(--space-6);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-6);width:100%">
+    <div data-kopf="1" style="margin:0 auto;padding:var(--space-3) var(--space-6);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-6);width:100%">
       <h1 class="nav-brand" style="margin:0;display:flex;align-items:center;gap:var(--space-3);font-size:19px;letter-spacing:0.01em;text-transform:uppercase">
         <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true" style="flex:0 0 auto;display:block">
           <rect width="64" height="64" fill="var(--color-accent)"></rect>
@@ -137,7 +151,7 @@
     </div>
   </header>
 
-  <div data-druckbereich="1" data-inhalt="1" style="max-width:1400px;margin:0 auto;padding:var(--space-6)">
+  <div data-druckbereich="1" data-inhalt="1" style="margin:0 auto;padding:var(--space-6)">
 
     <div data-nurdruck="1" style="margin-bottom:var(--space-6);padding-bottom:var(--space-3);border-bottom:1px solid var(--color-text)">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-6)">
@@ -155,7 +169,7 @@
 
     <sc-if value="{{ istKalender }}" hint-placeholder-val="{{ true }}">
       <div data-screen-label="Kalender" data-zweispaltig="1" style="display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:var(--space-8);align-items:start">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(264px,1fr));gap:var(--space-6)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:var(--space-6)">
           <sc-for list="{{ monate }}" as="m" hint-placeholder-count="12">
             <section data-monat="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -189,11 +203,11 @@
         </div>
 
         <aside data-nodruck="1" data-seitenspalte="1" style="position:sticky;top:78px;display:flex;flex-direction:column;gap:var(--space-6)">
-          <section class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
+          <section data-katbox="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Werkzeug</div>
-            <h2 style="margin:0 0 var(--space-1);font-family:var(--font-heading);font-size:17px">Kategorie</h2>
-            <p class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">Auswählen, dann Tage anklicken. Nochmal klicken löscht den Tag.</p>
+            <div data-katkopf="1" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Werkzeug</div>
+            <h2 data-katkopf="1" style="margin:0 0 var(--space-1);font-family:var(--font-heading);font-size:17px">Kategorie</h2>
+            <p data-katkopf="1" class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">Auswählen, dann Tage anklicken. Nochmal klicken löscht den Tag.</p>
             <div data-katliste="1" style="display:flex;flex-direction:column;gap:2px">
               <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
                 <button onClick="{{ k.klick }}" style="display:flex;align-items:center;gap:var(--space-3);min-height:38px;padding:var(--space-2);border:1px solid {{ k.rand }};border-radius:0;background: {{ k.bg }};text-align:left;cursor:pointer;width:100%">
@@ -235,15 +249,15 @@
     <sc-if value="{{ istWochen }}" hint-placeholder-val="{{ false }}">
       <div data-screen-label="Wochen">
         <h2 style="margin:0 0 var(--space-6);font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Kalenderwochen {{ jahr }}</h2>
-        <div class="blueprint" style="position:relative;padding:var(--space-4);background:transparent;overflow-x:auto">
+        <div data-scrollbox="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent;overflow-x:auto">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <table class="table" style="min-width:860px">
+          <table data-tabelle="1" class="table" style="min-width:860px">
             <thead>
               <tr>
-                <th style="white-space:nowrap">KW</th>
-                <th>Monat</th>
+                <th data-erstespalte="1" style="white-space:nowrap">KW</th>
+                <th data-nurbreit="1">Monat</th>
                 <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
-                  <th style="text-align:center;white-space:nowrap">{{ k.name }}</th>
+                  <th style="text-align:center;white-space:nowrap"><span data-nurbreit="1">{{ k.name }}</span><span data-nurschmal="1">{{ k.code }}</span></th>
                 </sc-for>
               </tr>
             </thead>
@@ -251,10 +265,10 @@
               <sc-for list="{{ wochenZeilen }}" as="z" hint-placeholder-count="12">
                 <tr>
                   <td style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ z.kw }}</td>
-                  <td style="white-space:nowrap">{{ z.monat }}</td>
+                  <td data-nurbreit="1" style="white-space:nowrap">{{ z.monat }}</td>
                   <sc-for list="{{ z.zellen }}" as="c" hint-placeholder-count="8">
                     <td style="text-align:center;padding:3px 4px">
-                      <input class="input" type="number" min="0" max="7" value="{{ c.wert }}" onChange="{{ c.aendern }}" style="width:46px;min-height:30px;padding:3px;border-radius:0;border-color:transparent;background: {{ c.bg }};text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;color: {{ c.fg }}">
+                      <input data-zahlfeld="1" class="input" type="number" min="0" max="7" value="{{ c.wert }}" onChange="{{ c.aendern }}" style="width:46px;min-height:30px;padding:3px;border-radius:0;border-color:transparent;background: {{ c.bg }};text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;color: {{ c.fg }}">
                     </td>
                   </sc-for>
                 </tr>
@@ -333,21 +347,21 @@
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent;margin-bottom:var(--space-8)">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <h3 style="margin:0 0 var(--space-4);font-family:var(--font-heading);font-size:18px">Monatsübersicht</h3>
-          <div style="overflow-x:auto">
-            <table class="table" style="min-width:760px">
+          <div data-scrollbox="1" style="overflow-x:auto">
+            <table data-tabelle="1" class="table" style="min-width:760px">
               <thead>
                 <tr>
-                  <th>Monat</th>
+                  <th data-erstespalte="1"><span data-nurbreit="1">Monat</span></th>
                   <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
-                    <th style="text-align:center;white-space:nowrap">{{ k.name }}</th>
+                    <th style="text-align:center;white-space:nowrap"><span data-nurbreit="1">{{ k.name }}</span><span data-nurschmal="1">{{ k.code }}</span></th>
                   </sc-for>
-                  <th style="text-align:center">Gesamt</th>
+                  <th style="text-align:center"><span data-nurbreit="1">Gesamt</span><span data-nurschmal="1">Σ</span></th>
                 </tr>
               </thead>
               <tbody>
                 <sc-for list="{{ monatsZeilen }}" as="r" hint-placeholder-count="13">
                   <tr>
-                    <td style="white-space:nowrap;font-weight: {{ r.gewicht }}">{{ r.monat }}</td>
+                    <td style="white-space:nowrap;font-weight: {{ r.gewicht }}"><span data-nurbreit="1">{{ r.monat }}</span><span data-nurschmal="1">{{ r.monatKurz }}</span></td>
                     <sc-for list="{{ r.werte }}" as="v" hint-placeholder-count="8">
                       <td style="text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px;color: {{ v.fg }}">{{ v.wert }}</td>
                     </sc-for>
@@ -380,7 +394,7 @@
           <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">PIN</h3>
           <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">{{ pinStatus }}</p>
           <form onSubmit="{{ pinSetzen }}" style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
-            <input class="input" type="password" placeholder="Neue PIN" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="flex:1;min-width:170px;min-height:40px;border-radius:0;letter-spacing:0.25em">
+            <input class="input" name="new-password" type="password" autoComplete="new-password" placeholder="Neue PIN" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="flex:1;min-width:170px;min-height:40px;border-radius:0;letter-spacing:0.25em">
             <button class="btn btn-primary blueprint" type="submit" style="position:relative;min-height:40px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
               Speichern
@@ -831,12 +845,12 @@ class Component extends DCLogic {
         if (i >= 0) werte[i]++;
       });
       return {
-        monat: name, gewicht: '400', gesamt: String(werte.reduce((a, b) => a + b, 0)),
+        monat: name, monatKurz: name.slice(0, 3), gewicht: '400', gesamt: String(werte.reduce((a, b) => a + b, 0)),
         werte: werte.map(v => ({ wert: String(v), fg: v ? 'var(--color-text)' : ink(28) }))
       };
     });
     if (istAuswertung) monatsZeilen.push({
-      monat: 'Gesamt', gewicht: '600',
+      monat: 'Gesamt', monatKurz: 'Σ', gewicht: '600',
       gesamt: String(KAT.reduce((a, k) => a + zaehler[k.id], 0)),
       werte: KAT.map(k => ({ wert: String(zaehler[k.id]), fg: 'var(--color-text)' }))
     });
