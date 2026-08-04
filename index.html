@@ -4,8 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Steuerakte</title>
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%235980a6'/%3E%3Cpath d='M16 10h32v40l-6-5-5 5-5-5-5 5-5-5-6 5z' fill='%23f2f2f3'/%3E%3Cg stroke='%235980a6' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M23 21h18M23 30h18M23 39h11'/%3E%3C/g%3E%3C/svg%3E">
 <meta name="apple-mobile-web-app-title" content="Steuerakte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#5980a6">
 <script src="./support.js"></script>
 </head>
@@ -25,6 +30,19 @@
   a:hover { color: var(--color-accent-900); }
   input, select, button, textarea { font: inherit; color: inherit; }
   [data-nurdruck] { display: none; }
+  @media (max-width: 900px) {
+    [data-zweispaltig] { grid-template-columns: minmax(0, 1fr) !important; }
+    [data-seitenspalte] { position: static !important; top: auto !important; order: -1; }
+    [data-kopf] { padding: 10px 14px !important; gap: 12px !important; }
+    [data-kopf] [data-tabs] { width: 100%; margin-left: 0 !important; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 20px !important; }
+    [data-kopf] [data-status] { min-width: 0 !important; text-align: left !important; }
+    [data-inhalt] { padding: 14px !important; }
+    [data-tagfeld] { min-height: 40px !important; font-size: 14px !important; }
+    [data-monat] { padding: 12px !important; }
+    [data-katliste] { flex-direction: row !important; flex-wrap: wrap; gap: 6px !important; }
+    [data-katliste] > button { width: auto !important; flex: 0 0 auto; padding: 6px 10px !important; }
+    [data-katliste] > button > span:nth-child(3) { display: none; }
+  }
   @media print {
     @page { size: A4 landscape; margin: 12mm; }
     html, body { background: #fff; }
@@ -94,7 +112,7 @@
     </sc-if>
 
   <header class="nav" data-nodruck="1" style="position:sticky;top:0;z-index:20;background:var(--color-bg);border-bottom:1px solid var(--color-divider)">
-    <div style="max-width:1400px;margin:0 auto;padding:var(--space-3) var(--space-6);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-6);width:100%">
+    <div data-kopf="1" style="max-width:1400px;margin:0 auto;padding:var(--space-3) var(--space-6);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-6);width:100%">
       <h1 class="nav-brand" style="margin:0;display:flex;align-items:center;gap:var(--space-3);font-size:19px;letter-spacing:0.01em;text-transform:uppercase">
         <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true" style="flex:0 0 auto;display:block">
           <rect width="64" height="64" fill="var(--color-accent)"></rect>
@@ -110,16 +128,16 @@
           <button onClick="{{ j.klick }}" style="min-height:32px;padding:var(--space-1) var(--space-4);border:0;border-left:1px solid var(--color-divider);background: {{ j.bg }};color: {{ j.fg }};font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-variant-numeric:tabular-nums;cursor:pointer">{{ j.jahr }}</button>
         </sc-for>
       </div>
-      <nav style="display:flex;gap:var(--space-6);margin-left:auto">
+      <nav data-tabs="1" style="display:flex;gap:var(--space-6);margin-left:auto">
         <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
           <button onClick="{{ t.klick }}" style="min-height:32px;padding:var(--space-1) 0;border:0;border-bottom:2px solid {{ t.linie }};background:transparent;color: {{ t.fg }};font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:15px;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer">{{ t.name }}</button>
         </sc-for>
       </nav>
-      <div class="text-muted" style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;min-width:130px;text-align:right">{{ syncStatus }}</div>
+      <div data-status="1" class="text-muted" style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;min-width:130px;text-align:right">{{ syncStatus }}</div>
     </div>
   </header>
 
-  <div data-druckbereich="1" style="max-width:1400px;margin:0 auto;padding:var(--space-6)">
+  <div data-druckbereich="1" data-inhalt="1" style="max-width:1400px;margin:0 auto;padding:var(--space-6)">
 
     <div data-nurdruck="1" style="margin-bottom:var(--space-6);padding-bottom:var(--space-3);border-bottom:1px solid var(--color-text)">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-6)">
@@ -136,10 +154,10 @@
     </div>
 
     <sc-if value="{{ istKalender }}" hint-placeholder-val="{{ true }}">
-      <div data-screen-label="Kalender" style="display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:var(--space-8);align-items:start">
+      <div data-screen-label="Kalender" data-zweispaltig="1" style="display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:var(--space-8);align-items:start">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(264px,1fr));gap:var(--space-6)">
           <sc-for list="{{ monate }}" as="m" hint-placeholder-count="12">
-            <section class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
+            <section data-monat="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--space-3)">
                 <h2 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.04em;text-transform:uppercase">{{ m.name }}</h2>
@@ -159,7 +177,7 @@
                 <div style="display:grid;grid-template-columns:20px repeat(7,1fr);gap:2px;margin-bottom:2px">
                   <div style="display:flex;align-items:center;justify-content:flex-end;padding-right:3px;font-family:var(--font-heading);font-size:10px;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 32%, transparent)">{{ w.kw }}</div>
                   <sc-for list="{{ w.tage }}" as="d" hint-placeholder-count="7">
-                    <button onClick="{{ d.klick }}" title="{{ d.titel }}" style="position:relative;aspect-ratio:1;min-height:30px;padding:0;border:1px solid {{ d.rand }};border-radius:0;background: {{ d.bg }};color: {{ d.fg }};font-family:var(--font-heading);font-size:12px;font-variant-numeric:tabular-nums;cursor: {{ d.cursor }};display:flex;align-items:center;justify-content:center;overflow:hidden">
+                    <button data-tagfeld="1" onClick="{{ d.klick }}" title="{{ d.titel }}" style="position:relative;aspect-ratio:1;min-height:30px;padding:0;border:1px solid {{ d.rand }};border-radius:0;background: {{ d.bg }};color: {{ d.fg }};font-family:var(--font-heading);font-size:12px;font-variant-numeric:tabular-nums;cursor: {{ d.cursor }};display:flex;align-items:center;justify-content:center;overflow:hidden">
                       <span>{{ d.nr }}</span>
                       <span style="position:absolute;top:1px;left:2px;font-size:10px;line-height:1;letter-spacing:0.04em;opacity:0.85">{{ d.code }}</span>
                     </button>
@@ -170,13 +188,13 @@
           </sc-for>
         </div>
 
-        <aside data-nodruck="1" style="position:sticky;top:78px;display:flex;flex-direction:column;gap:var(--space-6)">
+        <aside data-nodruck="1" data-seitenspalte="1" style="position:sticky;top:78px;display:flex;flex-direction:column;gap:var(--space-6)">
           <section class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Werkzeug</div>
             <h2 style="margin:0 0 var(--space-1);font-family:var(--font-heading);font-size:17px">Kategorie</h2>
             <p class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">Auswählen, dann Tage anklicken. Nochmal klicken löscht den Tag.</p>
-            <div style="display:flex;flex-direction:column;gap:2px">
+            <div data-katliste="1" style="display:flex;flex-direction:column;gap:2px">
               <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
                 <button onClick="{{ k.klick }}" style="display:flex;align-items:center;gap:var(--space-3);min-height:38px;padding:var(--space-2);border:1px solid {{ k.rand }};border-radius:0;background: {{ k.bg }};text-align:left;cursor:pointer;width:100%">
                   <span style="display:flex;align-items:center;justify-content:center;width:19px;height:19px;flex:0 0 auto;background: {{ k.farbe }};color: {{ k.auf }};font-family:var(--font-heading);font-size:11px">{{ k.code }}</span>
