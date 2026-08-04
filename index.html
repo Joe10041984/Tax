@@ -530,6 +530,7 @@ class Component extends DCLogic {
     return { tage: s.tage, notizen: s.notizen, belege: s.belege, settings: s.settings, gespeichert: new Date().toISOString() };
   }
   _merken(patch) {
+    this._bearbeitet = true;
     this._version = (this._version || 0) + 1;
     const stand = this._stand(patch);
     this.setState({ ...(patch || {}), gespeichert: stand.gespeichert });
@@ -567,7 +568,22 @@ class Component extends DCLogic {
       const res = await this.sync.downloadState();
       if (res.gesperrt) { this.setState({ gesperrt: true }); return; }
       const fern = res.stand || {};
-      const lokalTs = erzwingen ? '' : (this.state.gespeichert || '');
+      const fernTage = Object.keys(fern.tage || {}).length;
+      const lokalTage = Object.keys(this.state.tage || {}).length;
+      // Beim Start und beim erzwungenen Laden gilt der Gist als gemeinsame Wahrheit.
+      // Nur wer auf diesem Gerät wirklich etwas geändert hat, schiebt seinen Stand hoch.
+      if (erzwingen || !this._bearbeitet) {
+        if (!fernTage && lokalTage) { this.setState({ syncStatus: 'Gist ist leer — nichts geladen' }); return; }
+        this._version = (this._version || 0) + 1;
+        this.setState({
+          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {},
+          settings: { ...this.state.settings, ...(fern.settings || {}) },
+          gespeichert: fern.gespeichert, syncStatus: 'Stand von GitHub geladen', frisch: false
+        });
+        try { localStorage.setItem(KEY, JSON.stringify(fern)); } catch (e) {}
+        return;
+      }
+      const lokalTs = this.state.gespeichert || '';
       if ((fern.gespeichert || '') > lokalTs) {
         this._version = (this._version || 0) + 1;
         this.setState({
