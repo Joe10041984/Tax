@@ -543,7 +543,18 @@ class Component extends DCLogic {
       this.setState({ syncStatus: 'lädt hoch …' });
       await this.sync.uploadState(this._stand(), { sperreHash: this.state.settings.sperreHash });
       this.setState({ syncStatus: 'gespeichert ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }), gistEingabe: this.sync.cfg.gistId || '' });
-    } catch (e) { this.setState({ syncStatus: e.message }); }
+    } catch (e) {
+      if (/404/.test(e.message) && !this._reparatur) {
+        this._reparatur = true;
+        await this.sync.setConfig({ gistId: '' });
+        const gefunden = await this.sync.findGist();
+        if (gefunden) await this.sync.setConfig({ gistId: gefunden });
+        const r = await this._hochladen(still);
+        this._reparatur = false;
+        return r;
+      }
+      this.setState({ syncStatus: e.message });
+    }
   }
   async _autoLaden(erzwingen) {
     if (!this.sync || !this.sync.cfg.token) return;
@@ -570,10 +581,21 @@ class Component extends DCLogic {
       } else {
         this.setState({ syncStatus: 'aktuell' });
       }
-    } catch (e) { this.setState({ syncStatus: e.message }); }
+    } catch (e) {
+      if (/404/.test(e.message)) {
+        await this.sync.setConfig({ gistId: '' });
+        const gefunden = await this.sync.findGist();
+        if (gefunden) {
+          await this.sync.setConfig({ gistId: gefunden });
+          this.setState({ gistEingabe: gefunden });
+          return this._autoLaden(erzwingen);
+        }
+        this.setState({ gistEingabe: '', syncStatus: 'Kein Gist gefunden' });
+        return;
+      }
+      this.setState({ syncStatus: e.message });
+    }
   }
-
-  // ---------- Tage ----------
   _tagKlick(datum) {
     const kat = this.state.aktiveKat;
     const tage = { ...this.state.tage };
