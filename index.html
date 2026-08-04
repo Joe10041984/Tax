@@ -61,15 +61,14 @@
       <div data-nodruck="1" style="position:fixed;inset:0;z-index:40;background:var(--color-bg);display:flex;align-items:center;justify-content:center;padding:var(--space-6);overflow:auto">
         <div class="blueprint" style="position:relative;width:100%;max-width:440px;padding:var(--space-6);background:transparent">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Einrichtung</div>
-          <h2 style="margin:0;font-family:var(--font-heading);font-size:24px;letter-spacing:0.02em;text-transform:uppercase">Anwesenheit / Home Office</h2>
+          <h2 style="margin:0;font-family:var(--font-heading);font-size:24px;letter-spacing:0.02em;text-transform:uppercase">Erstmalige Einrichtung</h2>
           <p class="text-muted" style="margin:0 0 var(--space-4);font-size:13px">{{ einrichtenText }}</p>
           <form onSubmit="{{ einrichten }}" style="display:flex;flex-direction:column;gap:var(--space-3)">
             <div class="field">
               <label>PIN</label>
               <input class="input" type="password" autoComplete="current-password" placeholder="PIN oder Passphrase" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="min-height:42px;border-radius:0;letter-spacing:0.18em">
             </div>
-            <sc-if value="{{ ohneSetup }}" hint-placeholder-val="{{ false }}">
+            <sc-if value="{{ nie }}" hint-placeholder-val="{{ false }}">
               <div class="field">
                 <label>Token</label>
                 <input class="input" type="password" placeholder="github_pat_…" value="{{ tokenEingabe }}" onChange="{{ tokenTippen }}" style="min-height:42px;border-radius:0;font-size:13px">
@@ -465,7 +464,7 @@ class Component extends DCLogic {
     syncStatus: '', belegHinweis: '',
     tokenEingabe: '', repoEingabe: '', gistEingabe: '',
     gespeichert: null,
-    frisch: false,
+    frisch: !(function () { try { return !!localStorage.getItem(KEY); } catch (e) { return false; } })(),
     setupBlob: null,
     geladen: false
   };
@@ -538,13 +537,13 @@ class Component extends DCLogic {
       this.setState({ syncStatus: 'gespeichert ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }), gistEingabe: this.sync.cfg.gistId || '' });
     } catch (e) { this.setState({ syncStatus: e.message }); }
   }
-  async _autoLaden() {
+  async _autoLaden(erzwingen) {
     if (!this.sync || !this.sync.cfg.token || !this.sync.cfg.gistId) return;
     try {
       const res = await this.sync.downloadState();
       if (res.gesperrt) { this.setState({ gesperrt: true }); return; }
       const fern = res.stand || {};
-      const lokalTs = this.state.gespeichert || '';
+      const lokalTs = erzwingen ? '' : (this.state.gespeichert || '');
       if ((fern.gespeichert || '') > lokalTs) {
         this._version = (this._version || 0) + 1;
         this.setState({
@@ -754,9 +753,10 @@ class Component extends DCLogic {
     return {
       jahr: String(jahr), gesperrt: S.gesperrt, frisch: S.frisch,
       ohneSetup: !S.setupBlob,
+      nie: false,
       einrichtenLabel: S.setupBlob ? 'Entsperren' : 'Einrichten',
       einrichtenText: S.setupBlob ? 'Bitte PIN eingeben.' : 'Dieses Gerät kennt deinen Stand noch nicht.',
-      einrichtenHinweis: S.setupBlob ? '' : 'Alle Felder leer lassen und einrichten — dann fängt dieses Gerät mit einem leeren Jahr an.',
+      einrichtenHinweis: '',
       heuteLang: new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }),
       pinEingabe: S.pinEingabe, neuePin: S.neuePin, pinFehler: S.pinFehler, syncStatus: S.syncStatus,
       istKalender, istWochen, istAuswertung, istEinstellungen,
@@ -829,7 +829,7 @@ class Component extends DCLogic {
           this._feiertageAuffuellen(this.state.jahr);
           return;
         }
-        if (!pin && !token && !gist) { this.setState({ frisch: false, pinFehler: '' }); this._merken({}); this._feiertageAuffuellen(jahr); return; }
+        if (!pin) { this.setState({ pinFehler: 'Bitte PIN eingeben.' }); return; }
         if (pin.length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
         await this.sync.unlock(pin, null);
         const hash = await this.sync.pinHash(pin);
@@ -867,7 +867,10 @@ class Component extends DCLogic {
         this.setState({ syncStatus: this.sync.verschluesselt ? 'Zugang verschlüsselt gespeichert' : 'Zugang gespeichert — ohne PIN im Klartext' });
       },
       jetztHochladen: () => this._hochladen(false),
-      jetztLaden: () => this._autoLaden(),
+      jetztLaden: () => {
+        if (!window.confirm('Stand aus dem Gist holen? Was auf diesem Gerät steht, wird dabei ersetzt.')) return;
+        this._autoLaden(true);
+      },
       setupBauen: async () => {
         if (!this.sync) return;
         const pass = window.prompt('Passwort für setup.json — nimm dieselbe PIN, dann fragt ein neues Gerät nur danach (min. 8 Zeichen)');
