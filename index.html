@@ -520,7 +520,7 @@ class Component extends DCLogic {
       const blob = await sync.setupHolen();
       if (blob) this.setState({ setupBlob: blob });
     }
-    if (offen) await this._autoLaden();
+    if (sync && sync.cfg.token) await this._autoLaden();
     if (!nochNichtEingerichtet) this._feiertageAuffuellen(this.state.jahr);
   }
 
@@ -559,11 +559,12 @@ class Component extends DCLogic {
     }
   }
   async _autoLaden(erzwingen) {
-    if (!this.sync || !this.sync.cfg.token) return;
+    if (!this.sync || !this.sync.cfg.token) { this.setState({ syncStatus: 'Kein Token hinterlegt' }); return; }
     if (!this.sync.cfg.gistId) {
+      this.setState({ syncStatus: 'suche Gist …' });
       const gefunden = await this.sync.findGist();
       if (gefunden) { await this.sync.setConfig({ gistId: gefunden }); this.setState({ gistEingabe: gefunden }); }
-      else return;
+      else { this.setState({ syncStatus: 'Kein Gist gefunden' }); return; }
     }
     try {
       const res = await this.sync.downloadState();
@@ -579,7 +580,7 @@ class Component extends DCLogic {
         this.setState({
           tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {},
           settings: { ...this.state.settings, ...(fern.settings || {}) },
-          gespeichert: fern.gespeichert, syncStatus: 'Stand von GitHub geladen', frisch: false
+          gespeichert: fern.gespeichert, syncStatus: fernTage + ' Tage geladen', frisch: false
         });
         try { localStorage.setItem(KEY, JSON.stringify(fern)); } catch (e) {}
         return;
