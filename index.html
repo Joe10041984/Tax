@@ -546,7 +546,12 @@ class Component extends DCLogic {
     } catch (e) { this.setState({ syncStatus: e.message }); }
   }
   async _autoLaden(erzwingen) {
-    if (!this.sync || !this.sync.cfg.token || !this.sync.cfg.gistId) return;
+    if (!this.sync || !this.sync.cfg.token) return;
+    if (!this.sync.cfg.gistId) {
+      const gefunden = await this.sync.findGist();
+      if (gefunden) { await this.sync.setConfig({ gistId: gefunden }); this.setState({ gistEingabe: gefunden }); }
+      else return;
+    }
     try {
       const res = await this.sync.downloadState();
       if (res.gesperrt) { this.setState({ gesperrt: true }); return; }
@@ -872,6 +877,10 @@ class Component extends DCLogic {
       zugangSpeichern: async () => {
         if (!this.sync) return;
         await this.sync.setConfig({ token: S.tokenEingabe.trim(), repo: S.repoEingabe.trim(), gistId: S.gistEingabe.trim() });
+        if (!S.gistEingabe.trim()) {
+          const gefunden = await this.sync.findGist();
+          if (gefunden) { await this.sync.setConfig({ gistId: gefunden }); this.setState({ gistEingabe: gefunden }); }
+        }
         this.setState({ syncStatus: this.sync.verschluesselt ? 'Zugang verschlüsselt gespeichert' : 'Zugang gespeichert — ohne PIN im Klartext' });
       },
       jetztHochladen: () => this._hochladen(false),

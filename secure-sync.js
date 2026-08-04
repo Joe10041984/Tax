@@ -172,6 +172,28 @@ export class SecureSync {
   _headers(extra) { return { Authorization: 'Bearer ' + this.cfg.token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', ...(extra || {}) }; }
 
   /** Datenstand (beliebiges JSON-Objekt) verschlüsselt in den privaten Gist schreiben. */
+  /**
+   * Sucht in den eigenen Gists den ältesten, der die Zustandsdatei enthält.
+   * Damit findet ein neues Gerät den vorhandenen Stand, statt einen zweiten anzulegen.
+   */
+  async findGist() {
+    if (!this.cfg.token) return '';
+    try {
+      const treffer = [];
+      for (let seite = 1; seite <= 3; seite++) {
+        const r = await fetch('https://api.github.com/gists?per_page=100&page=' + seite, { headers: this._headers() });
+        if (!r.ok) return '';
+        const liste = await r.json();
+        if (!Array.isArray(liste) || !liste.length) break;
+        liste.forEach(g => { if (g.files && g.files[this.gistFile]) treffer.push(g); });
+        if (liste.length < 100) break;
+      }
+      if (!treffer.length) return '';
+      treffer.sort((a, b) => (a.created_at || '') < (b.created_at || '') ? -1 : 1);
+      return treffer[0].id;
+    } catch (e) { return ''; }
+  }
+
   async uploadState(stand, { sperreHash } = {}) {
     if (!this.cfg.token) throw new Error('Kein GitHub-Token hinterlegt.');
     const gespeichert = stand.gespeichert || new Date().toISOString();
@@ -185,6 +207,10 @@ export class SecureSync {
       inhalt = JSON.stringify({ ...stand, gespeichert }, null, 1);
     }
     const files = { [this.gistFile]: { content: inhalt } };
+    if (!this.cfg.gistId) {
+      const gefunden = await this.findGist();
+      if (gefunden) await this.setConfig({ gistId: gefunden });
+    }
     const r = this.cfg.gistId
       ? await fetch('https://api.github.com/gists/' + this.cfg.gistId.trim(), { method: 'PATCH', headers: this._headers(), body: JSON.stringify({ files }) })
       : await fetch('https://api.github.com/gists', { method: 'POST', headers: this._headers(), body: JSON.stringify({ description: this.gistDescription, public: false, files }) });
