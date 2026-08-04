@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="omelette-owns-print" content="1">
+<link rel="stylesheet" href="_ds/industry-39c6ab8f-d45f-4d87-9391-83152ddb3fe2/styles.css">
+<script src="_ds/industry-39c6ab8f-d45f-4d87-9391-83152ddb3fe2/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; }
+  * { box-sizing: border-box; }
+  a { color: var(--color-accent-700); text-decoration: underline; text-underline-offset: 2px; }
+  a:hover { color: var(--color-accent-900); }
+  input, select, button, textarea { font: inherit; color: inherit; }
+  [data-nurdruck] { display: none; }
+  @media print {
+    @page { size: A4 landscape; margin: 12mm; }
+    html, body { background: #fff; }
+    [data-nodruck] { display: none !important; }
+    [data-druckbereich] { padding: 0 !important; max-width: none !important; }
+    [data-nurdruck] { display: block !important; }
+    div, section, aside { overflow: visible !important; }
+    table { min-width: 0 !important; width: 100% !important; }
+    table.table th, table.table td { padding: 2px 3px !important; font-size: 8.5pt !important; }
+    table.table th { white-space: normal !important; }
+    section { break-inside: avoid; }
+    .blueprint > .corner { display: none !important; }
+  }
+</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px;line-height:1.55">
+
+  <sc-if value="{{ gesperrt }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:50;background:var(--color-bg);display:flex;align-items:center;justify-content:center;padding:var(--space-6)">
+      <div class="card blueprint" style="position:relative;width:100%;max-width:360px;background:transparent;padding:var(--space-6)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Zugriff</div>
+        <h2 style="margin:0;font-family:var(--font-heading);font-size:26px">Gesperrt</h2>
+        <p class="text-muted" style="margin:0 0 var(--space-3);font-size:13px">Die Daten auf diesem Gerät sind verschlüsselt.</p>
+        <form onSubmit="{{ pinAbsenden }}" style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <input class="input" type="password" inputMode="numeric" autoComplete="current-password" placeholder="PIN" value="{{ pinEingabe }}" onChange="{{ pinTippen }}" style="min-height:44px;letter-spacing:0.25em">
+          <button class="btn btn-primary blueprint" type="submit" style="position:relative;min-height:44px">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            Entsperren
+          </button>
+        </form>
+        <div style="min-height:20px;color:var(--color-accent-800);font-size:13px">{{ pinFehler }}</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <header class="nav" data-nodruck="1" style="position:sticky;top:0;z-index:20;background:var(--color-bg);border-bottom:1px solid var(--color-divider)">
+    <div style="max-width:1400px;margin:0 auto;padding:var(--space-3) var(--space-6);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-6);width:100%">
+      <h1 class="nav-brand" style="margin:0;font-size:19px;letter-spacing:0.01em;text-transform:uppercase">Anwesenheit / Home&nbsp;Office</h1>
+      <div class="seg" style="border-color:var(--color-divider)">
+        <sc-for list="{{ jahre }}" as="j" hint-placeholder-count="3">
+          <button onClick="{{ j.klick }}" style="min-height:32px;padding:var(--space-1) var(--space-4);border:0;border-left:1px solid var(--color-divider);background: {{ j.bg }};color: {{ j.fg }};font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-variant-numeric:tabular-nums;cursor:pointer">{{ j.jahr }}</button>
+        </sc-for>
+      </div>
+      <nav style="display:flex;gap:var(--space-6);margin-left:auto">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+          <button onClick="{{ t.klick }}" style="min-height:32px;padding:var(--space-1) 0;border:0;border-bottom:2px solid {{ t.linie }};background:transparent;color: {{ t.fg }};font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:15px;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer">{{ t.name }}</button>
+        </sc-for>
+      </nav>
+      <div class="text-muted" style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;min-width:130px;text-align:right">{{ syncStatus }}</div>
+    </div>
+  </header>
+
+  <div data-druckbereich="1" style="max-width:1400px;margin:0 auto;padding:var(--space-6)">
+
+    <div data-nurdruck="1" style="margin-bottom:var(--space-6);padding-bottom:var(--space-3);border-bottom:1px solid var(--color-text)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-6)">
+        <h2 style="margin:0;font-family:var(--font-heading);font-size:16pt;letter-spacing:0.03em;text-transform:uppercase">Anwesenheit und Home Office {{ jahr }}</h2>
+        <span style="font-size:9pt">Ausdruck {{ heuteLang }}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:var(--space-2) var(--space-4);margin-top:var(--space-2);font-size:8.5pt">
+        <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
+          <span style="display:flex;align-items:center;gap:4px">
+            <span style="display:flex;align-items:center;justify-content:center;width:14px;height:14px;background: {{ k.farbe }};color: {{ k.auf }};font-family:var(--font-heading);font-size:8pt">{{ k.code }}</span>{{ k.name }}
+          </span>
+        </sc-for>
+      </div>
+    </div>
+
+    <sc-if value="{{ istKalender }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="Kalender" style="display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:var(--space-8);align-items:start">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(264px,1fr));gap:var(--space-6)">
+          <sc-for list="{{ monate }}" as="m" hint-placeholder-count="12">
+            <section class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--space-3)">
+                <h2 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.04em;text-transform:uppercase">{{ m.name }}</h2>
+                <span class="text-muted" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase">{{ m.info }}</span>
+              </div>
+              <div style="display:grid;grid-template-columns:20px repeat(7,1fr);gap:2px;margin-bottom:3px;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 45%, transparent)">
+                <div></div>
+                <div style="text-align:center">Mo</div>
+                <div style="text-align:center">Di</div>
+                <div style="text-align:center">Mi</div>
+                <div style="text-align:center">Do</div>
+                <div style="text-align:center">Fr</div>
+                <div style="text-align:center">Sa</div>
+                <div style="text-align:center">So</div>
+              </div>
+              <sc-for list="{{ m.wochen }}" as="w" hint-placeholder-count="5">
+                <div style="display:grid;grid-template-columns:20px repeat(7,1fr);gap:2px;margin-bottom:2px">
+                  <div style="display:flex;align-items:center;justify-content:flex-end;padding-right:3px;font-family:var(--font-heading);font-size:10px;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 32%, transparent)">{{ w.kw }}</div>
+                  <sc-for list="{{ w.tage }}" as="d" hint-placeholder-count="7">
+                    <button onClick="{{ d.klick }}" title="{{ d.titel }}" style="position:relative;aspect-ratio:1;min-height:30px;padding:0;border:1px solid {{ d.rand }};border-radius:0;background: {{ d.bg }};color: {{ d.fg }};font-family:var(--font-heading);font-size:12px;font-variant-numeric:tabular-nums;cursor: {{ d.cursor }};display:flex;align-items:center;justify-content:center;overflow:hidden">
+                      <span>{{ d.nr }}</span>
+                      <span style="position:absolute;top:1px;left:2px;font-size:10px;line-height:1;letter-spacing:0.04em;opacity:0.85">{{ d.code }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </section>
+          </sc-for>
+        </div>
+
+        <aside data-nodruck="1" style="position:sticky;top:78px;display:flex;flex-direction:column;gap:var(--space-6)">
+          <section class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Werkzeug</div>
+            <h2 style="margin:0 0 var(--space-1);font-family:var(--font-heading);font-size:17px">Kategorie</h2>
+            <p class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">Auswählen, dann Tage anklicken. Nochmal klicken löscht den Tag.</p>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
+                <button onClick="{{ k.klick }}" style="display:flex;align-items:center;gap:var(--space-3);min-height:38px;padding:var(--space-2);border:1px solid {{ k.rand }};border-radius:0;background: {{ k.bg }};text-align:left;cursor:pointer;width:100%">
+                  <span style="display:flex;align-items:center;justify-content:center;width:19px;height:19px;flex:0 0 auto;background: {{ k.farbe }};color: {{ k.auf }};font-family:var(--font-heading);font-size:11px">{{ k.code }}</span>
+                  <span style="flex:1;font-size:14px">{{ k.name }}</span>
+                  <span style="font-family:var(--font-heading);font-size:14px;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ k.anzahl }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </section>
+
+          <sc-if value="{{ gewaehlt }}" hint-placeholder-val="{{ null }}">
+            <section class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Tag</div>
+              <div style="font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:17px;line-height:1.2">{{ gewaehltLabel }}</div>
+              <div class="text-muted" style="margin:2px 0 var(--space-3);font-size:12px">{{ gewaehltKat }}</div>
+              <textarea class="input" placeholder="Notiz zum Tag" value="{{ gewaehltNotiz }}" onChange="{{ notizTippen }}" rows="3" style="min-height:70px"></textarea>
+              <div style="margin-top:var(--space-3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Belege</div>
+              <div style="display:flex;flex-direction:column;gap:var(--space-1);margin:var(--space-2) 0">
+                <sc-for list="{{ gewaehltBelege }}" as="b" hint-placeholder-count="0">
+                  <div style="display:flex;align-items:center;gap:var(--space-2);font-size:13px">
+                    <button class="btn btn-ghost" onClick="{{ b.oeffnen }}" style="flex:1;justify-content:flex-start;text-decoration:underline;text-underline-offset:2px">{{ b.name }}</button>
+                    <button class="btn btn-secondary" onClick="{{ b.loeschen }}" style="border-radius:0;min-height:28px;font-size:12px">Weg</button>
+                  </div>
+                </sc-for>
+              </div>
+              <label class="btn btn-secondary" style="border-radius:0;border-style:dashed;min-height:36px;font-size:13px;cursor:pointer">
+                Datei anhängen
+                <input type="file" onChange="{{ belegWaehlen }}" style="display:none">
+              </label>
+              <div class="text-muted" style="margin-top:var(--space-2);font-size:11px">{{ belegHinweis }}</div>
+            </section>
+          </sc-if>
+        </aside>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ istWochen }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Wochen">
+        <h2 style="margin:0 0 var(--space-6);font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Kalenderwochen {{ jahr }}</h2>
+        <div class="blueprint" style="position:relative;padding:var(--space-4);background:transparent;overflow-x:auto">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <table class="table" style="min-width:860px">
+            <thead>
+              <tr>
+                <th style="white-space:nowrap">KW</th>
+                <th>Monat</th>
+                <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
+                  <th style="text-align:center;white-space:nowrap">{{ k.name }}</th>
+                </sc-for>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ wochenZeilen }}" as="z" hint-placeholder-count="12">
+                <tr>
+                  <td style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ z.kw }}</td>
+                  <td style="white-space:nowrap">{{ z.monat }}</td>
+                  <sc-for list="{{ z.zellen }}" as="c" hint-placeholder-count="8">
+                    <td style="text-align:center;padding:3px 4px">
+                      <input class="input" type="number" min="0" max="7" value="{{ c.wert }}" onChange="{{ c.aendern }}" style="width:46px;min-height:30px;padding:3px;border-radius:0;border-color:transparent;background: {{ c.bg }};text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;color: {{ c.fg }}">
+                    </td>
+                  </sc-for>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ istAuswertung }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Auswertung">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-6);margin-bottom:var(--space-6)">
+          <h2 style="margin:0;font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Auswertung {{ jahr }}</h2>
+          <button class="btn btn-secondary" data-nodruck="1" onClick="{{ drucken }}" style="border-radius:0">Als PDF drucken</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:var(--space-3);margin-bottom:var(--space-8)">
+          <sc-for list="{{ jahresSummen }}" as="s" hint-placeholder-count="8">
+            <div class="blueprint" style="position:relative;padding:var(--space-3) var(--space-4);background:transparent">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="display:flex;align-items:center;gap:var(--space-2);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 60%, transparent)">
+                <span style="display:flex;align-items:center;justify-content:center;width:15px;height:15px;background: {{ s.farbe }};color: {{ s.auf }};font-family:var(--font-heading);font-size:9px">{{ s.code }}</span>{{ s.name }}
+              </div>
+              <div style="margin-top:var(--space-1);font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:30px;line-height:1;font-variant-numeric:tabular-nums">{{ s.tage }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:var(--space-6);margin-bottom:var(--space-8)">
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 4 Abs. 5 Nr. 6c EStG</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Home-Office-Pauschale</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">6 € je Tag, höchstens 210 Tage im Jahr.</p>
+            <div class="field" style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3)">
+              <label style="margin:0;white-space:nowrap">Satz je Tag</label>
+              <input class="input" type="number" step="0.5" min="0" value="{{ hoSatz }}" onChange="{{ hoSatzAendern }}" style="width:78px;border-radius:0;font-family:var(--font-heading);font-variant-numeric:tabular-nums">
+              <span class="text-muted" style="font-size:12px">€</span>
+            </div>
+            <table class="table">
+              <tbody>
+                <sc-for list="{{ hoZeilen }}" as="r" hint-placeholder-count="4">
+                  <tr>
+                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 9 Abs. 1 Nr. 4 EStG</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Entfernungspauschale</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">0,30 € bis 20 km, 0,38 € ab dem 21. km.</p>
+            <div class="field" style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3)">
+              <label style="margin:0;white-space:nowrap">Entfernung einfach</label>
+              <input class="input" type="number" step="1" min="0" value="{{ km }}" onChange="{{ kmAendern }}" style="width:78px;border-radius:0;font-family:var(--font-heading);font-variant-numeric:tabular-nums">
+              <span class="text-muted" style="font-size:12px">km</span>
+            </div>
+            <table class="table">
+              <tbody>
+                <sc-for list="{{ fahrtZeilen }}" as="r" hint-placeholder-count="3">
+                  <tr>
+                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent;margin-bottom:var(--space-8)">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <h3 style="margin:0 0 var(--space-4);font-family:var(--font-heading);font-size:18px">Monatsübersicht</h3>
+          <div style="overflow-x:auto">
+            <table class="table" style="min-width:760px">
+              <thead>
+                <tr>
+                  <th>Monat</th>
+                  <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
+                    <th style="text-align:center;white-space:nowrap">{{ k.name }}</th>
+                  </sc-for>
+                  <th style="text-align:center">Gesamt</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ monatsZeilen }}" as="r" hint-placeholder-count="13">
+                  <tr>
+                    <td style="white-space:nowrap;font-weight: {{ r.gewicht }}">{{ r.monat }}</td>
+                    <sc-for list="{{ r.werte }}" as="v" hint-placeholder-count="8">
+                      <td style="text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px;color: {{ v.fg }}">{{ v.wert }}</td>
+                    </sc-for>
+                    <td style="text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px;font-weight: {{ r.gewicht }}">{{ r.gesamt }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="blueprint" data-nodruck="1" style="position:relative;padding:var(--space-6);background:transparent">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Kontrolle</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">{{ kontrollText }}</p>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+            <sc-for list="{{ kontrollen }}" as="c" hint-placeholder-count="0">
+              <button class="btn btn-secondary" onClick="{{ c.klick }}" style="border-radius:0;font-variant-numeric:tabular-nums">{{ c.label }}</button>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ istEinstellungen }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Einstellungen" style="max-width:680px;display:flex;flex-direction:column;gap:var(--space-6)">
+    <sc-if value="{{ frisch }}" hint-placeholder-val="{{ false }}">
+      <div class="blueprint" data-nodruck="1" style="position:relative;max-width:680px;margin-bottom:var(--space-6);padding:var(--space-6);background:transparent">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Neues Gerät</div>
+        <h2 style="margin:0;font-family:var(--font-heading);font-size:20px">Noch keine Daten auf diesem Gerät</h2>
+        <p class="text-muted" style="margin:0;font-size:13px">Unten PIN setzen, dann Token und Gist-ID eintragen und <em>Laden</em> drücken. Danach steht dein Stand hier.</p>
+      </div>
+    </sc-if>
+
+        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">01</div>
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">PIN</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">{{ pinStatus }}</p>
+          <form onSubmit="{{ pinSetzen }}" style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+            <input class="input" type="password" placeholder="Neue PIN" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="flex:1;min-width:170px;min-height:40px;border-radius:0;letter-spacing:0.25em">
+            <button class="btn btn-primary blueprint" type="submit" style="position:relative;min-height:40px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              Speichern
+            </button>
+          </form>
+          <div style="margin-top:var(--space-2);min-height:18px;font-size:12px;color:var(--color-accent-800)">{{ pinFehler }}</div>
+          <p class="text-muted" style="margin:0;font-size:11px">PIN vergessen heißt Daten verloren. Vorher unten einen Klartext-Export ziehen.</p>
+        </section>
+
+        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">02</div>
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">GitHub</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Fine-grained Token mit <em>Contents: Read and write</em> auf ein privates Repo und <em>Gists: Read and write</em>. Der Gist wird beim ersten Hochladen selbst angelegt.</p>
+          <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <sc-for list="{{ syncFelder }}" as="fd" hint-placeholder-count="3">
+              <div class="field">
+                <label>{{ fd.label }}</label>
+                <input class="input" type="{{ fd.typ }}" placeholder="{{ fd.platzhalter }}" value="{{ fd.wert }}" onChange="{{ fd.aendern }}" style="min-height:40px;border-radius:0;font-size:13px">
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-4)">
+            <button class="btn btn-primary blueprint" onClick="{{ zugangSpeichern }}" style="position:relative;min-height:40px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              Zugang speichern
+            </button>
+            <button class="btn btn-secondary" onClick="{{ jetztHochladen }}" style="border-radius:0;min-height:40px">Hochladen</button>
+            <button class="btn btn-secondary" onClick="{{ jetztLaden }}" style="border-radius:0;min-height:40px">Laden</button>
+            <button class="btn btn-secondary" onClick="{{ setupBauen }}" style="border-radius:0;min-height:40px">setup.json erzeugen</button>
+          </div>
+          <div class="text-muted" style="margin-top:var(--space-2);min-height:18px;font-size:12px">{{ syncStatus }}</div>
+        </section>
+
+        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">03</div>
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Feiertage Bayern</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Werden beim Öffnen eines Jahres automatisch nachgetragen, sofern der Tag noch leer ist. Der Knopf setzt sie erneut und überschreibt dabei, was du dort erfasst hast.</p>
+          <button class="btn btn-secondary" onClick="{{ feiertageSetzen }}" style="border-radius:0;min-height:40px">Feiertage {{ jahr }} überschreiben</button>
+          <div class="text-muted" style="margin-top:var(--space-3);font-size:12px">{{ feiertagListe }}</div>
+        </section>
+
+        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">04</div>
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Sicherung</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Unverschlüsselte JSON-Datei mit allen Tagen, Notizen und Beleg-Verweisen.</p>
+          <button class="btn btn-secondary" onClick="{{ exportieren }}" style="border-radius:0;min-height:40px">Export herunterladen</button>
+        </section>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const HELL = 'var(--color-bg)', DUNKEL = 'var(--color-text)';
+const KAT = [
+  { id: 'praesenz',   name: 'Präsenz',      code: 'P', farbe: 'var(--color-accent-900)', auf: HELL },
+  { id: 'homeoffice', name: 'Home Office',  code: 'H', farbe: 'var(--color-accent-700)', auf: HELL },
+  { id: 'urlaub',     name: 'Urlaub',       code: 'U', farbe: '#2f7a63', auf: HELL },
+  { id: 'qtag',       name: 'Quartalstag',  code: 'Q', farbe: '#6b5b9a', auf: HELL },
+  { id: 'surlaub',    name: 'Sonderurlaub', code: 'S', farbe: '#2b7d8c', auf: HELL },
+  { id: 'krank',      name: 'Krank',        code: 'K', farbe: '#9e4b45', auf: HELL },
+  { id: 'kindkrank',  name: 'Kindkrank',    code: 'C', farbe: '#b0722c', auf: HELL },
+  { id: 'feiertag',   name: 'Feiertag',     code: 'F', farbe: '#8a7f5c', auf: HELL }
+];
+const KAT_MAP = Object.fromEntries(KAT.map(k => [k.id, k]));
+const MONATE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const TABS = [['kalender','Kalender'],['wochen','Wochen'],['auswertung','Auswertung'],['einstellungen','Einstellungen']];
+const KEY = 'hotracker.stand.v1';
+const TAG = 864e5;
+const tint = (farbe, p) => 'color-mix(in srgb, ' + farbe + ' ' + p + '%, transparent)';
+const ink = p => 'color-mix(in srgb, var(--color-text) ' + p + '%, transparent)';
+
+const iso = d => d.toISOString().slice(0, 10);
+const utc = (y, m, t) => new Date(Date.UTC(y, m, t));
+const eur = n => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+function ostern(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
+  const g = Math.floor((8 * b + 13) / 25), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451), n = Math.floor((h + l - 7 * m + 114) / 31);
+  return utc(y, n - 1, ((h + l - 7 * m + 114) % 31) + 1);
+}
+function feiertageBayern(y) {
+  const o = ostern(y).getTime();
+  const feste = [[0,1,'Neujahr'],[0,6,'Heilige Drei Könige'],[4,1,'Erster Mai'],[7,15,'Mariä Himmelfahrt'],[9,3,'Tag der Deutschen Einheit'],[10,1,'Allerheiligen'],[11,25,'1. Weihnachtstag'],[11,26,'2. Weihnachtstag']];
+  const liste = feste.map(([m, t, n]) => [iso(utc(y, m, t)), n]);
+  [[-2,'Karfreitag'],[1,'Ostermontag'],[39,'Christi Himmelfahrt'],[50,'Pfingstmontag'],[60,'Fronleichnam']].forEach(([n, name]) => liste.push([iso(new Date(o + n * TAG)), name]));
+  return new Map(liste.sort((a, b) => a[0] < b[0] ? -1 : 1));
+}
+function kwMontag(jahr, kw) {
+  const jan4 = utc(jahr, 0, 4);
+  return new Date(jan4.getTime() - ((jan4.getUTCDay() + 6) % 7) * TAG + (kw - 1) * 7 * TAG);
+}
+const kwAnzahl = jahr => kwMontag(jahr, 53).getUTCFullYear() === jahr ? 53 : 52;
+const kwIndex = (jahr, montagMs) => Math.round((montagMs - kwMontag(jahr, 1).getTime()) / (7 * TAG)) + 1;
+
+class Component extends DCLogic {
+  state = {
+    jahr: new Date().getFullYear(),
+    tab: 'kalender',
+    tage: {}, notizen: {}, belege: {},
+    settings: { sperreHash: null, hoSatz: 6, km: 0 },
+    aktiveKat: 'praesenz',
+    gewaehlt: null,
+    gesperrt: false,
+    pinEingabe: '', neuePin: '', pinFehler: '',
+    syncStatus: '', belegHinweis: '',
+    tokenEingabe: '', repoEingabe: '', gistEingabe: '',
+    gespeichert: null,
+    frisch: false,
+    geladen: false
+  };
+
+  async componentDidMount() {
+    let lokal = null;
+    try { lokal = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+    let tage = lokal && lokal.tage;
+    const frisch = !tage;
+    if (frisch) tage = {};
+    const settings = { ...this.state.settings, ...((lokal && lokal.settings) || {}) };
+    let sync = null, offen = false, fehler = '';
+    try {
+      const { SecureSync } = await import('./secure-sync.js');
+      sync = new SecureSync({
+        ns: 'hotracker',
+        header: 'HOTENC1',
+        gistFile: 'anwesenheit-stand.json',
+        gistDescription: 'Anwesenheit & Home Office — privater Datenstand',
+        onStatus: msg => this.setState({ syncStatus: msg })
+      });
+      this.sync = sync;
+      offen = await sync.resume();
+    } catch (e) {
+      fehler = 'secure-sync.js nicht geladen';
+    }
+    this._version = (this._version || 0) + 1;
+    this.setState({
+      tage,
+      notizen: (lokal && lokal.notizen) || {},
+      belege: (lokal && lokal.belege) || {},
+      settings,
+      gespeichert: (lokal && lokal.gespeichert) || null,
+      geladen: true,
+      syncStatus: fehler,
+      tab: frisch && !(sync && sync.cfg.gistId) ? 'einstellungen' : this.state.tab,
+      frisch: frisch && !(sync && sync.cfg.gistId),
+      gesperrt: !!(settings.sperreHash && !offen),
+      tokenEingabe: (sync && sync.cfg.token) || '',
+      repoEingabe: (sync && sync.cfg.repo) || '',
+      gistEingabe: (sync && sync.cfg.gistId) || ''
+    });
+    this._feiertageAuffuellen(this.state.jahr);
+    if (offen) this._autoLaden();
+  }
+
+  // ---------- Speichern ----------
+  _stand(patch) {
+    const s = { ...this.state, ...(patch || {}) };
+    return { tage: s.tage, notizen: s.notizen, belege: s.belege, settings: s.settings, gespeichert: new Date().toISOString() };
+  }
+  _merken(patch) {
+    this._version = (this._version || 0) + 1;
+    const stand = this._stand(patch);
+    this.setState({ ...(patch || {}), gespeichert: stand.gespeichert });
+    try { localStorage.setItem(KEY, JSON.stringify(stand)); } catch (e) {}
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this._hochladen(true), 2500);
+  }
+  async _hochladen(still) {
+    if (!this.sync || !this.sync.cfg.token) { if (!still) this.setState({ syncStatus: 'Kein Token hinterlegt' }); return; }
+    try {
+      this.setState({ syncStatus: 'lädt hoch …' });
+      await this.sync.uploadState(this._stand(), { sperreHash: this.state.settings.sperreHash });
+      this.setState({ syncStatus: 'gespeichert ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }), gistEingabe: this.sync.cfg.gistId || '' });
+    } catch (e) { this.setState({ syncStatus: e.message }); }
+  }
+  async _autoLaden() {
+    if (!this.sync || !this.sync.cfg.token || !this.sync.cfg.gistId) return;
+    try {
+      const res = await this.sync.downloadState();
+      if (res.gesperrt) { this.setState({ gesperrt: true }); return; }
+      const fern = res.stand || {};
+      const lokalTs = this.state.gespeichert || '';
+      if ((fern.gespeichert || '') > lokalTs) {
+        this._version = (this._version || 0) + 1;
+        this.setState({
+          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {},
+          settings: { ...this.state.settings, ...(fern.settings || {}) },
+          gespeichert: fern.gespeichert, syncStatus: 'Stand von GitHub geladen', frisch: false
+        });
+        try { localStorage.setItem(KEY, JSON.stringify(fern)); } catch (e) {}
+      } else if (lokalTs > (fern.gespeichert || '')) {
+        this._hochladen(true);
+      } else {
+        this.setState({ syncStatus: 'aktuell' });
+      }
+    } catch (e) { this.setState({ syncStatus: e.message }); }
+  }
+
+  // ---------- Tage ----------
+  _tagKlick(datum) {
+    const kat = this.state.aktiveKat;
+    const tage = { ...this.state.tage };
+    if (tage[datum] === kat) delete tage[datum]; else tage[datum] = kat;
+    this._merken({ tage, gewaehlt: datum });
+  }
+  _wochenTage(jahr, kw) {
+    const mo = kwMontag(jahr, kw), raus = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mo.getTime() + i * TAG);
+      if (d.getUTCFullYear() !== jahr) continue;
+      const wd = d.getUTCDay();
+      if (wd === 0 || wd === 6) continue;
+      raus.push(iso(d));
+    }
+    return raus;
+  }
+  /** Alle Wochen eines Jahres samt Werktagen und Zählern — einmal pro Datenstand. */
+  _wochenDaten(jahr) {
+    const schluessel = jahr + ':' + (this._version || 0) + ':' + Object.keys(this.state.tage).length;
+    if (this._wdKey === schluessel) return this._wd;
+    const raus = [];
+    for (let kw = 1; kw <= kwAnzahl(jahr); kw++) {
+      const tage = this._wochenTage(jahr, kw);
+      const zahlen = {};
+      KAT.forEach(k => zahlen[k.id] = 0);
+      let summe = 0;
+      tage.forEach(d => { const k = this.state.tage[d]; if (k && zahlen[k] !== undefined) { zahlen[k]++; summe++; } });
+      raus.push({ kw, tage, zahlen, summe });
+    }
+    this._wdKey = schluessel; this._wd = raus;
+    return raus;
+  }
+  /** Trägt fehlende Werktags-Feiertage des Jahres nach. Bestehende Einträge bleiben. */
+  _feiertageAuffuellen(jahr) {
+    if (!this.state.geladen) return;
+    const tage = { ...this.state.tage };
+    let neu = 0;
+    [...this._feiertage(jahr).keys()].forEach(d => {
+      const wd = new Date(d + 'T00:00:00Z').getUTCDay();
+      if (wd === 0 || wd === 6 || tage[d]) return;
+      tage[d] = 'feiertag'; neu++;
+    });
+    if (neu) this._merken({ tage });
+  }
+  _feiertage(jahr) {
+    if (this._ftJahr !== jahr) { this._ftJahr = jahr; this._ft = feiertageBayern(jahr); }
+    return this._ft;
+  }
+  _wocheVerteilen(jahr, kw, zahlen) {
+    const tage = { ...this.state.tage };
+    const kandidaten = this._wochenTage(jahr, kw);
+    kandidaten.forEach(d => { delete tage[d]; });
+    const ft = this._feiertage(jahr);
+    const frei = new Set(kandidaten);
+    let fz = zahlen.feiertag || 0;
+    kandidaten.forEach(d => { if (fz > 0 && ft.has(d)) { tage[d] = 'feiertag'; frei.delete(d); fz--; } });
+    const rest = [...frei];
+    let i = 0;
+    while (fz > 0 && i < rest.length) { tage[rest[i++]] = 'feiertag'; fz--; }
+    ['praesenz','homeoffice','urlaub','qtag','surlaub','krank','kindkrank'].forEach(id => {
+      let n = zahlen[id] || 0;
+      while (n > 0 && i < rest.length) { tage[rest[i++]] = id; n--; }
+    });
+    this._merken({ tage });
+  }
+
+  // ---------- Belege ----------
+  async _belegHoch(datei) {
+    const datum = this.state.gewaehlt;
+    if (!datum || !datei) return;
+    if (!this.sync || !this.sync.cfg.repo) { this.setState({ belegHinweis: 'Erst ein privates Repo in den Einstellungen hinterlegen.' }); return; }
+    const pfad = 'belege/' + datum + '-' + Date.now() + '.bin';
+    try {
+      this.setState({ belegHinweis: 'lädt hoch …' });
+      await this.sync.uploadFile(pfad, datei);
+      const belege = { ...this.state.belege, [datum]: [...(this.state.belege[datum] || []), { pfad, name: datei.name, typ: datei.type }] };
+      this._merken({ belege });
+      this.setState({ belegHinweis: 'hochgeladen' });
+    } catch (e) { this.setState({ belegHinweis: e.message }); }
+  }
+  async _belegOeffnen(b) {
+    try {
+      const datei = await this.sync.downloadFile(b.pfad, b.name, b.typ);
+      if (!datei) { this.setState({ belegHinweis: 'nicht gefunden' }); return; }
+      window.open(URL.createObjectURL(datei), '_blank');
+    } catch (e) { this.setState({ belegHinweis: e.message }); }
+  }
+  _belegWeg(datum, pfad) {
+    const belege = { ...this.state.belege, [datum]: (this.state.belege[datum] || []).filter(x => x.pfad !== pfad) };
+    this._merken({ belege });
+    if (this.sync) this.sync.deleteFile(pfad).catch(() => {});
+  }
+
+  renderVals() {
+    const S = this.state, jahr = S.jahr, heute = iso(new Date());
+    const istKalender = S.tab === 'kalender', istWochen = S.tab === 'wochen';
+    const istAuswertung = S.tab === 'auswertung', istEinstellungen = S.tab === 'einstellungen';
+    const ft = this._feiertage(jahr);
+    const anzahlKw = kwAnzahl(jahr), vorjahrKw = kwAnzahl(jahr - 1);
+    const zaehler = {};
+    KAT.forEach(k => zaehler[k.id] = 0);
+    Object.keys(S.tage).forEach(d => { if (d.slice(0, 4) === String(jahr) && zaehler[S.tage[d]] !== undefined) zaehler[S.tage[d]]++; });
+
+    const monate = !istKalender ? [] : MONATE.map((name, mi) => {
+      const erster = utc(jahr, mi, 1);
+      const start = new Date(erster.getTime() - ((erster.getUTCDay() + 6) % 7) * TAG);
+      const wochen = [];
+      let ftAnzahl = 0;
+      for (let w = 0; w < 6; w++) {
+        const zeile = [];
+        let sichtbar = false;
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(start.getTime() + (w * 7 + i) * TAG);
+          const datum = iso(d), imMonat = d.getUTCMonth() === mi && d.getUTCFullYear() === jahr;
+          if (imMonat) sichtbar = true;
+          const wd = d.getUTCDay(), we = wd === 0 || wd === 6;
+          const k = imMonat && S.tage[datum] ? KAT_MAP[S.tage[datum]] : null;
+          if (imMonat && ft.has(datum) && !we) ftAnzahl++;
+          zeile.push({
+            nr: imMonat ? String(d.getUTCDate()) : '',
+            code: imMonat && k ? k.code : '',
+            bg: !imMonat ? 'transparent' : k ? k.farbe : we ? ink(6) : 'transparent',
+            fg: !imMonat ? 'transparent' : k ? k.auf : we ? ink(35) : ink(80),
+            rand: !imMonat ? 'transparent' : datum === S.gewaehlt ? 'var(--color-text)' : datum === heute ? 'var(--color-accent)' : k ? 'transparent' : 'var(--color-divider)',
+            cursor: imMonat ? 'pointer' : 'default',
+            titel: imMonat ? (ft.get(datum) ? datum + ' — ' + ft.get(datum) : datum) + (S.notizen[datum] ? ' · Notiz' : '') : '',
+            klick: imMonat ? () => this._tagKlick(datum) : () => {}
+          });
+        }
+        if (sichtbar) {
+          const idx = kwIndex(jahr, start.getTime() + w * 7 * TAG);
+          wochen.push({ kw: String(idx < 1 ? vorjahrKw + idx : idx > anzahlKw ? idx - anzahlKw : idx), tage: zeile });
+        }
+      }
+      return { name, info: ftAnzahl ? ftAnzahl + ' Feiertag' + (ftAnzahl > 1 ? 'e' : '') : '', wochen };
+    });
+
+    const wochen = this._wochenDaten(jahr);
+    const wochenZeilen = [];
+    for (let kw = istWochen ? 1 : anzahlKw + 1; kw <= anzahlKw; kw++) {
+      const { zahlen } = wochen[kw - 1];
+      const monatIdx = new Date(kwMontag(jahr, kw).getTime() + 3 * TAG).getUTCMonth();
+      wochenZeilen.push({
+        kw: String(kw),
+        monat: MONATE[monatIdx],
+        zellen: KAT.map(k => ({
+          wert: zahlen[k.id],
+          bg: zahlen[k.id] ? tint(k.farbe, 25) : 'transparent',
+          fg: zahlen[k.id] ? 'var(--color-text)' : ink(28),
+          aendern: e => {
+            const v = Math.max(0, Math.min(7, Number(e.target.value) || 0));
+            this._wocheVerteilen(jahr, kw, { ...zahlen, [k.id]: v });
+          }
+        }))
+      });
+    }
+
+    const monatsZeilen = !istAuswertung ? [] : MONATE.map((name, mi) => {
+      const werte = KAT.map(() => 0);
+      Object.keys(S.tage).forEach(d => {
+        if (d.slice(0, 4) !== String(jahr) || Number(d.slice(5, 7)) - 1 !== mi) return;
+        const i = KAT.findIndex(k => k.id === S.tage[d]);
+        if (i >= 0) werte[i]++;
+      });
+      return {
+        monat: name, gewicht: '400', gesamt: String(werte.reduce((a, b) => a + b, 0)),
+        werte: werte.map(v => ({ wert: String(v), fg: v ? 'var(--color-text)' : ink(28) }))
+      };
+    });
+    if (istAuswertung) monatsZeilen.push({
+      monat: 'Gesamt', gewicht: '600',
+      gesamt: String(KAT.reduce((a, k) => a + zaehler[k.id], 0)),
+      werte: KAT.map(k => ({ wert: String(zaehler[k.id]), fg: 'var(--color-text)' }))
+    });
+
+    const satz = Number(S.settings.hoSatz) || 0;
+    const hoTage = zaehler.homeoffice, anerkannt = Math.min(hoTage, 210);
+    const km = Number(S.settings.km) || 0;
+    const proTag = Math.min(km, 20) * 0.30 + Math.max(0, km - 20) * 0.38;
+
+    const kontrollen = [];
+    if (istAuswertung) wochen.forEach(w => {
+      if (w.summe !== w.tage.length) kontrollen.push({ label: 'KW ' + w.kw + ' — ' + w.summe + ' von ' + w.tage.length, klick: () => this.setState({ tab: 'wochen' }) });
+    });
+
+    const gew = S.gewaehlt;
+    const gewKat = gew && S.tage[gew] ? KAT_MAP[S.tage[gew]].name : 'nicht erfasst';
+
+    return {
+      jahr: String(jahr), gesperrt: S.gesperrt, frisch: S.frisch,
+      heuteLang: new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }),
+      pinEingabe: S.pinEingabe, neuePin: S.neuePin, pinFehler: S.pinFehler, syncStatus: S.syncStatus,
+      istKalender, istWochen, istAuswertung, istEinstellungen,
+      jahre: [jahr - 1, jahr, jahr + 1].map(j => ({
+        jahr: String(j),
+        bg: j === jahr ? 'var(--color-accent)' : 'transparent',
+        fg: j === jahr ? 'var(--color-bg)' : ink(60),
+        klick: () => { this.setState({ jahr: j, gewaehlt: null }); queueMicrotask(() => this._feiertageAuffuellen(j)); }
+      })),
+      tabs: TABS.map(([id, name]) => ({
+        name,
+        fg: S.tab === id ? 'var(--color-text)' : ink(55),
+        linie: S.tab === id ? 'var(--color-accent)' : 'transparent',
+        klick: () => this.setState({ tab: id })
+      })),
+      katListe: KAT.map(k => ({
+        name: k.name, farbe: k.farbe, auf: k.auf, code: k.code, anzahl: String(zaehler[k.id]),
+        bg: S.aktiveKat === k.id ? tint(k.farbe, 16) : 'transparent',
+        rand: S.aktiveKat === k.id ? 'var(--color-text)' : 'var(--color-divider)',
+        klick: () => this.setState({ aktiveKat: k.id })
+      })),
+      monate, wochenZeilen, monatsZeilen, kontrollen,
+      kontrollText: kontrollen.length ? 'Diese Wochen haben nicht so viele erfasste Tage wie Werktage.' : 'Jede Woche ist vollständig erfasst.',
+      jahresSummen: KAT.map(k => ({ name: k.name, farbe: k.farbe, auf: k.auf, code: k.code, tage: String(zaehler[k.id]) })),
+      hoSatz: String(satz), km: String(km),
+      hoSatzAendern: e => this._merken({ settings: { ...S.settings, hoSatz: Math.max(0, Number(e.target.value) || 0) } }),
+      kmAendern: e => this._merken({ settings: { ...S.settings, km: Math.max(0, Number(e.target.value) || 0) } }),
+      hoZeilen: [
+        { label: 'Home-Office-Tage', wert: String(hoTage), gewicht: '400' },
+        { label: 'davon anerkannt', wert: String(anerkannt), gewicht: '400' },
+        { label: 'Höchstbetrag', wert: eur(210 * satz), gewicht: '400' },
+        { label: 'Ansatz', wert: eur(anerkannt * satz), gewicht: '600' }
+      ],
+      fahrtZeilen: [
+        { label: 'Präsenztage', wert: String(zaehler.praesenz), gewicht: '400' },
+        { label: 'je Tag', wert: eur(proTag), gewicht: '400' },
+        { label: 'Ansatz', wert: eur(proTag * zaehler.praesenz), gewicht: '600' }
+      ],
+      gewaehlt: gew || null,
+      gewaehltLabel: gew ? new Date(gew + 'T00:00:00Z').toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '',
+      gewaehltKat: gew ? (ft.get(gew) ? gewKat + ' · ' + ft.get(gew) : gewKat) : '',
+      gewaehltNotiz: gew ? (S.notizen[gew] || '') : '',
+      gewaehltBelege: gew ? (S.belege[gew] || []).map(b => ({
+        name: b.name, oeffnen: () => this._belegOeffnen(b), loeschen: () => this._belegWeg(gew, b.pfad)
+      })) : [],
+      belegHinweis: S.belegHinweis,
+      notizTippen: e => this._merken({ notizen: { ...S.notizen, [gew]: e.target.value } }),
+      belegWaehlen: e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; this._belegHoch(f); },
+      pinTippen: e => this.setState({ pinEingabe: e.target.value }),
+      neuePinTippen: e => this.setState({ neuePin: e.target.value }),
+      pinStatus: S.settings.sperreHash ? 'Eine PIN ist gesetzt. Neue PIN eintragen wechselt sie — die Daten auf GitHub bleiben lesbar.' : 'Noch keine PIN. Ohne PIN liegen Token und Daten unverschlüsselt.',
+      pinAbsenden: async e => {
+        e.preventDefault();
+        if (!this.sync) return;
+        const ok = await this.sync.unlock(S.pinEingabe, S.settings.sperreHash);
+        if (!ok) { this.setState({ pinFehler: 'PIN stimmt nicht.' }); return; }
+        this.setState({ gesperrt: false, pinEingabe: '', pinFehler: '', tokenEingabe: this.sync.cfg.token || '', repoEingabe: this.sync.cfg.repo || '', gistEingabe: this.sync.cfg.gistId || '' });
+        this._autoLaden();
+      },
+      pinSetzen: async e => {
+        e.preventDefault();
+        if (!this.sync) return;
+        if ((S.neuePin || '').length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
+        const hash = S.settings.sperreHash ? await this.sync.changePin(S.neuePin) : (await this.sync.unlock(S.neuePin, null), await this.sync.pinHash(S.neuePin));
+        this._merken({ settings: { ...S.settings, sperreHash: hash } });
+        this.setState({ neuePin: '', pinFehler: '', syncStatus: 'PIN gespeichert' });
+      },
+      syncFelder: [
+        { label: 'Token', typ: 'password', platzhalter: 'github_pat_…', wert: S.tokenEingabe, aendern: e => this.setState({ tokenEingabe: e.target.value }) },
+        { label: 'Privates Repo für Belege', typ: 'text', platzhalter: 'benutzer/anwesenheit-belege', wert: S.repoEingabe, aendern: e => this.setState({ repoEingabe: e.target.value }) },
+        { label: 'Gist-ID (wird selbst gesetzt)', typ: 'text', platzhalter: 'leer lassen', wert: S.gistEingabe, aendern: e => this.setState({ gistEingabe: e.target.value }) }
+      ],
+      zugangSpeichern: async () => {
+        if (!this.sync) return;
+        await this.sync.setConfig({ token: S.tokenEingabe.trim(), repo: S.repoEingabe.trim(), gistId: S.gistEingabe.trim() });
+        this.setState({ syncStatus: this.sync.verschluesselt ? 'Zugang verschlüsselt gespeichert' : 'Zugang gespeichert — ohne PIN im Klartext' });
+      },
+      jetztHochladen: () => this._hochladen(false),
+      jetztLaden: () => this._autoLaden(),
+      setupBauen: async () => {
+        if (!this.sync) return;
+        const pass = window.prompt('Passwort für setup.json (min. 8 Zeichen)');
+        if (!pass || pass.length < 8) return;
+        const text = await this.sync.setupErzeugen(pass);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+        a.download = 'setup.json'; a.click();
+      },
+      feiertagListe: [...ft.values()].join(' · '),
+      feiertageSetzen: () => {
+        const tage = { ...S.tage };
+        [...ft.keys()].forEach(d => {
+          const wd = new Date(d + 'T00:00:00Z').getUTCDay();
+          if (wd !== 0 && wd !== 6) tage[d] = 'feiertag';
+        });
+        this._merken({ tage });
+      },
+      exportieren: () => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(this._stand(), null, 1)], { type: 'application/json' }));
+        a.download = 'anwesenheit-export.json'; a.click();
+      },
+      drucken: () => window.print()
+    };
+  }
+}
+
+</script>
+</body>
+</html>
