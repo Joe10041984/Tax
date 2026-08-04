@@ -129,7 +129,9 @@ export class SecureSync {
       const bytes = b64ab(dk);
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k.key, bytes);
-      localStorage.setItem(this._k('tresor'), JSON.stringify({ salt, iv: b64(iv), key: b64(new Uint8Array(ct)) }));
+      const t = { salt, iv: b64(iv), key: b64(new Uint8Array(ct)) };
+      this._tresorSig = t.salt + '|' + t.iv + '|' + t.key;
+      localStorage.setItem(this._k('tresor'), JSON.stringify(t));
     }
     return await this.pinHash(neu);
   }
