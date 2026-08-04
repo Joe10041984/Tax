@@ -57,6 +57,39 @@
     </div>
   </sc-if>
 
+    <sc-if value="{{ frisch }}" hint-placeholder-val="{{ false }}">
+      <div data-nodruck="1" style="position:fixed;inset:0;z-index:40;background:var(--color-bg);display:flex;align-items:center;justify-content:center;padding:var(--space-6);overflow:auto">
+        <div class="blueprint" style="position:relative;width:100%;max-width:440px;padding:var(--space-6);background:transparent">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Einrichtung</div>
+          <h2 style="margin:0;font-family:var(--font-heading);font-size:24px;letter-spacing:0.02em;text-transform:uppercase">Anwesenheit / Home Office</h2>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:13px">{{ einrichtenText }}</p>
+          <form onSubmit="{{ einrichten }}" style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <div class="field">
+              <label>PIN</label>
+              <input class="input" type="password" autoComplete="current-password" placeholder="PIN oder Passphrase" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="min-height:42px;border-radius:0;letter-spacing:0.18em">
+            </div>
+            <sc-if value="{{ ohneSetup }}" hint-placeholder-val="{{ false }}">
+              <div class="field">
+                <label>Token</label>
+                <input class="input" type="password" placeholder="github_pat_…" value="{{ tokenEingabe }}" onChange="{{ tokenTippen }}" style="min-height:42px;border-radius:0;font-size:13px">
+              </div>
+              <div class="field">
+                <label>Gist-ID</label>
+                <input class="input" type="text" placeholder="z. B. 4f1c…" value="{{ gistEingabe }}" onChange="{{ gistTippen }}" style="min-height:42px;border-radius:0;font-size:13px">
+              </div>
+            </sc-if>
+            <button class="btn btn-primary blueprint" type="submit" style="position:relative;min-height:44px;margin-top:var(--space-1)">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              {{ einrichtenLabel }}
+            </button>
+          </form>
+          <div style="margin-top:var(--space-2);min-height:18px;font-size:12px;color:var(--color-accent-800)">{{ pinFehler }}</div>
+          <p class="text-muted" style="margin:0;font-size:11px">{{ einrichtenHinweis }}</p>
+        </div>
+      </div>
+    </sc-if>
+
   <header class="nav" data-nodruck="1" style="position:sticky;top:0;z-index:20;background:var(--color-bg);border-bottom:1px solid var(--color-divider)">
     <div style="max-width:1400px;margin:0 auto;padding:var(--space-3) var(--space-6);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-6);width:100%">
       <h1 class="nav-brand" style="margin:0;font-size:19px;letter-spacing:0.01em;text-transform:uppercase">Anwesenheit / Home&nbsp;Office</h1>
@@ -311,37 +344,6 @@
 
     <sc-if value="{{ istEinstellungen }}" hint-placeholder-val="{{ false }}">
       <div data-screen-label="Einstellungen" style="max-width:680px;display:flex;flex-direction:column;gap:var(--space-6)">
-    <sc-if value="{{ frisch }}" hint-placeholder-val="{{ false }}">
-      <div data-nodruck="1" style="position:fixed;inset:0;z-index:40;background:var(--color-bg);display:flex;align-items:center;justify-content:center;padding:var(--space-6);overflow:auto">
-        <div class="blueprint" style="position:relative;width:100%;max-width:440px;padding:var(--space-6);background:transparent">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Einrichtung</div>
-          <h2 style="margin:0;font-family:var(--font-heading);font-size:24px;letter-spacing:0.02em;text-transform:uppercase">Anwesenheit / Home Office</h2>
-          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:13px">Dieses Gerät kennt deinen Stand noch nicht.</p>
-          <form onSubmit="{{ einrichten }}" style="display:flex;flex-direction:column;gap:var(--space-3)">
-            <div class="field">
-              <label>PIN</label>
-              <input class="input" type="password" autoComplete="current-password" placeholder="PIN oder Passphrase" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="min-height:42px;border-radius:0;letter-spacing:0.18em">
-            </div>
-            <div class="field">
-              <label>Token</label>
-              <input class="input" type="password" placeholder="github_pat_…" value="{{ tokenEingabe }}" onChange="{{ tokenTippen }}" style="min-height:42px;border-radius:0;font-size:13px">
-            </div>
-            <div class="field">
-              <label>Gist-ID</label>
-              <input class="input" type="text" placeholder="z. B. 4f1c…" value="{{ gistEingabe }}" onChange="{{ gistTippen }}" style="min-height:42px;border-radius:0;font-size:13px">
-            </div>
-            <button class="btn btn-primary blueprint" type="submit" style="position:relative;min-height:44px;margin-top:var(--space-1)">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              Einrichten
-            </button>
-          </form>
-          <div style="margin-top:var(--space-2);min-height:18px;font-size:12px;color:var(--color-accent-800)">{{ pinFehler }}</div>
-          <p class="text-muted" style="margin:0;font-size:11px">Ohne Zugang leer lassen und einrichten — dann fängt dieses Gerät mit einem leeren Jahr an.</p>
-        </div>
-      </div>
-    </sc-if>
-
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">01</div>
@@ -362,7 +364,7 @@
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">02</div>
           <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">GitHub</h3>
-          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Fine-grained Token mit <em>Contents: Read and write</em> auf ein privates Repo und <em>Gists: Read and write</em>. Der Gist wird beim ersten Hochladen selbst angelegt.</p>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Fine-grained Token mit <em>Contents: Read and write</em> auf ein privates Repo und <em>Gists: Read and write</em>. <em>setup.json erzeugen</em> legt eine mit der PIN verschlüsselte Zugangsdatei an — kommt sie neben die index.html ins Repo, fragt ein neues Gerät nur noch nach der PIN.</p>
           <div style="display:flex;flex-direction:column;gap:var(--space-3)">
             <sc-for list="{{ syncFelder }}" as="fd" hint-placeholder-count="3">
               <div class="field">
@@ -464,6 +466,7 @@ class Component extends DCLogic {
     tokenEingabe: '', repoEingabe: '', gistEingabe: '',
     gespeichert: null,
     frisch: false,
+    setupBlob: null,
     geladen: false
   };
 
@@ -471,8 +474,8 @@ class Component extends DCLogic {
     let lokal = null;
     try { lokal = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
     let tage = lokal && lokal.tage;
-    const frisch = !tage;
-    if (frisch) tage = {};
+    const frisch = !lokal;
+    if (!tage) tage = {};
     const settings = { ...this.state.settings, ...((lokal && lokal.settings) || {}) };
     let sync = null, offen = false, fehler = '';
     try {
@@ -490,6 +493,7 @@ class Component extends DCLogic {
       fehler = 'secure-sync.js nicht geladen';
     }
     this._version = (this._version || 0) + 1;
+    const nochNichtEingerichtet = frisch && !(sync && sync.cfg.gistId);
     this.setState({
       tage,
       notizen: (lokal && lokal.notizen) || {},
@@ -498,14 +502,18 @@ class Component extends DCLogic {
       gespeichert: (lokal && lokal.gespeichert) || null,
       geladen: true,
       syncStatus: fehler,
-      tab: frisch && !(sync && sync.cfg.gistId) ? 'kalender' : this.state.tab,
-      frisch: frisch && !(sync && sync.cfg.gistId),
+      tab: 'kalender',
+      frisch: nochNichtEingerichtet,
       gesperrt: !!(settings.sperreHash && !offen),
       tokenEingabe: (sync && sync.cfg.token) || '',
       repoEingabe: (sync && sync.cfg.repo) || '',
       gistEingabe: (sync && sync.cfg.gistId) || ''
     });
-    this._feiertageAuffuellen(this.state.jahr);
+    if (!nochNichtEingerichtet) this._feiertageAuffuellen(this.state.jahr);
+    if (nochNichtEingerichtet && sync) {
+      const blob = await sync.setupHolen();
+      if (blob) this.setState({ setupBlob: blob });
+    }
     if (offen) this._autoLaden();
   }
 
@@ -745,6 +753,10 @@ class Component extends DCLogic {
 
     return {
       jahr: String(jahr), gesperrt: S.gesperrt, frisch: S.frisch,
+      ohneSetup: !S.setupBlob,
+      einrichtenLabel: S.setupBlob ? 'Entsperren' : 'Einrichten',
+      einrichtenText: S.setupBlob ? 'Bitte PIN eingeben.' : 'Dieses Gerät kennt deinen Stand noch nicht.',
+      einrichtenHinweis: S.setupBlob ? '' : 'Alle Felder leer lassen und einrichten — dann fängt dieses Gerät mit einem leeren Jahr an.',
       heuteLang: new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }),
       pinEingabe: S.pinEingabe, neuePin: S.neuePin, pinFehler: S.pinFehler, syncStatus: S.syncStatus,
       istKalender, istWochen, istAuswertung, istEinstellungen,
@@ -801,7 +813,23 @@ class Component extends DCLogic {
         e.preventDefault();
         if (!this.sync) return;
         const pin = S.neuePin || '', token = (S.tokenEingabe || '').trim(), gist = (S.gistEingabe || '').trim();
-        if (!pin && !token && !gist) { this.setState({ frisch: false, pinFehler: '' }); return; }
+        if (S.setupBlob) {
+          if (pin.length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
+          try {
+            await this.sync.unlock(pin, null);
+            await this.sync.setupAnwenden(pin, S.setupBlob);
+          } catch (err) { this.setState({ pinFehler: 'PIN stimmt nicht.' }); return; }
+          const h = await this.sync.pinHash(pin);
+          this._merken({ settings: { ...S.settings, sperreHash: h } });
+          this.setState({
+            neuePin: '', pinFehler: '', frisch: false,
+            tokenEingabe: this.sync.cfg.token || '', repoEingabe: this.sync.cfg.repo || '', gistEingabe: this.sync.cfg.gistId || ''
+          });
+          await this._autoLaden();
+          this._feiertageAuffuellen(this.state.jahr);
+          return;
+        }
+        if (!pin && !token && !gist) { this.setState({ frisch: false, pinFehler: '' }); this._merken({}); this._feiertageAuffuellen(jahr); return; }
         if (pin.length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
         await this.sync.unlock(pin, null);
         const hash = await this.sync.pinHash(pin);
@@ -809,6 +837,7 @@ class Component extends DCLogic {
         this._merken({ settings: { ...S.settings, sperreHash: hash } });
         this.setState({ neuePin: '', pinFehler: '', frisch: false });
         if (token && gist) await this._autoLaden();
+        this._feiertageAuffuellen(jahr);
       },
       pinStatus: S.settings.sperreHash ? 'Eine PIN ist gesetzt. Neue PIN eintragen wechselt sie — die Daten auf GitHub bleiben lesbar.' : 'Noch keine PIN. Ohne PIN liegen Token und Daten unverschlüsselt.',
       pinAbsenden: async e => {
@@ -841,7 +870,7 @@ class Component extends DCLogic {
       jetztLaden: () => this._autoLaden(),
       setupBauen: async () => {
         if (!this.sync) return;
-        const pass = window.prompt('Passwort für setup.json (min. 8 Zeichen)');
+        const pass = window.prompt('Passwort für setup.json — nimm dieselbe PIN, dann fragt ein neues Gerät nur danach (min. 8 Zeichen)');
         if (!pass || pass.length < 8) return;
         const text = await this.sync.setupErzeugen(pass);
         const a = document.createElement('a');
