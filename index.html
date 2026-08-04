@@ -511,7 +511,7 @@ class Component extends DCLogic {
       syncStatus: fehler,
       tab: 'kalender',
       frisch: nochNichtEingerichtet,
-      gesperrt: !!(settings.sperreHash && !offen),
+      gesperrt: !!(sync && sync.verschluesselt && !offen),
       tokenEingabe: (sync && sync.cfg.token) || '',
       repoEingabe: (sync && sync.cfg.repo) || '',
       gistEingabe: (sync && sync.cfg.gistId) || ''
@@ -520,6 +520,7 @@ class Component extends DCLogic {
       const blob = await sync.setupHolen();
       if (blob) this.setState({ setupBlob: blob });
     }
+    if (sync && sync.verschluesselt && !offen) return;
     if (sync && sync.cfg.token) await this._autoLaden();
     if (!nochNichtEingerichtet) this._feiertageAuffuellen(this.state.jahr);
   }
