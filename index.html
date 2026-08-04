@@ -312,11 +312,33 @@
     <sc-if value="{{ istEinstellungen }}" hint-placeholder-val="{{ false }}">
       <div data-screen-label="Einstellungen" style="max-width:680px;display:flex;flex-direction:column;gap:var(--space-6)">
     <sc-if value="{{ frisch }}" hint-placeholder-val="{{ false }}">
-      <div class="blueprint" data-nodruck="1" style="position:relative;max-width:680px;margin-bottom:var(--space-6);padding:var(--space-6);background:transparent">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Neues Gerät</div>
-        <h2 style="margin:0;font-family:var(--font-heading);font-size:20px">Noch keine Daten auf diesem Gerät</h2>
-        <p class="text-muted" style="margin:0;font-size:13px">Unten PIN setzen, dann Token und Gist-ID eintragen und <em>Laden</em> drücken. Danach steht dein Stand hier.</p>
+      <div data-nodruck="1" style="position:fixed;inset:0;z-index:40;background:var(--color-bg);display:flex;align-items:center;justify-content:center;padding:var(--space-6);overflow:auto">
+        <div class="blueprint" style="position:relative;width:100%;max-width:440px;padding:var(--space-6);background:transparent">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Einrichtung</div>
+          <h2 style="margin:0;font-family:var(--font-heading);font-size:24px;letter-spacing:0.02em;text-transform:uppercase">Anwesenheit / Home Office</h2>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:13px">Dieses Gerät kennt deinen Stand noch nicht.</p>
+          <form onSubmit="{{ einrichten }}" style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <div class="field">
+              <label>PIN</label>
+              <input class="input" type="password" autoComplete="current-password" placeholder="PIN oder Passphrase" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="min-height:42px;border-radius:0;letter-spacing:0.18em">
+            </div>
+            <div class="field">
+              <label>Token</label>
+              <input class="input" type="password" placeholder="github_pat_…" value="{{ tokenEingabe }}" onChange="{{ tokenTippen }}" style="min-height:42px;border-radius:0;font-size:13px">
+            </div>
+            <div class="field">
+              <label>Gist-ID</label>
+              <input class="input" type="text" placeholder="z. B. 4f1c…" value="{{ gistEingabe }}" onChange="{{ gistTippen }}" style="min-height:42px;border-radius:0;font-size:13px">
+            </div>
+            <button class="btn btn-primary blueprint" type="submit" style="position:relative;min-height:44px;margin-top:var(--space-1)">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              Einrichten
+            </button>
+          </form>
+          <div style="margin-top:var(--space-2);min-height:18px;font-size:12px;color:var(--color-accent-800)">{{ pinFehler }}</div>
+          <p class="text-muted" style="margin:0;font-size:11px">Ohne Zugang leer lassen und einrichten — dann fängt dieses Gerät mit einem leeren Jahr an.</p>
+        </div>
       </div>
     </sc-if>
 
@@ -476,7 +498,7 @@ class Component extends DCLogic {
       gespeichert: (lokal && lokal.gespeichert) || null,
       geladen: true,
       syncStatus: fehler,
-      tab: frisch && !(sync && sync.cfg.gistId) ? 'einstellungen' : this.state.tab,
+      tab: frisch && !(sync && sync.cfg.gistId) ? 'kalender' : this.state.tab,
       frisch: frisch && !(sync && sync.cfg.gistId),
       gesperrt: !!(settings.sperreHash && !offen),
       tokenEingabe: (sync && sync.cfg.token) || '',
@@ -773,6 +795,21 @@ class Component extends DCLogic {
       belegWaehlen: e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; this._belegHoch(f); },
       pinTippen: e => this.setState({ pinEingabe: e.target.value }),
       neuePinTippen: e => this.setState({ neuePin: e.target.value }),
+      tokenTippen: e => this.setState({ tokenEingabe: e.target.value }),
+      gistTippen: e => this.setState({ gistEingabe: e.target.value }),
+      einrichten: async e => {
+        e.preventDefault();
+        if (!this.sync) return;
+        const pin = S.neuePin || '', token = (S.tokenEingabe || '').trim(), gist = (S.gistEingabe || '').trim();
+        if (!pin && !token && !gist) { this.setState({ frisch: false, pinFehler: '' }); return; }
+        if (pin.length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
+        await this.sync.unlock(pin, null);
+        const hash = await this.sync.pinHash(pin);
+        await this.sync.setConfig({ token, repo: (S.repoEingabe || '').trim(), gistId: gist });
+        this._merken({ settings: { ...S.settings, sperreHash: hash } });
+        this.setState({ neuePin: '', pinFehler: '', frisch: false });
+        if (token && gist) await this._autoLaden();
+      },
       pinStatus: S.settings.sperreHash ? 'Eine PIN ist gesetzt. Neue PIN eintragen wechselt sie — die Daten auf GitHub bleiben lesbar.' : 'Noch keine PIN. Ohne PIN liegen Token und Daten unverschlüsselt.',
       pinAbsenden: async e => {
         e.preventDefault();
