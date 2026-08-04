@@ -398,7 +398,14 @@
           <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">04</div>
           <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Sicherung</h3>
           <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Unverschlüsselte JSON-Datei mit allen Tagen, Notizen und Beleg-Verweisen.</p>
-          <button class="btn btn-secondary" onClick="{{ exportieren }}" style="border-radius:0;min-height:40px">Export herunterladen</button>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+            <button class="btn btn-secondary" onClick="{{ exportieren }}" style="border-radius:0;min-height:40px">Export herunterladen</button>
+            <label class="btn btn-secondary" style="border-radius:0;min-height:40px;cursor:pointer">
+              Import einlesen
+              <input type="file" accept="application/json,.json" onChange="{{ importieren }}" style="display:none">
+            </label>
+          </div>
+          <div class="text-muted" style="margin-top:var(--space-2);min-height:18px;font-size:12px">{{ importHinweis }}</div>
         </section>
       </div>
     </sc-if>
@@ -465,6 +472,7 @@ class Component extends DCLogic {
     tokenEingabe: '', repoEingabe: '', gistEingabe: '',
     gespeichert: null,
     frisch: !(function () { try { return !!localStorage.getItem(KEY); } catch (e) { return false; } })(),
+    importHinweis: '',
     setupBlob: null,
     geladen: false
   };
@@ -888,6 +896,29 @@ class Component extends DCLogic {
           if (wd !== 0 && wd !== 6) tage[d] = 'feiertag';
         });
         this._merken({ tage });
+      },
+      importHinweis: S.importHinweis || '',
+      importieren: e => {
+        const f = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!f) return;
+        const leser = new FileReader();
+        leser.onload = () => {
+          let daten;
+          try { daten = JSON.parse(leser.result); } catch (err) { this.setState({ importHinweis: 'Keine lesbare JSON-Datei.' }); return; }
+          if (!daten || typeof daten.tage !== 'object') { this.setState({ importHinweis: 'Datei enthält keine Tage.' }); return; }
+          const anzahl = Object.keys(daten.tage).length;
+          if (!window.confirm(anzahl + ' Tage einlesen? Der bisherige Stand auf diesem Gerät wird ersetzt.')) return;
+          this._version = (this._version || 0) + 1;
+          this._merken({
+            tage: daten.tage,
+            notizen: daten.notizen || {},
+            belege: daten.belege || {},
+            settings: { ...S.settings, hoSatz: (daten.settings && daten.settings.hoSatz) ?? S.settings.hoSatz, km: (daten.settings && daten.settings.km) ?? S.settings.km }
+          });
+          this.setState({ importHinweis: anzahl + ' Tage eingelesen' });
+        };
+        leser.readAsText(f);
       },
       exportieren: () => {
         const a = document.createElement('a');
