@@ -516,12 +516,12 @@ class Component extends DCLogic {
       repoEingabe: (sync && sync.cfg.repo) || '',
       gistEingabe: (sync && sync.cfg.gistId) || ''
     });
-    if (!nochNichtEingerichtet) this._feiertageAuffuellen(this.state.jahr);
     if (nochNichtEingerichtet && sync) {
       const blob = await sync.setupHolen();
       if (blob) this.setState({ setupBlob: blob });
     }
-    if (offen) this._autoLaden();
+    if (offen) await this._autoLaden();
+    if (!nochNichtEingerichtet) this._feiertageAuffuellen(this.state.jahr);
   }
 
   // ---------- Speichern ----------
@@ -529,12 +529,13 @@ class Component extends DCLogic {
     const s = { ...this.state, ...(patch || {}) };
     return { tage: s.tage, notizen: s.notizen, belege: s.belege, settings: s.settings, gespeichert: new Date().toISOString() };
   }
-  _merken(patch) {
-    this._bearbeitet = true;
+  _merken(patch, still) {
+    if (!still) this._bearbeitet = true;
     this._version = (this._version || 0) + 1;
     const stand = this._stand(patch);
     this.setState({ ...(patch || {}), gespeichert: stand.gespeichert });
     try { localStorage.setItem(KEY, JSON.stringify(stand)); } catch (e) {}
+    if (still) return;
     clearTimeout(this._t);
     this._t = setTimeout(() => this._hochladen(true), 2500);
   }
@@ -655,7 +656,7 @@ class Component extends DCLogic {
       if (wd === 0 || wd === 6 || tage[d]) return;
       tage[d] = 'feiertag'; neu++;
     });
-    if (neu) this._merken({ tage });
+    if (neu) this._merken({ tage }, true);
   }
   _feiertage(jahr) {
     if (this._ftJahr !== jahr) { this._ftJahr = jahr; this._ft = feiertageBayern(jahr); }
