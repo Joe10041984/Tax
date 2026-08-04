@@ -135,19 +135,43 @@ export class SecureSync {
   }
 
   // ---------- Datenschlüssel (Umschlag-Verschlüsselung) ----------
+  /**
+   * Liefert den gemeinsamen Datenschlüssel. Wird ein Umschlag (tresor) mitgegeben —
+   * etwa der aus dem Gist —, hat der Vorrang vor allem, was dieses Gerät gespeichert hat.
+   * Sonst legen zwei Geräte je einen eigenen Schlüssel an und können sich nicht mehr lesen.
+   */
   async dataKey(tresor) {
+    const sig = t => t ? (t.salt + '|' + t.iv + '|' + t.key) : null;
+    const fremd = sig(tresor);
+    if (this._dataKey && (!fremd || fremd === this._tresorSig)) return this._dataKey;
+    if (fremd && this._pin) {
+      try {
+        const k = await this._fromPin(this._pin, tresor.salt);
+        const bytes = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ab(tresor.iv) }, k.key, b64ab(tresor.key)));
+        const imp = await this._import(bytes);
+        this._dataKey = imp.key; this._tresorSig = fremd;
+        sessionStorage.setItem(this.ns + '.datenschluessel', imp.raw);
+        localStorage.setItem(this._k('tresor'), JSON.stringify(tresor));
+        return this._dataKey;
+      } catch (e) {}
+    }
     if (this._dataKey) return this._dataKey;
     const raw = sessionStorage.getItem(this.ns + '.datenschluessel');
-    if (raw) { try { this._dataKey = (await this._import(b64ab(raw))).key; return this._dataKey; } catch (e) {} }
-    const t = tresor || this._raw('tresor');
+    if (raw) {
+      try {
+        this._dataKey = (await this._import(b64ab(raw))).key;
+        this._tresorSig = sig(this._raw('tresor'));
+        return this._dataKey;
+      } catch (e) {}
+    }
+    const t = this._raw('tresor');
     if (t && this._pin) {
       try {
         const k = await this._fromPin(this._pin, t.salt);
         const bytes = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ab(t.iv) }, k.key, b64ab(t.key)));
         const imp = await this._import(bytes);
-        this._dataKey = imp.key;
+        this._dataKey = imp.key; this._tresorSig = sig(t);
         sessionStorage.setItem(this.ns + '.datenschluessel', imp.raw);
-        localStorage.setItem(this._k('tresor'), JSON.stringify(t));
         return this._dataKey;
       } catch (e) {}
     }
@@ -163,7 +187,9 @@ export class SecureSync {
     const k = await this._fromPin(this._pin, salt);
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k.key, bytes);
-    localStorage.setItem(this._k('tresor'), JSON.stringify({ salt, iv: b64(iv), key: b64(new Uint8Array(ct)) }));
+    const t = { salt, iv: b64(iv), key: b64(new Uint8Array(ct)) };
+    this._tresorSig = t.salt + '|' + t.iv + '|' + t.key;
+    localStorage.setItem(this._k('tresor'), JSON.stringify(t));
     return this._dataKey;
   }
   tresorRoh() { return this._raw('tresor'); }
@@ -194,11 +220,35 @@ export class SecureSync {
     } catch (e) { return ''; }
   }
 
+  /**
+   * Holt nur den Umschlag aus dem Gist, ohne zu entschlüsseln. Damit kann ein Gerät
+   * vor dem ersten Hochladen den gemeinsamen Datenschlüssel übernehmen.
+   */
+  async fernTresor() {
+    if (!this.cfg.token || !this.cfg.gistId) return null;
+    if (this._tresorSig) return null; // schon einen gemeinsamen Schlüssel — kein Abruf nötig
+    try {
+      const r = await fetch('https://api.github.com/gists/' + this.cfg.gistId.trim(), { headers: this._headers() });
+      if (!r.ok) return null;
+      const j = await r.json();
+      const f = j.files && j.files[this.gistFile];
+      if (!f) return null;
+      const s = JSON.parse(f.truncated ? await (await fetch(f.raw_url)).text() : f.content);
+      return s && s.verschluesselt ? (s.tresor || null) : null;
+    } catch (e) { return null; }
+  }
+
   async uploadState(stand, { sperreHash } = {}) {
     if (!this.cfg.token) throw new Error('Kein GitHub-Token hinterlegt.');
     const gespeichert = stand.gespeichert || new Date().toISOString();
     let inhalt;
-    const key = await this.dataKey(null);
+    if (!this.cfg.gistId) {
+      const gefunden = await this.findGist();
+      if (gefunden) await this.setConfig({ gistId: gefunden });
+    }
+    // Erst den Umschlag des Gists übernehmen, sonst schreibt dieses Gerät mit
+    // einem eigenen Schlüssel und sperrt alle anderen aus.
+    const key = await this.dataKey(await this.fernTresor());
     if (key) {
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc(JSON.stringify({ ...stand, gespeichert })));
@@ -207,10 +257,6 @@ export class SecureSync {
       inhalt = JSON.stringify({ ...stand, gespeichert }, null, 1);
     }
     const files = { [this.gistFile]: { content: inhalt } };
-    if (!this.cfg.gistId) {
-      const gefunden = await this.findGist();
-      if (gefunden) await this.setConfig({ gistId: gefunden });
-    }
     const r = this.cfg.gistId
       ? await fetch('https://api.github.com/gists/' + this.cfg.gistId.trim(), { method: 'PATCH', headers: this._headers(), body: JSON.stringify({ files }) })
       : await fetch('https://api.github.com/gists', { method: 'POST', headers: this._headers(), body: JSON.stringify({ description: this.gistDescription, public: false, files }) });
@@ -237,7 +283,11 @@ export class SecureSync {
     if (s && s.verschluesselt) {
       const key = await this.dataKey(s.tresor);
       if (!key) return { gesperrt: true, sperreHash: s.sperreHash || null };
-      s = JSON.parse(dec(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ab(s.iv) }, key, b64ab(s.daten))));
+      try {
+        s = JSON.parse(dec(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ab(s.iv) }, key, b64ab(s.daten))));
+      } catch (e) {
+        throw new Error('Stand lässt sich mit dieser PIN nicht entschlüsseln.');
+      }
     }
     return { stand: s };
   }
