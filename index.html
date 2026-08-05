@@ -32,6 +32,7 @@
   [data-nurdruck] { display: none; }
   [data-nurschmal] { display: none; }
   @media (max-width: 900px) {
+    html, body { overflow-x: hidden; max-width: 100%; }
     [data-nurbreit] { display: none !important; }
     [data-nurschmal] { display: inline !important; }
     [data-tabelle] { min-width: 0 !important; width: 100% !important; table-layout: fixed; }
@@ -45,12 +46,16 @@
     [data-kopf] [data-tabs] { width: 100%; margin-left: 0 !important; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 20px !important; }
     [data-kopf] [data-status] { min-width: 0 !important; text-align: left !important; }
     [data-inhalt] { padding: 14px !important; }
+    [data-monatsgitter] { grid-template-columns: minmax(0, 1fr) !important; }
+    [data-monat] { min-width: 0 !important; }
+    [data-wochengitter] { grid-template-columns: 16px repeat(7, minmax(0, 1fr)) !important; }
+    [data-tagfeld] { min-width: 0 !important; }
     [data-monat] { padding: 12px !important; }
     [data-tagfeld] { min-height: 40px !important; font-size: 14px !important; }
     [data-katliste] { flex-direction: row !important; flex-wrap: wrap; gap: 6px !important; }
     [data-katliste] > button { width: auto !important; flex: 0 0 auto; padding: 6px 10px !important; }
     [data-katliste] > button > span:nth-child(3) { display: none; }
-    [data-katbox] { position: fixed !important; left: 0; right: 0; bottom: 0; z-index: 30; padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)) !important; background: var(--color-bg); border-top: 1px solid var(--color-text); max-height: 40vh; overflow-y: auto; }
+    [data-katbox] { position: fixed !important; left: 0; right: 0; bottom: 0; z-index: 30; padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)) !important; background: var(--color-bg) !important; border-top: 1px solid var(--color-text); box-shadow: 0 -6px 16px rgba(0,0,0,0.10); max-height: 40vh; overflow-y: auto; }
     [data-katbox] > .corner { display: none; }
     [data-katkopf] { display: none !important; }
     [data-inhalt] { padding-bottom: 150px !important; }
@@ -75,7 +80,6 @@
   <sc-if value="{{ gesperrt }}" hint-placeholder-val="{{ false }}">
     <div style="position:fixed;inset:0;z-index:50;background:var(--color-bg);display:flex;align-items:center;justify-content:center;padding:var(--space-6)">
       <div class="card blueprint" style="position:relative;width:100%;max-width:360px;background:transparent;padding:var(--space-6)">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Zugriff</div>
         <h2 style="margin:0;font-family:var(--font-heading);font-size:26px">Gesperrt</h2>
         <p class="text-muted" style="margin:0 0 var(--space-3);font-size:13px">Die Daten auf diesem Gerät sind verschlüsselt.</p>
@@ -83,7 +87,6 @@
           <input type="text" name="username" autoComplete="username" value="steuerakte" readOnly="{{ true }}" tabIndex="-1" aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;border:0;opacity:0;pointer-events:none">
           <input class="input" id="pin-entsperren" name="password" type="password" autoComplete="current-password" enterKeyHint="go" placeholder="PIN" value="{{ pinEingabe }}" onChange="{{ pinTippen }}" style="min-height:44px;letter-spacing:0.25em">
           <button class="btn btn-primary blueprint" type="submit" style="position:relative;min-height:44px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             Entsperren
           </button>
         </form>
@@ -95,7 +98,6 @@
     <sc-if value="{{ frisch }}" hint-placeholder-val="{{ false }}">
       <div data-nodruck="1" style="position:fixed;inset:0;z-index:40;background:var(--color-bg);display:flex;align-items:center;justify-content:center;padding:var(--space-6);overflow:auto">
         <div class="blueprint" style="position:relative;width:100%;max-width:440px;padding:var(--space-6);background:transparent">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <h2 style="margin:0;font-family:var(--font-heading);font-size:24px;letter-spacing:0.02em;text-transform:uppercase">Erstmalige Einrichtung</h2>
           <p class="text-muted" style="margin:0 0 var(--space-4);font-size:13px">{{ einrichtenText }}</p>
           <form onSubmit="{{ einrichten }}" style="display:flex;flex-direction:column;gap:var(--space-3)">
@@ -115,7 +117,6 @@
               </div>
             </sc-if>
             <button class="btn btn-primary blueprint" type="submit" style="position:relative;min-height:44px;margin-top:var(--space-1)">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
               {{ einrichtenLabel }}
             </button>
           </form>
@@ -155,29 +156,30 @@
 
     <div data-nurdruck="1" style="margin-bottom:var(--space-6);padding-bottom:var(--space-3);border-bottom:1px solid var(--color-text)">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-6)">
-        <h2 style="margin:0;font-family:var(--font-heading);font-size:16pt;letter-spacing:0.03em;text-transform:uppercase">Anwesenheit und Home Office {{ jahr }}</h2>
+        <h2 style="margin:0;font-family:var(--font-heading);font-size:16pt;letter-spacing:0.03em;text-transform:uppercase">{{ druckTitel }}</h2>
         <span style="font-size:9pt">Ausdruck {{ heuteLang }}</span>
       </div>
+      <sc-if value="{{ nichtBelege }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex;flex-wrap:wrap;gap:var(--space-2) var(--space-4);margin-top:var(--space-2);font-size:8.5pt">
         <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
           <span style="display:flex;align-items:center;gap:4px">
-            <span style="display:flex;align-items:center;justify-content:center;width:14px;height:14px;background: {{ k.farbe }};color: {{ k.auf }};font-family:var(--font-heading);font-size:8pt">{{ k.code }}</span>{{ k.name }}
+            <span style="display:flex;align-items:center;justify-content:center;width:17px;height:17px;background: {{ k.farbe }};color: {{ k.auf }}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="{{ k.pfad }}"></path></svg></span>{{ k.name }}
           </span>
         </sc-for>
       </div>
+      </sc-if>
     </div>
 
     <sc-if value="{{ istKalender }}" hint-placeholder-val="{{ true }}">
       <div data-screen-label="Kalender" data-zweispaltig="1" style="display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:var(--space-8);align-items:start">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:var(--space-6)">
+        <div data-monatsgitter="1" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:var(--space-6)">
           <sc-for list="{{ monate }}" as="m" hint-placeholder-count="12">
             <section data-monat="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--space-3)">
                 <h2 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.04em;text-transform:uppercase">{{ m.name }}</h2>
                 <span class="text-muted" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase">{{ m.info }}</span>
               </div>
-              <div style="display:grid;grid-template-columns:20px repeat(7,1fr);gap:2px;margin-bottom:3px;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 45%, transparent)">
+              <div data-wochengitter="1" style="display:grid;grid-template-columns:20px repeat(7,1fr);gap:2px;margin-bottom:3px;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 45%, transparent)">
                 <div></div>
                 <div style="text-align:center">Mo</div>
                 <div style="text-align:center">Di</div>
@@ -188,12 +190,15 @@
                 <div style="text-align:center">So</div>
               </div>
               <sc-for list="{{ m.wochen }}" as="w" hint-placeholder-count="5">
-                <div style="display:grid;grid-template-columns:20px repeat(7,1fr);gap:2px;margin-bottom:2px">
+                <div data-wochengitter="1" style="display:grid;grid-template-columns:20px repeat(7,1fr);gap:2px;margin-bottom:2px">
                   <div style="display:flex;align-items:center;justify-content:flex-end;padding-right:3px;font-family:var(--font-heading);font-size:10px;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 32%, transparent)">{{ w.kw }}</div>
                   <sc-for list="{{ w.tage }}" as="d" hint-placeholder-count="7">
                     <button data-tagfeld="1" onClick="{{ d.klick }}" title="{{ d.titel }}" style="position:relative;aspect-ratio:1;min-height:30px;padding:0;border:1px solid {{ d.rand }};border-radius:0;background: {{ d.bg }};color: {{ d.fg }};font-family:var(--font-heading);font-size:12px;font-variant-numeric:tabular-nums;cursor: {{ d.cursor }};display:flex;align-items:center;justify-content:center;overflow:hidden">
-                      <span>{{ d.nr }}</span>
-                      <span style="position:absolute;top:1px;left:2px;font-size:10px;line-height:1;letter-spacing:0.04em;opacity:0.85">{{ d.code }}</span>
+                      <span style="position:absolute;top:1px;left:3px;font-size:10px;line-height:1;opacity:0.9">{{ d.nrEcke }}</span>
+                      <span>{{ d.nrMitte }}</span>
+                      <sc-if value="{{ d.hatKat }}" hint-placeholder-val="{{ false }}">
+                        <span style="display:flex;margin-top:3px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="{{ d.pfad }}"></path></svg></span>
+                      </sc-if>
                     </button>
                   </sc-for>
                 </div>
@@ -204,14 +209,13 @@
 
         <aside data-nodruck="1" data-seitenspalte="1" style="position:sticky;top:78px;display:flex;flex-direction:column;gap:var(--space-6)">
           <section data-katbox="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div data-katkopf="1" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Werkzeug</div>
             <h2 data-katkopf="1" style="margin:0 0 var(--space-1);font-family:var(--font-heading);font-size:17px">Kategorie</h2>
             <p data-katkopf="1" class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">Auswählen, dann Tage anklicken. Nochmal klicken löscht den Tag.</p>
             <div data-katliste="1" style="display:flex;flex-direction:column;gap:2px">
               <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
                 <button onClick="{{ k.klick }}" style="display:flex;align-items:center;gap:var(--space-3);min-height:38px;padding:var(--space-2);border:1px solid {{ k.rand }};border-radius:0;background: {{ k.bg }};text-align:left;cursor:pointer;width:100%">
-                  <span style="display:flex;align-items:center;justify-content:center;width:19px;height:19px;flex:0 0 auto;background: {{ k.farbe }};color: {{ k.auf }};font-family:var(--font-heading);font-size:11px">{{ k.code }}</span>
+                  <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex:0 0 auto;background: {{ k.farbe }};color: {{ k.auf }}"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="{{ k.pfad }}"></path></svg></span>
                   <span style="flex:1;font-size:14px">{{ k.name }}</span>
                   <span style="font-family:var(--font-heading);font-size:14px;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ k.anzahl }}</span>
                 </button>
@@ -221,7 +225,6 @@
 
           <sc-if value="{{ gewaehlt }}" hint-placeholder-val="{{ null }}">
             <section class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Tag</div>
               <div style="font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:17px;line-height:1.2">{{ gewaehltLabel }}</div>
               <div class="text-muted" style="margin:2px 0 var(--space-3);font-size:12px">{{ gewaehltKat }}</div>
@@ -250,7 +253,6 @@
       <div data-screen-label="Wochen">
         <h2 style="margin:0 0 var(--space-6);font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Kalenderwochen {{ jahr }}</h2>
         <div data-scrollbox="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent;overflow-x:auto">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <table data-tabelle="1" class="table" style="min-width:860px">
             <thead>
               <tr>
@@ -289,9 +291,8 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:var(--space-3);margin-bottom:var(--space-8)">
           <sc-for list="{{ jahresSummen }}" as="s" hint-placeholder-count="8">
             <div class="blueprint" style="position:relative;padding:var(--space-3) var(--space-4);background:transparent">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
               <div style="display:flex;align-items:center;gap:var(--space-2);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 60%, transparent)">
-                <span style="display:flex;align-items:center;justify-content:center;width:15px;height:15px;background: {{ s.farbe }};color: {{ s.auf }};font-family:var(--font-heading);font-size:9px">{{ s.code }}</span>{{ s.name }}
+                <span style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;flex:0 0 auto;background: {{ s.farbe }};color: {{ s.auf }}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="{{ s.pfad }}"></path></svg></span>{{ s.name }}
               </div>
               <div style="margin-top:var(--space-1);font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:30px;line-height:1;font-variant-numeric:tabular-nums">{{ s.tage }}</div>
             </div>
@@ -300,7 +301,6 @@
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:var(--space-6);margin-bottom:var(--space-8)">
           <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 4 Abs. 5 Nr. 6c EStG</div>
             <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Home-Office-Pauschale</h3>
             <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">6 € je Tag, höchstens 210 Tage im Jahr.</p>
@@ -322,7 +322,6 @@
           </section>
 
           <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 9 Abs. 1 Nr. 4 EStG</div>
             <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Entfernungspauschale</h3>
             <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">0,30 € bis 20 km, 0,38 € ab dem 21. km.</p>
@@ -345,7 +344,6 @@
         </div>
 
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent;margin-bottom:var(--space-8)">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <h3 style="margin:0 0 var(--space-4);font-family:var(--font-heading);font-size:18px">Monatsübersicht</h3>
           <div data-scrollbox="1" style="overflow-x:auto">
             <table data-tabelle="1" class="table" style="min-width:760px">
@@ -374,7 +372,6 @@
         </section>
 
         <section class="blueprint" data-nodruck="1" style="position:relative;padding:var(--space-6);background:transparent">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Kontrolle</h3>
           <p class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">{{ kontrollText }}</p>
           <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
@@ -386,17 +383,171 @@
       </div>
     </sc-if>
 
+    <sc-if value="{{ istBelege }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Belege">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6)">
+          <h2 style="margin:0;font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Belege {{ jahr }}</h2>
+          <button data-nodruck="1" class="btn btn-secondary" onClick="{{ drucken }}" style="border-radius:0;min-height:36px">Als PDF drucken</button>
+          <div data-nodruck="1" class="seg" style="border-color:var(--color-divider);margin-left:auto">
+            <sc-for list="{{ personFilter }}" as="p" hint-placeholder-count="2">
+              <button onClick="{{ p.klick }}" style="min-height:32px;padding:var(--space-1) var(--space-4);border:0;border-left:1px solid var(--color-divider);background: {{ p.bg }};color: {{ p.fg }};font-family:var(--font-heading);font-weight:var(--font-heading-weight);cursor:pointer">{{ p.name }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div data-zweispaltig="1" style="display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:var(--space-8);align-items:start">
+          <div style="display:flex;flex-direction:column;gap:var(--space-6)">
+            <sc-if value="{{ belegLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist noch kein Beleg erfasst.</p>
+            </sc-if>
+            <sc-for list="{{ belegGruppen }}" as="g" hint-placeholder-count="2">
+              <section style="border:1px solid var(--color-divider);padding:var(--space-4)">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-3);margin-bottom:var(--space-2)">
+                  <h3 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.03em;text-transform:uppercase">{{ g.name }}</h3>
+                  <span class="text-muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase">{{ g.art }}</span>
+                  <span style="margin-left:auto;font-family:var(--font-heading);font-size:19px;font-variant-numeric:tabular-nums">{{ g.summe }}</span>
+                </div>
+                <div data-scrollbox="1" style="overflow-x:auto">
+                  <table data-tabelle="1" class="table">
+                    <thead>
+                      <tr>
+                        <th data-erstespalte="1" style="width:34px">Nr</th>
+                        <th style="white-space:nowrap">Datum</th>
+                        <th>Beleg</th>
+                        <th data-nurbreit="1">Person</th>
+                        <th style="text-align:right;white-space:nowrap">Betrag</th>
+                        <th style="text-align:right;white-space:nowrap">Absetzbar</th>
+                        <th data-nodruck="1"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <sc-for list="{{ g.zeilen }}" as="z" hint-placeholder-count="2">
+                        <tr>
+                          <td style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ z.nr }}</td>
+                          <td style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.datum }}</td>
+                          <td>
+                            <div>{{ z.bez }}</div>
+                            <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.detail }}</div>
+                          </td>
+                          <td data-nurbreit="1" style="white-space:nowrap">{{ z.person }}</td>
+                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.betrag }}</td>
+                          <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.absetzbar }}</td>
+                          <td data-nodruck="1" style="text-align:right;white-space:nowrap">
+                            <button class="btn btn-ghost" onClick="{{ z.bearbeiten }}" style="min-height:30px;padding:2px 8px;border-radius:0">Ändern</button>
+                            <button class="btn btn-ghost" onClick="{{ z.loeschen }}" style="min-height:30px;padding:2px 8px;border-radius:0">Löschen</button>
+                          </td>
+                        </tr>
+                      </sc-for>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </sc-for>
+
+            <section style="border:1px solid var(--color-text);padding:var(--space-4)">
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
+              <table class="table" style="margin-top:var(--space-2)">
+                <tbody>
+                  <sc-for list="{{ artSummen }}" as="a" hint-placeholder-count="2">
+                    <tr>
+                      <td>{{ a.art }}</td>
+                      <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ a.summe }}</td>
+                    </tr>
+                  </sc-for>
+                  <tr>
+                    <td style="font-weight:600">Alle Belege — {{ belegAnzahl }} Stück</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ belegGesamt }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+          </div>
+
+          <aside data-seitenspalte="1" data-nodruck="1" style="position:sticky;top:78px;border:1px solid var(--color-text);padding:var(--space-4)">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Erfassen</div>
+            <h3 style="margin:0 0 var(--space-3);font-family:var(--font-heading);font-size:17px">{{ belegTitel }}</h3>
+
+            <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-3)">
+              <label class="btn btn-primary" style="border-radius:0;min-height:40px;cursor:pointer">
+                Foto aufnehmen
+                <input type="file" accept="image/*" capture="environment" multiple="{{ true }}" onChange="{{ belegFotoWaehlen }}" style="display:none">
+              </label>
+              <label class="btn btn-secondary" style="border-radius:0;min-height:40px;cursor:pointer">
+                Datei anhängen
+                <input type="file" accept="image/*,application/pdf" onChange="{{ belegDateiWaehlen }}" style="display:none">
+              </label>
+            </div>
+            <div class="text-muted" style="margin-bottom:var(--space-3);min-height:16px;font-size:11px">{{ ocrHinweis }}</div>
+
+            <div style="display:flex;flex-direction:column;gap:var(--space-1);margin-bottom:var(--space-3)">
+              <sc-for list="{{ bfDateien }}" as="d" hint-placeholder-count="0">
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:12px">
+                  <button class="btn btn-ghost" onClick="{{ d.oeffnen }}" style="flex:1;justify-content:flex-start;min-height:28px;padding:2px 4px;border-radius:0;text-decoration:underline;text-underline-offset:2px">{{ d.name }}</button>
+                  <button class="btn btn-ghost" onClick="{{ d.weg }}" style="min-height:28px;padding:2px 6px;border-radius:0">Weg</button>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+              <sc-for list="{{ belegFelder }}" as="fd" hint-placeholder-count="7">
+                <div class="field">
+                  <label>{{ fd.label }}</label>
+                  <input class="input" type="{{ fd.typ }}" step="{{ fd.schritt }}" inputMode="decimal" value="{{ fd.wert }}" onChange="{{ fd.aendern }}" style="min-height:40px;border-radius:0">
+                </div>
+              </sc-for>
+              <div class="field">
+                <label>Kategorie</label>
+                <select class="input" value="{{ bfKat }}" onChange="{{ bfKatAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ katOptionen }}" as="o" hint-placeholder-count="9">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+              <div class="field">
+                <label>Person</label>
+                <select class="input" value="{{ bfPerson }}" onChange="{{ bfPersonAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ personOptionen }}" as="o" hint-placeholder-count="2">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+              <div class="field">
+                <label>Notiz</label>
+                <textarea class="input" rows="2" value="{{ bfNotiz }}" onChange="{{ bfNotizAendern }}" style="min-height:56px;border-radius:0"></textarea>
+              </div>
+            </div>
+
+            <div class="text-muted" style="margin-top:var(--space-2);font-size:11px;text-wrap:pretty">{{ afaHinweis }}</div>
+            <div style="margin-top:var(--space-2);min-height:16px;font-size:12px;color:var(--color-accent-800)">{{ belegFehler }}</div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-2)">
+              <button class="btn btn-primary" onClick="{{ belegSpeichern }}" style="border-radius:0;min-height:40px">Beleg speichern</button>
+              <button class="btn btn-secondary" onClick="{{ belegVerwerfen }}" style="border-radius:0;min-height:40px">Leeren</button>
+              <sc-if value="{{ bfVorhanden }}" hint-placeholder-val="{{ false }}">
+                <button class="btn btn-ghost" onClick="{{ belegLoeschen }}" style="border-radius:0;min-height:40px">Löschen</button>
+              </sc-if>
+            </div>
+
+            <div style="margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--color-divider)">
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Text auslesen</div>
+              <p class="text-muted" style="margin:2px 0 var(--space-2);font-size:11px">Text aus einer PDF-Rechnung hier einfügen. Datum, Betrag, Umsatzsteuer und Aussteller werden in die leeren Felder übernommen.</p>
+              <textarea class="input" rows="3" placeholder="Rechnungstext einfügen" value="{{ belegText }}" onChange="{{ belegTextTippen }}" style="min-height:70px;border-radius:0;font-size:12px"></textarea>
+              <button class="btn btn-secondary" onClick="{{ belegTextUebernehmen }}" style="margin-top:var(--space-2);border-radius:0;min-height:36px">Werte übernehmen</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ istEinstellungen }}" hint-placeholder-val="{{ false }}">
       <div data-screen-label="Einstellungen" style="max-width:680px;display:flex;flex-direction:column;gap:var(--space-6)">
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">01</div>
           <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">PIN</h3>
           <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">{{ pinStatus }}</p>
           <form onSubmit="{{ pinSetzen }}" style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
             <input class="input" name="new-password" type="password" autoComplete="new-password" placeholder="Neue PIN" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="flex:1;min-width:170px;min-height:40px;border-radius:0;letter-spacing:0.25em">
             <button class="btn btn-primary blueprint" type="submit" style="position:relative;min-height:40px">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
               Speichern
             </button>
           </form>
@@ -405,7 +556,6 @@
         </section>
 
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">02</div>
           <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">GitHub</h3>
           <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Fine-grained Token mit <em>Contents: Read and write</em> auf ein privates Repo und <em>Gists: Read and write</em>. <em>setup.json erzeugen</em> legt eine mit der PIN verschlüsselte Zugangsdatei an — kommt sie neben die index.html ins Repo, fragt ein neues Gerät nur noch nach der PIN.</p>
@@ -419,7 +569,6 @@
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-4)">
             <button class="btn btn-primary blueprint" onClick="{{ zugangSpeichern }}" style="position:relative;min-height:40px">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
               Zugang speichern
             </button>
             <button class="btn btn-secondary" onClick="{{ jetztHochladen }}" style="border-radius:0;min-height:40px">Hochladen</button>
@@ -430,7 +579,6 @@
         </section>
 
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">03</div>
           <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Feiertage Bayern</h3>
           <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Werden beim Öffnen eines Jahres automatisch nachgetragen, sofern der Tag noch leer ist. Der Knopf setzt sie erneut und überschreibt dabei, was du dort erfasst hast.</p>
@@ -439,10 +587,16 @@
         </section>
 
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">04</div>
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Personen</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Namen mit Komma trennen. Jeder Beleg wird einer Person zugeordnet, der Kalender bleibt allein deiner.</p>
+          <input class="input" type="text" placeholder="Ich, Konrad, Ehefrau" value="{{ personenFeld }}" onChange="{{ personenTippen }}" style="min-height:40px;border-radius:0">
+        </section>
+
+        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">05</div>
           <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Sicherung</h3>
-          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Unverschlüsselte JSON-Datei mit allen Tagen, Notizen und Beleg-Verweisen.</p>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Unverschlüsselte JSON-Datei mit allen Tagen, Notizen, Belegen und Verweisen.</p>
           <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
             <button class="btn btn-secondary" onClick="{{ exportieren }}" style="border-radius:0;min-height:40px">Export herunterladen</button>
             <label class="btn btn-secondary" style="border-radius:0;min-height:40px;cursor:pointer">
@@ -460,6 +614,31 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 const HELL = 'var(--color-bg)', DUNKEL = 'var(--color-text)';
+const IKON = {
+  praesenz:   'M4 21V4h11v17M15 21V9h5v12M2 21h20M7.5 7.5h4M7.5 11h4M7.5 14.5h4',
+  homeoffice: 'M3 10.6 12 3.5l9 7.1M5.5 9.4V20.5h13V9.4M10 20.5V14h4v6.5',
+  urlaub:     'M12 7.2a4.8 4.8 0 1 0 0 9.6 4.8 4.8 0 0 0 0-9.6ZM12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6',
+  qtag:       'M12 3.2a8.8 8.8 0 1 0 0 17.6 8.8 8.8 0 0 0 0-17.6ZM12 7.4V12l3.6 2.2',
+  surlaub:    'M12 3.5l2.6 5.6 6 .8-4.4 4.2 1.1 6-5.3-3-5.3 3 1.1-6-4.4-4.2 6-.8z',
+  krank:      'M14 14.5V4.5a2 2 0 1 0-4 0v10a4 4 0 1 0 4 0ZM10 8h2M10 11h2',
+  kindkrank:  'M12 3.5a2.3 2.3 0 1 0 0 4.6 2.3 2.3 0 0 0 0-4.6ZM12 8.1v6M8.5 11h7M9.5 20.5 12 14.1l2.5 6.4',
+  feiertag:   'M12 3.5 7 12h10L12 3.5ZM12 9 4.5 19.5h15L12 9ZM10.5 19.5V22h3v-2.5'
+};
+const FT_IKON = {
+  'Neujahr':                    'M12 3v5M12 16v5M3 12h5M16 12h5M6 6l3.5 3.5M14.5 14.5 18 18M18 6l-3.5 3.5M6 18l3.5-3.5',
+  'Heilige Drei Könige':        'M3 19h18M3.6 7.5 5 19M3.6 7.5 8.5 12 12 4.5l3.5 7.5 4.9-4.5M20.4 7.5 19 19',
+  'Karfreitag':                 'M12 2.5v19M7 8.5h10',
+  'Ostermontag':                'M12 2.8c3.3 0 6 4.6 6 9.2a6 6 0 0 1-12 0c0-4.6 2.7-9.2 6-9.2ZM6.6 14.5h10.8M7.4 17.8h9.2',
+  'Erster Mai':                 'M12 2.5v19M12 5 5.5 9.5M12 5l6.5 4.5M8 21.5h8',
+  'Christi Himmelfahrt':        'M12 10.5V3m0 0L9.4 5.6M12 3l2.6 2.6M6.5 20.5h11a3 3 0 0 0 .3-6 5 5 0 0 0-9.3-1.3 3.2 3.2 0 0 0-2 7.3Z',
+  'Pfingstmontag':              'M12 21.5c3.3 0 6-2.4 6-5.4 0-3.9-3.6-5.3-3-10.6-2.4 1-4.2 3.4-4.2 5.6 0 1.4-.9 2-1.8 1.2-.6-.5-1-1.4-1-2.4C6.6 11.5 6 13.5 6 16.1c0 3 2.7 5.4 6 5.4Z',
+  'Fronleichnam':               'M7.5 3.5h9l-1 4.5a3.5 3.5 0 0 1-7 0zM12 12.5v6M8.5 21.5h7',
+  'Mariä Himmelfahrt':          'M12 21.5v-8.5M12 13c-3.2 0-5.5-2.2-5.5-5.5 3.2 0 5.5 2.2 5.5 5.5Zm0 0c3.2 0 5.5-2.2 5.5-5.5-3.2 0-5.5 2.2-5.5 5.5Z',
+  'Tag der Deutschen Einheit':  'M5.5 2.5v19M5.5 4h13v8.5h-13',
+  'Allerheiligen':              'M12 2.5s1.9 1.8 1.9 3.2a1.9 1.9 0 0 1-3.8 0c0-1.4 1.9-3.2 1.9-3.2ZM9 9.5h6v12H9z',
+  '1. Weihnachtstag':           'M12 3.5 7 12h10L12 3.5ZM12 9 4.5 19.5h15L12 9ZM10.5 19.5V22h3v-2.5',
+  '2. Weihnachtstag':           'M12 3.5 7 12h10L12 3.5ZM12 9 4.5 19.5h15L12 9ZM10.5 19.5V22h3v-2.5'
+};
 const KAT = [
   { id: 'praesenz',   name: 'Präsenz',      code: 'P', farbe: 'var(--color-accent-900)', auf: HELL },
   { id: 'homeoffice', name: 'Home Office',  code: 'H', farbe: 'var(--color-accent-700)', auf: HELL },
@@ -472,7 +651,74 @@ const KAT = [
 ];
 const KAT_MAP = Object.fromEntries(KAT.map(k => [k.id, k]));
 const MONATE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-const TABS = [['kalender','Kalender'],['wochen','Wochen'],['auswertung','Auswertung'],['einstellungen','Einstellungen']];
+const TABS = [['kalender','Kalender'],['wochen','Wochen'],['belege','Belege'],['auswertung','Auswertung'],['einstellungen','Einstellungen']];
+const AUSGABE_KAT = [
+  { id: 'arbeitsmittel',  name: 'Arbeitsmittel',              art: 'Werbungskosten' },
+  { id: 'fachliteratur',  name: 'Fachliteratur',              art: 'Werbungskosten' },
+  { id: 'fortbildung',    name: 'Fortbildung und Seminare',   art: 'Werbungskosten' },
+  { id: 'verband',        name: 'Berufsverband',              art: 'Werbungskosten' },
+  { id: 'steuerberatung', name: 'Steuerberatung',             art: 'Werbungskosten' },
+  { id: 'spenden',        name: 'Spenden',                    art: 'Sonderausgaben' },
+  { id: 'versicherung',   name: 'Versicherungen',             art: 'Sonderausgaben' },
+  { id: 'handwerker',     name: 'Handwerker und haushaltsnahe Dienste', art: 'Haushaltsnah' },
+  { id: 'sonstiges',      name: 'Sonstiges',                  art: 'Sonstiges' }
+];
+const AUSGABE_MAP = Object.fromEntries(AUSGABE_KAT.map(k => [k.id, k]));
+const LEER_BELEG = { id: '', datum: '', bez: '', haendler: '', betrag: '', ust: '', kat: 'arbeitsmittel', person: '', anteil: '100', nd: '', notiz: '', dateien: [] };
+const eur = n => (Number(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+/** Betrag, der steuerlich zählt: Bruttobetrag mal beruflicher Anteil. */
+function absetzbar(p) {
+  const anteil = p.anteil === '' || p.anteil == null ? 100 : Number(p.anteil) || 0;
+  return (Number(p.betrag) || 0) * anteil / 100;
+}
+/** Anteil eines Belegs am gewählten Jahr — bei Nutzungsdauer über 1 Jahr die Abschreibungsrate. */
+function jahresAnteil(p, jahr) {
+  const nd = Number(p.nd) || 0, gesamt = absetzbar(p), j0 = Number(p.jahr) || jahr;
+  if (nd < 2) return j0 === jahr ? gesamt : 0;
+  if (jahr < j0 || jahr > j0 + nd) return 0;
+  const monat = Number((p.datum || '').slice(5, 7)) || 1;
+  const rate = gesamt / nd, erste = rate * (13 - monat) / 12;
+  if (jahr === j0) return erste;
+  if (jahr === j0 + nd) return rate - erste;
+  return rate;
+}
+/** Zieht Datum, Betrag, Umsatzsteuer und Aussteller aus einem Rechnungstext. */
+function belegAusText(t) {
+  const raus = {}, zahl = s => Number(String(s).replace(/[.\s]/g, '') );
+  const dm = t.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})/);
+  if (dm) {
+    const j = dm[3].length === 2 ? '20' + dm[3] : dm[3];
+    raus.datum = j + '-' + dm[2].padStart(2, '0') + '-' + dm[1].padStart(2, '0');
+  }
+  const muster = '(\\d{1,3}(?:[.\\s]\\d{3})*|\\d+)[,.](\\d{2})(?!\\d)';
+  const summe = t.match(new RegExp('(?:summe|gesamt|total|zu zahlen|endbetrag|betrag)[^0-9-]{0,24}' + muster, 'i'));
+  if (summe) raus.betrag = zahl(summe[1]) + Number(summe[2]) / 100;
+  else {
+    const alle = [...t.matchAll(new RegExp(muster, 'g'))].map(m => zahl(m[1]) + Number(m[2]) / 100);
+    if (alle.length) raus.betrag = Math.max(...alle);
+  }
+  const ust = t.match(new RegExp('(?:mwst|ust|umsatzsteuer|19\\s*%|7\\s*%)[^0-9-]{0,24}' + muster, 'i'));
+  if (ust) raus.ust = zahl(ust[1]) + Number(ust[2]) / 100;
+  const zeilen = t.split(/\n/).map(s => s.trim()).filter(s => s.length > 2);
+  if (zeilen.length) raus.haendler = zeilen[0].slice(0, 48);
+  return raus;
+}
+/** Fotos vor dem Hochladen auf eine sinnvolle Größe rechnen. */
+async function bildKlein(datei, max, guete) {
+  if (!/^image\//.test(datei.type || '')) return datei;
+  try {
+    const url = URL.createObjectURL(datei);
+    const bild = await new Promise((ok, weg) => { const i = new Image(); i.onload = () => ok(i); i.onerror = weg; i.src = url; });
+    const f = Math.min(1, max / Math.max(bild.width, bild.height));
+    if (f === 1 && datei.size < 700000) { URL.revokeObjectURL(url); return datei; }
+    const c = document.createElement('canvas');
+    c.width = Math.round(bild.width * f); c.height = Math.round(bild.height * f);
+    c.getContext('2d').drawImage(bild, 0, 0, c.width, c.height);
+    const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', guete));
+    URL.revokeObjectURL(url);
+    return new File([blob], (datei.name || 'foto').replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' });
+  } catch (e) { return datei; }
+}
 const KEY = 'hotracker.stand.v1';
 const TAG = 864e5;
 const tint = (farbe, p) => 'color-mix(in srgb, ' + farbe + ' ' + p + '%, transparent)';
@@ -480,7 +726,6 @@ const ink = p => 'color-mix(in srgb, var(--color-text) ' + p + '%, transparent)'
 
 const iso = d => d.toISOString().slice(0, 10);
 const utc = (y, m, t) => new Date(Date.UTC(y, m, t));
-const eur = n => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 
 function ostern(y) {
   const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
@@ -507,8 +752,10 @@ class Component extends DCLogic {
   state = {
     jahr: new Date().getFullYear(),
     tab: 'kalender',
-    tage: {}, notizen: {}, belege: {},
-    settings: { sperreHash: null, hoSatz: 6, km: 0 },
+    tage: {}, notizen: {}, belege: {}, posten: {},
+    settings: { sperreHash: null, hoSatz: 6, km: 0, personen: 'Ich, Konrad, Ehefrau' },
+    belegForm: { ...LEER_BELEG },
+    belegPerson: 'alle', belegText: '', ocrHinweis: '', belegFehler: '',
     aktiveKat: 'praesenz',
     gewaehlt: null,
     gesperrt: false,
@@ -550,6 +797,7 @@ class Component extends DCLogic {
       tage,
       notizen: (lokal && lokal.notizen) || {},
       belege: (lokal && lokal.belege) || {},
+      posten: (lokal && lokal.posten) || {},
       settings,
       gespeichert: (lokal && lokal.gespeichert) || null,
       geladen: true,
@@ -565,6 +813,14 @@ class Component extends DCLogic {
       const blob = await sync.setupHolen();
       if (blob) this.setState({ setupBlob: blob });
     }
+    // Offene Änderungen sichern, bevor der Tab in den Hintergrund geht oder geschlossen wird.
+    this._abschicken = () => {
+      if (!this._t) return;
+      clearTimeout(this._t); this._t = null;
+      this._hochladen(true);
+    };
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') this._abschicken(); });
+    window.addEventListener('pagehide', this._abschicken);
     if (sync && sync.verschluesselt && !offen) return;
     if (sync && sync.cfg.token) await this._autoLaden();
     if (!nochNichtEingerichtet) this._feiertageAuffuellen(this.state.jahr);
@@ -573,7 +829,7 @@ class Component extends DCLogic {
   // ---------- Speichern ----------
   _stand(patch) {
     const s = { ...this.state, ...(patch || {}) };
-    return { tage: s.tage, notizen: s.notizen, belege: s.belege, settings: s.settings, gespeichert: new Date().toISOString() };
+    return { tage: s.tage, notizen: s.notizen, belege: s.belege, posten: s.posten, settings: s.settings, gespeichert: new Date().toISOString() };
   }
   _merken(patch, still) {
     if (!still) this._bearbeitet = true;
@@ -583,7 +839,7 @@ class Component extends DCLogic {
     try { localStorage.setItem(KEY, JSON.stringify(stand)); } catch (e) {}
     if (still) return;
     clearTimeout(this._t);
-    this._t = setTimeout(() => this._hochladen(true), 2500);
+    this._t = setTimeout(() => { this._t = null; this._hochladen(true); }, 2500);
   }
   async _hochladen(still) {
     if (!this.sync || !this.sync.cfg.token) { if (!still) this.setState({ syncStatus: 'Kein Token hinterlegt' }); return; }
@@ -633,20 +889,27 @@ class Component extends DCLogic {
       // Nur wer auf diesem Gerät wirklich etwas geändert hat, schiebt seinen Stand hoch.
       if (erzwingen || !this._bearbeitet) {
         if (!fernTage && lokalTage) { this.setState({ syncStatus: 'Gist ist leer — nichts geladen' }); return; }
+        // Ein lokaler Stand, der neuer ist als der Gist, war eine ungesicherte Änderung
+        // aus der letzten Sitzung — der wird hochgeladen statt überschrieben.
+        if (!erzwingen && (this.state.gespeichert || '') > (fern.gespeichert || '')) {
+          this._hochladen(true);
+          return;
+        }
         this._version = (this._version || 0) + 1;
+        const zusammen = { ...fern, settings: { ...this.state.settings, ...(fern.settings || {}) } };
         this.setState({
-          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {},
-          settings: { ...this.state.settings, ...(fern.settings || {}) },
+          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {}, posten: fern.posten || {},
+          settings: zusammen.settings,
           gespeichert: fern.gespeichert, syncStatus: fernTage + ' Tage geladen', frisch: false
         });
-        try { localStorage.setItem(KEY, JSON.stringify(fern)); } catch (e) {}
+        try { localStorage.setItem(KEY, JSON.stringify(zusammen)); } catch (e) {}
         return;
       }
       const lokalTs = this.state.gespeichert || '';
       if ((fern.gespeichert || '') > lokalTs) {
         this._version = (this._version || 0) + 1;
         this.setState({
-          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {},
+          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {}, posten: fern.posten || {},
           settings: { ...this.state.settings, ...(fern.settings || {}) },
           gespeichert: fern.gespeichert, syncStatus: 'Stand von GitHub geladen', frisch: false
         });
@@ -746,6 +1009,109 @@ class Component extends DCLogic {
     this._merken({ tage });
   }
 
+  // ---------- Ausgabenbelege ----------
+  _personen() {
+    const roh = String(this.state.settings.personen || 'Ich').split(',').map(s => s.trim()).filter(Boolean);
+    return roh.length ? roh : ['Ich'];
+  }
+  _formSetzen(patch) {
+    this.setState({ belegForm: { ...this.state.belegForm, ...patch } });
+  }
+  async _belegDateiHoch(datei, erkennen) {
+    if (!datei) return;
+    if (!this.sync || !this.sync.cfg.repo) { this.setState({ belegFehler: 'Erst ein privates Repo für Belege in den Einstellungen hinterlegen.' }); return; }
+    const id = this.state.belegForm.id || 'b' + Date.now().toString(36);
+    if (!this.state.belegForm.id) this._formSetzen({ id });
+    try {
+      this.setState({ belegFehler: '' , ocrHinweis: 'bereite Datei vor …' });
+      const klein = await bildKlein(datei, 1600, 0.75);
+      const pfad = 'belege/' + this.state.jahr + '/' + id + '-' + Date.now().toString(36) + '.bin';
+      this.setState({ ocrHinweis: 'lädt hoch …' });
+      await this.sync.uploadFile(pfad, klein);
+      const dateien = [...(this.state.belegForm.dateien || []), { pfad, name: klein.name || datei.name, typ: klein.type || datei.type }];
+      this._formSetzen({ dateien });
+      this.setState({ ocrHinweis: dateien.length + (dateien.length === 1 ? ' Seite angehängt' : ' Seiten angehängt') });
+      if (erkennen && /^image\//.test(klein.type || '')) await this._ocr(klein);
+    } catch (e) { this.setState({ belegFehler: e.message, ocrHinweis: '' }); }
+  }
+  async _ocr(datei) {
+    try {
+      if (!window.Tesseract) {
+        this.setState({ ocrHinweis: 'lädt Texterkennung …' });
+        await new Promise((ok, weg) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+          s.onload = ok;
+          s.onerror = () => weg(new Error('Texterkennung konnte nicht geladen werden (keine Verbindung?)'));
+          document.head.appendChild(s);
+        });
+      }
+      this.setState({ ocrHinweis: 'erkennt Text …' });
+      const res = await window.Tesseract.recognize(datei, 'deu', {
+        logger: m => { if (m.status === 'recognizing text') this.setState({ ocrHinweis: 'erkennt Text … ' + Math.round(m.progress * 100) + '%' }); }
+      });
+      const text = (res && res.data && res.data.text) || '';
+      if (!text.trim()) { this.setState({ ocrHinweis: 'kein Text erkannt' }); return; }
+      this._werteUebernehmen(text, 'aus dem Foto gelesen');
+    } catch (e) { this.setState({ ocrHinweis: e.message }); }
+  }
+  _werteUebernehmen(text, quelle) {
+    const g = belegAusText(text), f = this.state.belegForm, patch = {};
+    if (g.datum && !f.datum) patch.datum = g.datum;
+    if (g.betrag != null && !f.betrag) patch.betrag = String(g.betrag.toFixed(2));
+    if (g.ust != null && !f.ust) patch.ust = String(g.ust.toFixed(2));
+    if (g.haendler && !f.haendler) patch.haendler = g.haendler;
+    if (g.haendler && !f.bez) patch.bez = g.haendler;
+    this._formSetzen(patch);
+    const teile = [];
+    if (patch.datum) teile.push('Datum');
+    if (patch.betrag) teile.push('Betrag');
+    if (patch.ust) teile.push('Umsatzsteuer');
+    if (patch.haendler) teile.push('Aussteller');
+    this.setState({ ocrHinweis: teile.length ? teile.join(', ') + ' ' + quelle + ' — bitte prüfen' : 'nichts Neues gefunden — Felder waren schon gefüllt' });
+  }
+  _belegSpeichern() {
+    const f = this.state.belegForm;
+    if (!f.bez.trim() && !f.haendler.trim()) { this.setState({ belegFehler: 'Bezeichnung oder Aussteller angeben.' }); return; }
+    if (!(Number(f.betrag) > 0)) { this.setState({ belegFehler: 'Betrag fehlt.' }); return; }
+    const id = f.id || 'b' + Date.now().toString(36);
+    const eintrag = {
+      id, jahr: f.jahr || this.state.jahr,
+      datum: f.datum || '', bez: f.bez.trim() || f.haendler.trim(), haendler: f.haendler.trim(),
+      betrag: Number(f.betrag) || 0, ust: f.ust === '' ? '' : Number(f.ust) || 0,
+      kat: f.kat, person: f.person || this._personen()[0],
+      anteil: f.anteil === '' ? 100 : Number(f.anteil) || 0,
+      nd: f.nd === '' ? '' : Number(f.nd) || '',
+      notiz: f.notiz || '', dateien: f.dateien || []
+    };
+    this._merken({ posten: { ...this.state.posten, [id]: eintrag } });
+    this.setState({ belegForm: { ...LEER_BELEG, person: eintrag.person, kat: eintrag.kat }, belegText: '', belegFehler: '', ocrHinweis: 'Beleg gespeichert' });
+  }
+  _belegBearbeiten(p) {
+    this.setState({
+      belegForm: {
+        ...LEER_BELEG, ...p,
+        betrag: String(p.betrag ?? ''), ust: p.ust === '' || p.ust == null ? '' : String(p.ust),
+        anteil: String(p.anteil ?? 100), nd: p.nd === '' || p.nd == null ? '' : String(p.nd)
+      },
+      belegFehler: '', ocrHinweis: 'Beleg wird bearbeitet'
+    });
+  }
+  _belegLoeschen(id) {
+    const posten = { ...this.state.posten }, weg = posten[id];
+    delete posten[id];
+    this._merken({ posten });
+    if (weg && this.sync) (weg.dateien || []).forEach(d => this.sync.deleteFile(d.pfad).catch(() => {}));
+    if (this.state.belegForm.id === id) this.setState({ belegForm: { ...LEER_BELEG } });
+  }
+  async _belegDateiOeffnen(d) {
+    try {
+      const datei = await this.sync.downloadFile(d.pfad, d.name, d.typ);
+      if (!datei) { this.setState({ belegFehler: 'Datei nicht gefunden' }); return; }
+      window.open(URL.createObjectURL(datei), '_blank');
+    } catch (e) { this.setState({ belegFehler: e.message }); }
+  }
+
   // ---------- Belege ----------
   async _belegHoch(datei) {
     const datum = this.state.gewaehlt;
@@ -777,6 +1143,43 @@ class Component extends DCLogic {
     const S = this.state, jahr = S.jahr, heute = iso(new Date());
     const istKalender = S.tab === 'kalender', istWochen = S.tab === 'wochen';
     const istAuswertung = S.tab === 'auswertung', istEinstellungen = S.tab === 'einstellungen';
+    const istBelege = S.tab === 'belege';
+    const personen = this._personen();
+    const F = S.belegForm;
+    const postenGefiltert = Object.values(S.posten || {}).filter(p => S.belegPerson === 'alle' || p.person === S.belegPerson);
+    const imJahr = postenGefiltert.map(p => ({ p, wert: jahresAnteil(p, jahr) })).filter(x => x.wert > 0.004);
+    imJahr.sort((a, b) => (a.p.datum || '9') < (b.p.datum || '9') ? -1 : 1);
+    let laufNr = 0;
+    const nummer = new Map(imJahr.map(x => [x.p.id, ++laufNr]));
+    const belegGruppen = AUSGABE_KAT.map(k => {
+      const teil = imJahr.filter(x => x.p.kat === k.id);
+      if (!teil.length) return null;
+      return {
+        name: k.name, art: k.art,
+        summe: eur(teil.reduce((a, x) => a + x.wert, 0)),
+        zeilen: teil.map(({ p, wert }) => {
+          const nd = Number(p.nd) || 0;
+          const details = [];
+          if (p.haendler && p.haendler !== p.bez) details.push(p.haendler);
+          if (Number(p.anteil) !== 100) details.push('beruflich ' + p.anteil + ' %');
+          if (nd > 1) details.push('Abschreibung Jahr ' + (jahr - Number(p.jahr) + 1) + ' von ' + nd);
+          if (p.ust !== '' && p.ust != null) details.push('USt ' + eur(p.ust));
+          if ((p.dateien || []).length) details.push((p.dateien || []).length + ' Seite' + ((p.dateien || []).length === 1 ? '' : 'n'));
+          if (p.notiz) details.push(p.notiz);
+          return {
+            nr: String(nummer.get(p.id)),
+            datum: p.datum ? p.datum.slice(8, 10) + '.' + p.datum.slice(5, 7) + '.' + p.datum.slice(0, 4) : '—',
+            bez: p.bez, detail: details.join(' · '), person: p.person,
+            betrag: eur(p.betrag), absetzbar: eur(wert),
+            bearbeiten: () => this._belegBearbeiten(p),
+            loeschen: () => this._belegLoeschen(p.id)
+          };
+        })
+      };
+    }).filter(Boolean);
+    const artSummen = ['Werbungskosten', 'Sonderausgaben', 'Haushaltsnah', 'Sonstiges']
+      .map(a => ({ art: a, summe: eur(imJahr.filter(x => AUSGABE_MAP[x.p.kat] && AUSGABE_MAP[x.p.kat].art === a).reduce((s, x) => s + x.wert, 0)), roh: imJahr.filter(x => AUSGABE_MAP[x.p.kat] && AUSGABE_MAP[x.p.kat].art === a).length }))
+      .filter(x => x.roh > 0);
     const ft = this._feiertage(jahr);
     const anzahlKw = kwAnzahl(jahr), vorjahrKw = kwAnzahl(jahr - 1);
     const zaehler = {};
@@ -801,6 +1204,10 @@ class Component extends DCLogic {
           zeile.push({
             nr: imMonat ? String(d.getUTCDate()) : '',
             code: imMonat && k ? k.code : '',
+            hatKat: !!(imMonat && k),
+            nrEcke: imMonat && k ? String(d.getUTCDate()) : '',
+            nrMitte: imMonat && !k ? String(d.getUTCDate()) : '',
+            pfad: imMonat && k ? (k.id === 'feiertag' && FT_IKON[ft.get(datum)] ? FT_IKON[ft.get(datum)] : IKON[k.id]) : '',
             bg: !imMonat ? 'transparent' : k ? k.farbe : we ? ink(6) : 'transparent',
             fg: !imMonat ? 'transparent' : k ? k.auf : we ? ink(35) : ink(80),
             rand: !imMonat ? 'transparent' : datum === S.gewaehlt ? 'var(--color-text)' : datum === heute ? 'var(--color-accent)' : k ? 'transparent' : 'var(--color-divider)',
@@ -885,8 +1292,60 @@ class Component extends DCLogic {
       einrichtenHinweis: '',
       heuteLang: new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }),
       pinEingabe: S.pinEingabe, neuePin: S.neuePin, pinFehler: S.pinFehler, syncStatus: S.syncStatus,
-      istKalender, istWochen, istAuswertung, istEinstellungen,
-      bereich: istEinstellungen ? 'Einstellungen' : 'Home Office',
+      istKalender, istWochen, istAuswertung, istEinstellungen, istBelege,
+      nichtBelege: !istBelege,
+      druckTitel: istBelege ? 'Belege und Aufwendungen ' + jahr : 'Anwesenheit und Home Office ' + jahr,
+      bereich: istEinstellungen ? 'Einstellungen' : istBelege ? 'Belege' : 'Home Office',
+      belegGruppen, artSummen,
+      belegAnzahl: String(imJahr.length),
+      belegGesamt: eur(imJahr.reduce((a, x) => a + x.wert, 0)),
+      belegLeer: !imJahr.length,
+      personFilter: ['alle', ...personen].map(n => ({
+        name: n === 'alle' ? 'Alle' : n,
+        bg: S.belegPerson === n ? 'var(--color-accent)' : 'transparent',
+        fg: S.belegPerson === n ? 'var(--color-bg)' : ink(60),
+        klick: () => this.setState({ belegPerson: n })
+      })),
+      belegTitel: F.id ? 'Beleg ändern' : 'Neuer Beleg',
+      bfVorhanden: !!F.id,
+      bfKat: F.kat, bfPerson: F.person || personen[0], bfNotiz: F.notiz,
+      bfKatAendern: e => this._formSetzen({ kat: e.target.value }),
+      bfPersonAendern: e => this._formSetzen({ person: e.target.value }),
+      bfNotizAendern: e => this._formSetzen({ notiz: e.target.value }),
+      katOptionen: AUSGABE_KAT.map(k => ({ id: k.id, name: k.name })),
+      personOptionen: personen.map(n => ({ id: n, name: n })),
+      belegFelder: [
+        { label: 'Datum', typ: 'date', wert: F.datum, schritt: '1', aendern: e => this._formSetzen({ datum: e.target.value }) },
+        { label: 'Bezeichnung', typ: 'text', wert: F.bez, schritt: '1', aendern: e => this._formSetzen({ bez: e.target.value }) },
+        { label: 'Aussteller', typ: 'text', wert: F.haendler, schritt: '1', aendern: e => this._formSetzen({ haendler: e.target.value }) },
+        { label: 'Betrag brutto €', typ: 'number', wert: F.betrag, schritt: '0.01', aendern: e => this._formSetzen({ betrag: e.target.value }) },
+        { label: 'davon Umsatzsteuer €', typ: 'number', wert: F.ust, schritt: '0.01', aendern: e => this._formSetzen({ ust: e.target.value }) },
+        { label: 'Beruflicher Anteil %', typ: 'number', wert: F.anteil, schritt: '1', aendern: e => this._formSetzen({ anteil: e.target.value }) },
+        { label: 'Nutzungsdauer Jahre — leer bedeutet sofort absetzbar', typ: 'number', wert: F.nd, schritt: '1', aendern: e => this._formSetzen({ nd: e.target.value }) }
+      ],
+      bfDateien: (F.dateien || []).map(d => ({
+        name: d.name,
+        oeffnen: () => this._belegDateiOeffnen(d),
+        weg: () => { this._formSetzen({ dateien: (this.state.belegForm.dateien || []).filter(x => x.pfad !== d.pfad) }); if (this.sync) this.sync.deleteFile(d.pfad).catch(() => {}); }
+      })),
+      afaHinweis: Number(F.betrag) > 800 && !(Number(F.nd) > 1) ? 'Bei über 800 € netto ist der Betrag über die Nutzungsdauer zu verteilen — Nutzungsdauer eintragen (Computer 3, Möbel 13 Jahre).' : '',
+      belegDateiWaehlen: e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; this._belegDateiHoch(f, false); },
+      belegFotoWaehlen: e => {
+        const dateien = [...(e.target.files || [])]; e.target.value = '';
+        (async () => { for (let i = 0; i < dateien.length; i++) await this._belegDateiHoch(dateien[i], i === 0); })();
+      },
+      belegText: S.belegText,
+      belegTextTippen: e => this.setState({ belegText: e.target.value }),
+      belegTextUebernehmen: () => {
+        if (!S.belegText.trim()) { this.setState({ ocrHinweis: 'Erst Text einfügen' }); return; }
+        this._werteUebernehmen(S.belegText, 'aus dem Text gelesen');
+      },
+      belegSpeichern: () => this._belegSpeichern(),
+      belegVerwerfen: () => this.setState({ belegForm: { ...LEER_BELEG, person: F.person, kat: F.kat }, belegText: '', belegFehler: '', ocrHinweis: '' }),
+      belegLoeschen: () => this._belegLoeschen(F.id),
+      ocrHinweis: S.ocrHinweis, belegFehler: S.belegFehler,
+      personenFeld: String(S.settings.personen || 'Ich'),
+      personenTippen: e => this._merken({ settings: { ...S.settings, personen: e.target.value } }),
       jahre: [jahr - 1, jahr, jahr + 1].map(j => ({
         jahr: String(j),
         bg: j === jahr ? 'var(--color-accent)' : 'transparent',
@@ -900,14 +1359,14 @@ class Component extends DCLogic {
         klick: () => this.setState({ tab: id })
       })),
       katListe: KAT.map(k => ({
-        name: k.name, farbe: k.farbe, auf: k.auf, code: k.code, anzahl: String(zaehler[k.id]),
+        name: k.name, farbe: k.farbe, auf: k.auf, code: k.code, pfad: IKON[k.id], anzahl: String(zaehler[k.id]),
         bg: S.aktiveKat === k.id ? tint(k.farbe, 16) : 'transparent',
         rand: S.aktiveKat === k.id ? 'var(--color-text)' : 'var(--color-divider)',
         klick: () => this.setState({ aktiveKat: k.id })
       })),
       monate, wochenZeilen, monatsZeilen, kontrollen,
       kontrollText: kontrollen.length ? 'Diese Wochen und Tage stimmen nicht mit den Werktagen überein.' : 'Jede Woche ist vollständig erfasst.',
-      jahresSummen: KAT.map(k => ({ name: k.name, farbe: k.farbe, auf: k.auf, code: k.code, tage: String(zaehler[k.id]) })),
+      jahresSummen: KAT.map(k => ({ name: k.name, farbe: k.farbe, auf: k.auf, code: k.code, pfad: IKON[k.id], tage: String(zaehler[k.id]) })),
       hoSatz: String(satz), km: String(km),
       hoSatzAendern: e => this._merken({ settings: { ...S.settings, hoSatz: Math.max(0, Number(e.target.value) || 0) } }),
       kmAendern: e => this._merken({ settings: { ...S.settings, km: Math.max(0, Number(e.target.value) || 0) } }),
@@ -1037,6 +1496,7 @@ class Component extends DCLogic {
             tage: daten.tage,
             notizen: daten.notizen || {},
             belege: daten.belege || {},
+            posten: daten.posten || {},
             settings: { ...S.settings, hoSatz: (daten.settings && daten.settings.hoSatz) ?? S.settings.hoSatz, km: (daten.settings && daten.settings.km) ?? S.settings.km }
           });
           this.setState({ importHinweis: anzahl + ' Tage eingelesen' });
