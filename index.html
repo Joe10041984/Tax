@@ -693,23 +693,61 @@ function jahresAnteil(p, jahr) {
 }
 /** Zieht Datum, Betrag, Umsatzsteuer und Aussteller aus einem Rechnungstext. */
 function belegAusText(t) {
-  const raus = {}, zahl = s => Number(String(s).replace(/[.\s]/g, '') );
-  const dm = t.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})/);
-  if (dm) {
-    const j = dm[3].length === 2 ? '20' + dm[3] : dm[3];
-    raus.datum = j + '-' + dm[2].padStart(2, '0') + '-' + dm[1].padStart(2, '0');
-  }
+  const raus = {}, zahl = s => Number(String(s).replace(/[.\s]/g, ''));
+  const alsIso = m => {
+    const j = m[3].length === 2 ? '20' + m[3] : m[3];
+    return j + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
+  };
+  const datumMuster = '(\\d{1,2})[.\\/](\\d{1,2})[.\\/](\\d{2,4})';
+  const dBenannt = t.match(new RegExp('(?:rechnungsdatum|belegdatum|leistungsdatum|lieferdatum|kaufdatum|bestelldatum|datum)[\\s\\S]{0,40}?' + datumMuster, 'i'));
+  const dm = dBenannt || t.match(new RegExp(datumMuster));
+  if (dm) raus.datum = alsIso(dm);
   const muster = '(\\d{1,3}(?:[.\\s]\\d{3})*|\\d+)[,.](\\d{2})(?!\\d)';
-  const summe = t.match(new RegExp('(?:summe|gesamt|total|zu zahlen|endbetrag|betrag)[^0-9-]{0,24}' + muster, 'i'));
-  if (summe) raus.betrag = zahl(summe[1]) + Number(summe[2]) / 100;
-  else {
+  const zeilenAlle = t.split(/\n/).map(s => s.trim());
+  const betragsFinder = new RegExp(muster + '(?!\\s*%)', 'g');
+  const inZeile = z => [...z.matchAll(betragsFinder)].map(m => zahl(m[1]) + Number(m[2]) / 100);
+  const stufen = [
+    /(zahlbetrag|rechnungsbetrag|gesamtbetrag|gesamtpreis|endbetrag|gesamtsumme|zu zahlen|zahlungsbetrag)/i,
+    /(gesamt|summe|total)/i,
+    /(betrag|preis)/i
+  ];
+  const nichtSumme = /(zwischensumme|nettosumme|warenwert|nettobetrag|netto|teilsumme|versand|rabatt|steuer)/i;
+  for (const stufe of stufen) {
+    const werte = [];
+    zeilenAlle.forEach(z => {
+      if (!stufe.test(z) || nichtSumme.test(z)) return;
+      const w = inZeile(z);
+      if (w.length) werte.push(Math.max(...w));
+    });
+    if (werte.length) { raus.betrag = Math.max(...werte); break; }
+  }
+  if (raus.betrag == null) {
     const alle = [...t.matchAll(new RegExp(muster, 'g'))].map(m => zahl(m[1]) + Number(m[2]) / 100);
     if (alle.length) raus.betrag = Math.max(...alle);
   }
-  const ust = t.match(new RegExp('(?:mwst|mehrwertsteuer|umsatzsteuer|ust)[^\\n]{0,40}?' + muster + '(?!\\s*%)', 'i'));
-  if (ust) raus.ust = zahl(ust[1]) + Number(ust[2]) / 100;
-  const zeilen = t.split(/\n/).map(s => s.trim()).filter(s => s.length > 2);
-  if (zeilen.length) raus.haendler = zeilen[0].slice(0, 48);
+  const zeilen = zeilenAlle.filter(s => s.length > 2);
+  const ustWort = /(mwst|mehrwertsteuer|umsatzsteuer|\bust\b)/i;
+  const keineSteuer = /(id\s?[\.\-]?\s?nr|identifikation|steuernummer|erkl\u00e4rt|reverse|befreit|nicht ausgewiesen)/i;
+  const betragsRe = new RegExp(muster + '(?!\\s*%)', 'g');
+  const kandidaten = [];
+  zeilen.forEach(z => {
+    if (!ustWort.test(z) || keineSteuer.test(z)) return;
+    const treffer = [...z.matchAll(betragsRe)].map(m => zahl(m[1]) + Number(m[2]) / 100);
+    if (treffer.length) kandidaten.push(treffer[treffer.length - 1]);
+  });
+  const grenze = raus.betrag ? raus.betrag * 0.2 : Infinity;
+  const passend = kandidaten.filter(w => w > 0 && w <= grenze);
+  if (passend.length) raus.ust = Math.max(...passend);
+  const firma = /(gmbh|mbh|mbb|\bag\b|\bkg\b|\bug\b|\bse\b|\be\.k\.|ltd\.?|limited|s\.?\s?[aà]\s?r\.?\s?l\.?|b\.?v\.?|inc\.?|& co\.?)/i;
+  const allgemein = /^(rechnung|invoice|quittung|beleg|kassenbon|bon|rechnungskopie|steuerbeleg|kaufbeleg|lieferschein|seite)\b/i;
+  const firmenZeile = zeilen.find(z => firma.test(z));
+  if (firmenZeile) {
+    const m = firmenZeile.match(firma);
+    raus.haendler = firmenZeile.slice(0, m.index + m[0].length).trim().slice(0, 48);
+  } else {
+    raus.haendler = (zeilen.find(z => !allgemein.test(z)) || zeilen[0] || '').slice(0, 48);
+  }
+  if (!raus.haendler) delete raus.haendler;
   return raus;
 }
 /** Fotos vor dem Hochladen auf eine sinnvolle Größe rechnen. */
