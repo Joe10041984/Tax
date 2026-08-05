@@ -530,7 +530,7 @@
 
             <div style="margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--color-divider)">
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Text auslesen</div>
-              <p class="text-muted" style="margin:2px 0 var(--space-2);font-size:11px">Text aus einer PDF-Rechnung hier einfügen. Datum, Betrag, Umsatzsteuer und Aussteller werden in die leeren Felder übernommen.</p>
+              <p class="text-muted" style="margin:2px 0 var(--space-2);font-size:11px">Bei Foto und PDF passiert das automatisch — der erkannte Text steht dann hier. Sonst Text aus der Rechnung einfügen und übernehmen.</p>
               <textarea class="input" rows="3" placeholder="Rechnungstext einfügen" value="{{ belegText }}" onChange="{{ belegTextTippen }}" style="min-height:70px;border-radius:0;font-size:12px"></textarea>
               <button class="btn btn-secondary" onClick="{{ belegTextUebernehmen }}" style="margin-top:var(--space-2);border-radius:0;min-height:36px">Werte übernehmen</button>
             </div>
@@ -697,7 +697,7 @@ function belegAusText(t) {
     const alle = [...t.matchAll(new RegExp(muster, 'g'))].map(m => zahl(m[1]) + Number(m[2]) / 100);
     if (alle.length) raus.betrag = Math.max(...alle);
   }
-  const ust = t.match(new RegExp('(?:mwst|ust|umsatzsteuer|19\\s*%|7\\s*%)[^0-9-]{0,24}' + muster, 'i'));
+  const ust = t.match(new RegExp('(?:mwst|mehrwertsteuer|umsatzsteuer|ust)[^\\n]{0,40}?' + muster + '(?!\\s*%)', 'i'));
   if (ust) raus.ust = zahl(ust[1]) + Number(ust[2]) / 100;
   const zeilen = t.split(/\n/).map(s => s.trim()).filter(s => s.length > 2);
   if (zeilen.length) raus.haendler = zeilen[0].slice(0, 48);
@@ -1017,42 +1017,89 @@ class Component extends DCLogic {
   _formSetzen(patch) {
     this.setState({ belegForm: { ...this.state.belegForm, ...patch } });
   }
+  /** Datei anhängen: erst auslesen, dann hochladen — das Auslesen läuft auch ohne Beleg-Repo. */
   async _belegDateiHoch(datei, erkennen) {
     if (!datei) return;
-    if (!this.sync || !this.sync.cfg.repo) { this.setState({ belegFehler: 'Erst ein privates Repo für Belege in den Einstellungen hinterlegen.' }); return; }
     const id = this.state.belegForm.id || 'b' + Date.now().toString(36);
     if (!this.state.belegForm.id) this._formSetzen({ id });
+    let klein = datei;
     try {
-      this.setState({ belegFehler: '' , ocrHinweis: 'bereite Datei vor …' });
-      const klein = await bildKlein(datei, 1600, 0.75);
-      const pfad = 'belege/' + this.state.jahr + '/' + id + '-' + Date.now().toString(36) + '.bin';
+      this.setState({ belegFehler: '', ocrHinweis: 'bereite Datei vor …' });
+      klein = await bildKlein(datei, 1600, 0.75);
+    } catch (e) {}
+    if (erkennen) {
+      if (/pdf/i.test(klein.type || '') || /\.pdf$/i.test(klein.name || '')) await this._pdfText(klein);
+      else if (/^image\//.test(klein.type || '')) await this._ocr(klein);
+    }
+    if (!this.sync || !this.sync.cfg.repo) {
+      this.setState({ belegFehler: 'Datei nicht gespeichert — in den Einstellungen ein privates Repo für Belege hinterlegen. Die ausgelesenen Werte kannst du trotzdem speichern.' });
+      return;
+    }
+    try {
+      const vorher = this.state.ocrHinweis;
       this.setState({ ocrHinweis: 'lädt hoch …' });
+      const pfad = 'belege/' + this.state.jahr + '/' + id + '-' + Date.now().toString(36) + '.bin';
       await this.sync.uploadFile(pfad, klein);
       const dateien = [...(this.state.belegForm.dateien || []), { pfad, name: klein.name || datei.name, typ: klein.type || datei.type }];
       this._formSetzen({ dateien });
-      this.setState({ ocrHinweis: dateien.length + (dateien.length === 1 ? ' Seite angehängt' : ' Seiten angehängt') });
-      if (erkennen && /^image\//.test(klein.type || '')) await this._ocr(klein);
-    } catch (e) { this.setState({ belegFehler: e.message, ocrHinweis: '' }); }
+      const seiten = dateien.length + (dateien.length === 1 ? ' Seite' : ' Seiten');
+      this.setState({ ocrHinweis: vorher && !/^(bereite|lädt)/.test(vorher) ? seiten + ' angehängt · ' + vorher : seiten + ' angehängt' });
+    } catch (e) { this.setState({ belegFehler: 'Hochladen fehlgeschlagen: ' + e.message, ocrHinweis: '' }); }
+  }
+  async _skript(url, pruefen, fehler) {
+    if (pruefen()) return;
+    await new Promise((ok, weg) => {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = ok;
+      s.onerror = () => weg(new Error(fehler));
+      document.head.appendChild(s);
+    });
+    if (!pruefen()) throw new Error(fehler);
+  }
+  /** Text aus einer PDF-Rechnung holen — ohne Bilderkennung, direkt aus der Textebene. */
+  async _pdfText(datei) {
+    try {
+      this.setState({ ocrHinweis: 'liest PDF …' });
+      await this._skript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
+        () => window.pdfjsLib, 'PDF-Leser konnte nicht geladen werden (keine Verbindung?)');
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      const puffer = await datei.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: puffer }).promise;
+      let text = '';
+      for (let s = 1; s <= Math.min(pdf.numPages, 4); s++) {
+        const seite = await pdf.getPage(s);
+        const inhalt = await seite.getTextContent();
+        let letztesY = null;
+        inhalt.items.forEach(i => {
+          const y = i.transform && i.transform[5];
+          if (letztesY != null && Math.abs(y - letztesY) > 2) text += '\n';
+          text += i.str + ' ';
+          letztesY = y;
+        });
+        text += '\n';
+      }
+      if (!text.trim()) {
+        this.setState({ ocrHinweis: 'Das PDF enthält keinen Text — es ist ein Scan. Als Bild anhängen oder abfotografieren.' });
+        return;
+      }
+      this.setState({ belegText: text.trim().slice(0, 4000) });
+      this._werteUebernehmen(text, 'aus dem PDF gelesen');
+    } catch (e) { this.setState({ ocrHinweis: e.message }); }
   }
   async _ocr(datei) {
     try {
-      if (!window.Tesseract) {
-        this.setState({ ocrHinweis: 'lädt Texterkennung …' });
-        await new Promise((ok, weg) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
-          s.onload = ok;
-          s.onerror = () => weg(new Error('Texterkennung konnte nicht geladen werden (keine Verbindung?)'));
-          document.head.appendChild(s);
-        });
-      }
+      this.setState({ ocrHinweis: 'lädt Texterkennung …' });
+      await this._skript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+        () => window.Tesseract, 'Texterkennung konnte nicht geladen werden (keine Verbindung?)');
       this.setState({ ocrHinweis: 'erkennt Text …' });
       const res = await window.Tesseract.recognize(datei, 'deu', {
         logger: m => { if (m.status === 'recognizing text') this.setState({ ocrHinweis: 'erkennt Text … ' + Math.round(m.progress * 100) + '%' }); }
       });
       const text = (res && res.data && res.data.text) || '';
-      if (!text.trim()) { this.setState({ ocrHinweis: 'kein Text erkannt' }); return; }
-      this._werteUebernehmen(text, 'aus dem Foto gelesen');
+      if (!text.trim()) { this.setState({ ocrHinweis: 'kein Text erkannt — heller fotografieren oder Text unten einfügen' }); return; }
+      this.setState({ belegText: text.trim().slice(0, 4000) });
+      this._werteUebernehmen(text, 'aus dem Bild gelesen');
     } catch (e) { this.setState({ ocrHinweis: e.message }); }
   }
   _werteUebernehmen(text, quelle) {
@@ -1068,7 +1115,14 @@ class Component extends DCLogic {
     if (patch.betrag) teile.push('Betrag');
     if (patch.ust) teile.push('Umsatzsteuer');
     if (patch.haendler) teile.push('Aussteller');
-    this.setState({ ocrHinweis: teile.length ? teile.join(', ') + ' ' + quelle + ' — bitte prüfen' : 'nichts Neues gefunden — Felder waren schon gefüllt' });
+    if (teile.length) { this.setState({ ocrHinweis: teile.join(', ') + ' ' + quelle + ' — bitte prüfen' }); return; }
+    const gefunden = [];
+    if (g.datum) gefunden.push('Datum ' + g.datum.split('-').reverse().join('.'));
+    if (g.betrag != null) gefunden.push('Betrag ' + eur(g.betrag));
+    if (g.ust != null) gefunden.push('USt ' + eur(g.ust));
+    this.setState({ ocrHinweis: gefunden.length
+      ? 'Gefunden: ' + gefunden.join(' · ') + ' — Felder waren schon gefüllt, ggf. leeren und erneut übernehmen'
+      : 'Aus dem Text ließen sich keine Werte lesen — bitte von Hand eintragen' });
   }
   _belegSpeichern() {
     const f = this.state.belegForm;
@@ -1329,7 +1383,7 @@ class Component extends DCLogic {
         weg: () => { this._formSetzen({ dateien: (this.state.belegForm.dateien || []).filter(x => x.pfad !== d.pfad) }); if (this.sync) this.sync.deleteFile(d.pfad).catch(() => {}); }
       })),
       afaHinweis: Number(F.betrag) > 800 && !(Number(F.nd) > 1) ? 'Bei über 800 € netto ist der Betrag über die Nutzungsdauer zu verteilen — Nutzungsdauer eintragen (Computer 3, Möbel 13 Jahre).' : '',
-      belegDateiWaehlen: e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; this._belegDateiHoch(f, false); },
+      belegDateiWaehlen: e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; this._belegDateiHoch(f, true); },
       belegFotoWaehlen: e => {
         const dateien = [...(e.target.files || [])]; e.target.value = '';
         (async () => { for (let i = 0; i < dateien.length; i++) await this._belegDateiHoch(dateien[i], i === 0); })();

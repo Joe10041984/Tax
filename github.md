@@ -2,13 +2,13 @@ repo: Joe10041984/Tax
 branch: main
 
 ## Last sync
-date: 2026-08-05T14:05:00Z
+date: 2026-08-05T14:40:00Z
 
 ### Updated in this project
-- Neuer Reiter Belege: Erfassung von Werbungskosten und sonstigen absetzbaren Aufwänden
-- Foto mit Texterkennung und Einfügen von PDF-Rechnungstext füllen Datum, Betrag, Umsatzsteuer und Aussteller vor
-- Abschreibung über Nutzungsdauer, Gruppierung nach Kategorie, PDF-Belegliste mit Nummerierung
-- Mehrere Personen: Namen in den Einstellungen, Filter über der Belegliste
+- Neuer Reiter Belege: Werbungskosten und sonstige absetzbare Aufwände, gruppiert nach Kategorie, mit PDF-Belegliste
+- Jede angehängte Datei wird ausgelesen: Bilder per Texterkennung, PDF direkt aus der Textebene
+- Auslesen läuft vor dem Hochladen und damit auch ohne hinterlegtes Beleg-Repo
+- Abschreibung über die Nutzungsdauer, mehrere Personen mit Filter über der Liste
 
 ## Screen map
 | Bereich | Dateien |
