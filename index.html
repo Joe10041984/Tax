@@ -606,6 +606,14 @@
           </div>
           <div class="text-muted" style="margin-top:var(--space-2);min-height:18px;font-size:12px">{{ importHinweis }}</div>
         </section>
+
+        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">06</div>
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Belegauslesen prüfen</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Testet, ob Texterkennung und PDF-Leser auf diesem Gerät geladen und gelesen werden können. Stand {{ bauStand }}.</p>
+          <button class="btn btn-secondary" onClick="{{ pruefeErkennung }}" style="border-radius:0;min-height:40px">Prüfung starten</button>
+          <div class="text-muted" style="margin-top:var(--space-2);min-height:18px;font-size:12px;white-space:pre-wrap">{{ diagText }}</div>
+        </section>
       </div>
     </sc-if>
   </div>
@@ -652,6 +660,7 @@ const KAT = [
 const KAT_MAP = Object.fromEntries(KAT.map(k => [k.id, k]));
 const MONATE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const TABS = [['kalender','Kalender'],['wochen','Wochen'],['belege','Belege'],['auswertung','Auswertung'],['einstellungen','Einstellungen']];
+const BAU_STAND = '05.08.2026';
 const AUSGABE_KAT = [
   { id: 'arbeitsmittel',  name: 'Arbeitsmittel',              art: 'Werbungskosten' },
   { id: 'fachliteratur',  name: 'Fachliteratur',              art: 'Werbungskosten' },
@@ -1046,6 +1055,34 @@ class Component extends DCLogic {
       this.setState({ ocrHinweis: vorher && !/^(bereite|lädt)/.test(vorher) ? seiten + ' angehängt · ' + vorher : seiten + ' angehängt' });
     } catch (e) { this.setState({ belegFehler: 'Hochladen fehlgeschlagen: ' + e.message, ocrHinweis: '' }); }
   }
+  async _pruefeErkennung() {
+    const zeilen = [];
+    const zeige = () => this.setState({ diagText: zeilen.join('\n') });
+    zeilen.push('prüfe …'); zeige();
+    zeilen.length = 0;
+    try {
+      await this._skript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js', () => window.Tesseract, 'nicht ladbar');
+      zeilen.push('Texterkennung geladen'); zeige();
+      const c = document.createElement('canvas');
+      c.width = 620; c.height = 120;
+      const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+      x.fillStyle = '#000'; x.font = '30px Arial';
+      x.fillText('Testbeleg 12.05.2026', 20, 50);
+      x.fillText('Gesamtbetrag 123,45', 20, 100);
+      const blob = await new Promise(ok => c.toBlob(ok, 'image/png'));
+      const res = await window.Tesseract.recognize(blob, 'deu');
+      const g = belegAusText((res && res.data && res.data.text) || '');
+      zeilen.push(g.betrag === 123.45 ? 'Bilderkennung liest richtig' : 'Bilderkennung ungenau: ' + JSON.stringify(g));
+    } catch (e) { zeilen.push('Texterkennung: ' + e.message); }
+    zeige();
+    try {
+      await this._skript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js', () => window.pdfjsLib, 'nicht ladbar');
+      zeilen.push('PDF-Leser geladen');
+    } catch (e) { zeilen.push('PDF-Leser: ' + e.message); }
+    zeilen.push(this.sync && this.sync.cfg.repo ? 'Beleg-Repo hinterlegt' : 'kein Beleg-Repo hinterlegt — Dateien werden nicht gespeichert');
+    zeige();
+  }
   async _skript(url, pruefen, fehler) {
     if (pruefen()) return;
     await new Promise((ok, weg) => {
@@ -1399,6 +1436,9 @@ class Component extends DCLogic {
       belegLoeschen: () => this._belegLoeschen(F.id),
       ocrHinweis: S.ocrHinweis, belegFehler: S.belegFehler,
       personenFeld: String(S.settings.personen || 'Ich'),
+      bauStand: BAU_STAND,
+      diagText: S.diagText || '',
+      pruefeErkennung: () => this._pruefeErkennung(),
       personenTippen: e => this._merken({ settings: { ...S.settings, personen: e.target.value } }),
       jahre: [jahr - 1, jahr, jahr + 1].map(j => ({
         jahr: String(j),
