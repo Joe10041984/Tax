@@ -1880,7 +1880,19 @@ function gesundheitLesen(stand, jahr) {
     return isFinite(n) ? n : 0;
   };
   const feld = (e, namen) => { for (const n of namen) if (e[n] != null && e[n] !== '') return e[n]; return null; };
+  const jahrAus = d => {
+    d = String(d || '');
+    const iso = d.match(/(\d{4})-\d{2}-\d{2}/);
+    if (iso) return Number(iso[1]);
+    const de = d.match(/\d{1,2}[.\/]\d{1,2}[.\/](\d{4})/);
+    if (de) return Number(de[1]);
+    const irgendwo = d.match(/(19|20)\d{2}/);
+    return irgendwo ? Number(irgendwo[0]) : null;
+  };
   const jahrVon = e => {
+    /* Zahldatum zuerst — die Steuer folgt dem Abflussprinzip. */
+    const zahl1 = jahrAus(feld(e, ['bezahltAm', 'zahldatum', 'gezahltAm', 'bezahlt']));
+    if (zahl1) return zahl1;
     const j = Number(feld(e, ['jahr', 'year']));
     if (j >= 1990 && j <= 2100) return j;
     const d = String(feld(e, ['datum', 'date', 'belegdatum', 'rechnungsdatum', 'leistungsdatum', 'erstelltAm', 'created']) || '');
@@ -1915,7 +1927,7 @@ function gesundheitLesen(stand, jahr) {
      Erstattung den Ansatz im Jahr der Auszahlung wieder mindert. */
   imJahr.forEach(e => {
     const b = zahl(feld(e, ['betrag', 'summe', 'kosten', 'preis', 'rechnungsbetrag', 'gesamt', 'brutto']));
-    const er = zahl(feld(e, ['erstattet', 'erstattung', 'bezahlt', 'ersatz']));
+    const er = zahl(feld(e, ['erstattet', 'erstattung']));
     const pp = fuerPerson(feld(e, ['patient', 'person', 'versicherter', 'name']) || 'Ohne Angabe');
     const a = feld(e, ['art', 'kategorie', 'typ', 'leistungsart', 'bezeichnung']) || 'Sonstiges';
     const eigen = Math.max(0, b - er);
@@ -1936,7 +1948,11 @@ function gesundheitLesen(stand, jahr) {
   const rund = n => Math.round(n * 100) / 100;
   return {
     gesamt, erstattet, wartend, selbst, rueck, rueckDetail, posten: imJahr.length, nachArt,
-    diagnose: { gesamtEintraege: eintraege.length, ohneJahr, jahre, feldNamen, oberFelder, roh: roh.length },
+    diagnose: {
+      gesamtEintraege: eintraege.length, ohneJahr, jahre, feldNamen, oberFelder, roh: roh.length,
+      jahreDatum: (() => { const o = {}; eintraege.forEach(e => { const j = jahrAus(feld(e, ['datum', 'rechnungsdatum'])); if (j) o[j] = (o[j] || 0) + 1; }); return o; })(),
+      beispiel: imJahr[0] ? JSON.stringify(imJahr[0]).slice(0, 400) : (eintraege[0] ? JSON.stringify(eintraege[0]).slice(0, 400) : '')
+    },
     personen: Object.values(nachPerson)
       .map(p => ({ name: p.name, selbst: rund(p.selbst), erstattet: rund(p.erstattet), wartend: rund(p.wartend), posten: p.posten }))
       .sort((a, b) => b.selbst - a.selbst)
@@ -2892,7 +2908,10 @@ class Component extends DCLogic {
         + (d.ohneJahr ? ', davon ' + d.ohneJahr + ' ohne erkennbares Datum' : '') + '.'
         + '\nFelder je Eintrag: ' + (d.feldNamen || []).join(', ') + '.'
         + '\nOberste Ebene: ' + (d.oberFelder || []).join(', ') + '.'
-        + '\nJe Person: ' + (g.personen || []).map(p => p.name + ' ' + p.posten + '×' + ' ' + eur(p.selbst)).join(' · ') + '.';
+        + '\nNach Rechnungsdatum: ' + Object.entries(d.jahreDatum || {}).sort((a, b) => b[0].localeCompare(a[0])).map(([j, n]) => j + ': ' + n).join(', ') + '.'
+        + '\nJe Person: ' + (g.personen || []).map(p => p.name + ' ' + p.posten + '×' + ' ' + eur(p.selbst)).join(' · ') + '.'
+        + '\nArten: ' + Object.entries(g.nachArt || {}).sort((a, b) => b[1] - a[1]).map(([a, w]) => a + ' ' + eur(w)).join(' · ') + '.'
+        + '\nBeispiel: ' + (d.beispiel || '—');
       if (!g.posten) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Gelesen, aber für ' + jahr + ' war nichts dabei. ' + bericht }); return; }
       const arten = Object.entries(g.nachArt).sort((a, b) => b[1] - a[1]).map(([a, w]) => a + ' ' + eur(w));
 
