@@ -31,6 +31,8 @@
   input, select, button, textarea { font: inherit; color: inherit; }
   [data-nurdruck] { display: none; }
   [data-nurschmal] { display: none; }
+  [data-klebkopf] { position: sticky; top: 0; z-index: 6; background: var(--color-bg); background-clip: padding-box; box-shadow: inset 0 -2px 0 var(--color-text); }
+  [data-klebbox] { max-height: calc(100vh - var(--kopf-h, 62px) - 56px); overflow: auto; overscroll-behavior: contain; }
   @media (max-width: 900px) {
     html, body { overflow-x: hidden; max-width: 100%; }
     [data-nurbreit] { display: none !important; }
@@ -40,6 +42,7 @@
     [data-zahlfeld] { width: 100% !important; min-width: 0 !important; padding: 4px 0 !important; font-size: 13px !important; }
     [data-erstespalte] { width: 16% !important; }
     [data-scrollbox] { overflow-x: visible !important; }
+    [data-klebbox] { max-height: none !important; overflow: visible !important; }
     [data-zweispaltig] { grid-template-columns: minmax(0, 1fr) !important; }
     [data-seitenspalte] { position: static !important; top: auto !important; order: -1; }
     [data-kopf] { padding: 10px 14px !important; gap: 12px !important; }
@@ -261,14 +264,17 @@
             </sc-for>
           </div>
         </section>
-        <div data-scrollbox="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent;overflow-x:auto">
+        <div data-scrollbox="1" data-klebbox="1" class="blueprint" style="position:relative;padding:0 var(--space-4) var(--space-4);background:transparent">
           <table data-tabelle="1" class="table" style="min-width:860px">
             <thead>
               <tr>
-                <th data-erstespalte="1" style="white-space:nowrap">KW</th>
-                <th data-nurbreit="1">Monat</th>
+                <th data-erstespalte="1" data-klebkopf="1" style="white-space:nowrap;vertical-align:bottom;padding-top:var(--space-4)">KW</th>
+                <th data-nurbreit="1" data-klebkopf="1" style="vertical-align:bottom;padding-top:var(--space-4)">Monat</th>
                 <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
-                  <th style="text-align:center;white-space:nowrap"><span data-nurbreit="1">{{ k.name }}</span><span data-nurschmal="1">{{ k.code }}</span></th>
+                  <th data-klebkopf="1" style="text-align:center;white-space:nowrap;vertical-align:bottom;padding-top:var(--space-4)">
+                    <span data-nurbreit="1">{{ k.name }}</span><span data-nurschmal="1">{{ k.code }}</span>
+                    <span style="display:block;margin-top:2px;font-family:var(--font-heading);font-size:15px;font-variant-numeric:tabular-nums;color: {{ k.jahrFarbe }}">{{ k.anzahl }}</span>
+                  </th>
                 </sc-for>
               </tr>
             </thead>
@@ -604,6 +610,15 @@
                   </sc-for>
                 </div>
                 <div style="font-family:var(--font-heading);font-size:13px;font-variant-numeric:tabular-nums;text-align:right;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ b.gesamt }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2) var(--space-5);margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--color-divider)">
+            <sc-for list="{{ monatsLegende }}" as="l" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:var(--space-2)">
+                <span style="width:11px;height:11px;flex:none;background: {{ l.farbe }}"></span>
+                <span style="font-size:12px">{{ l.name }}</span>
+                <span class="text-muted" style="font-size:11px;font-variant-numeric:tabular-nums">{{ l.tage }}</span>
               </div>
             </sc-for>
           </div>
@@ -2052,7 +2067,14 @@ class Component extends DCLogic {
     geladen: false
   };
 
+  _kopfMessen = () => {
+    const k = document.querySelector('header.nav');
+    if (k) document.documentElement.style.setProperty('--kopf-h', Math.round(k.getBoundingClientRect().height) + 'px');
+  };
+
   async componentDidMount() {
+    this._kopfMessen();
+    window.addEventListener('resize', this._kopfMessen);
     let lokal = null;
     try { lokal = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
     let tage = lokal && lokal.tage;
@@ -3547,6 +3569,7 @@ class Component extends DCLogic {
       })),
       katListe: KAT.map(k => ({
         name: k.name, farbe: k.farbe, auf: k.auf, code: k.code, pfad: IKON[k.id], anzahl: String(zaehler[k.id]),
+        jahrFarbe: zaehler[k.id] > 0 ? 'var(--color-text)' : 'color-mix(in srgb, var(--color-text) 35%, transparent)',
         bg: S.aktiveKat === k.id ? tint(k.farbe, 16) : 'transparent',
         rand: S.aktiveKat === k.id ? 'var(--color-text)' : 'var(--color-divider)',
         klick: () => this.setState({ aktiveKat: k.id })
@@ -3704,6 +3727,7 @@ class Component extends DCLogic {
         if (agb.length) bloecke.push({ titel: 'Außergewöhnliche Belastungen', hinweis: 'Die zumutbare Belastung zieht die Software selbst ab.', zeilen: agb });
         return bloecke;
       })(),
+      monatsLegende: KAT.filter(k => zaehler[k.id] > 0).map(k => ({ name: k.name, farbe: k.farbe, tage: zaehler[k.id] + (zaehler[k.id] === 1 ? ' Tag' : ' Tage') })),
       monate, wochenZeilen, monatsBalken, kontrollen,
       kontrollText: kontrollen.length ? 'Diese Wochen und Tage stimmen nicht mit den Werktagen überein.' : 'Jede Woche ist vollständig erfasst.',
       jahresSummen: KAT.map(k => ({ name: k.name, farbe: k.farbe, auf: k.auf, code: k.code, pfad: IKON[k.id], tage: String(zaehler[k.id]) })),
