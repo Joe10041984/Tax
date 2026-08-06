@@ -450,7 +450,8 @@
                 <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px;text-wrap:pretty">{{ gesAusHinweis }}</p>
               </div>
             </sc-if>
-            <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ gesQuelle }}</p>
+            <p style="margin:var(--space-3) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ gesBrutto }}</p>
+            <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px;text-wrap:pretty">{{ gesQuelle }}</p>
             <p class="text-muted" style="margin:2px 0 0;font-size:11px;text-wrap:pretty">{{ gesArten }}</p>
             <p class="text-muted" style="margin:2px 0 0;font-size:11px;text-wrap:pretty">{{ gesWartend }}</p>
             <p class="text-muted" style="margin:2px 0 0;font-size:11px;text-wrap:pretty">{{ gesRueckHinweis }}</p>
@@ -1933,7 +1934,8 @@ function gesundheitLesen(stand, jahr) {
     const eigen = Math.max(0, b - er);
     gesamt += b; erstattet += er; selbst += eigen;
     pp.erstattet += er; pp.selbst += eigen; pp.posten += 1;
-    nachArt[a] = (nachArt[a] || 0) + eigen;
+    if (!nachArt[a]) nachArt[a] = { brutto: 0, eigen: 0 };
+    nachArt[a].brutto += b; nachArt[a].eigen += eigen;
     if (e.eingereicht && !(er > 0)) { wartend += b; pp.wartend += b; }
   });
   let rueck = 0;
@@ -1950,8 +1952,7 @@ function gesundheitLesen(stand, jahr) {
     gesamt, erstattet, wartend, selbst, rueck, rueckDetail, posten: imJahr.length, nachArt,
     diagnose: {
       gesamtEintraege: eintraege.length, ohneJahr, jahre, feldNamen, oberFelder, roh: roh.length,
-      jahreDatum: (() => { const o = {}; eintraege.forEach(e => { const j = jahrAus(feld(e, ['datum', 'rechnungsdatum'])); if (j) o[j] = (o[j] || 0) + 1; }); return o; })(),
-      beispiel: imJahr[0] ? JSON.stringify(imJahr[0]).slice(0, 400) : (eintraege[0] ? JSON.stringify(eintraege[0]).slice(0, 400) : '')
+      gespeichert: stand.gespeichert || stand.stand || stand.zuletzt || null
     },
     personen: Object.values(nachPerson)
       .map(p => ({ name: p.name, selbst: rund(p.selbst), erstattet: rund(p.erstattet), wartend: rund(p.wartend), posten: p.posten }))
@@ -2891,8 +2892,27 @@ class Component extends DCLogic {
       const fremd = new SecureSync({ ns: 'pkvimport', header: 'PKVIMP1', gistFile: 'pkv-stand.json' });
       await fremd.setConfig({ token: this.sync.cfg.token });
       await fremd.unlock(pin, null);
-      const id = await fremd.findGist();
+      /* Mehrere Gists können pkv-stand.json führen. Der zuletzt beschriebene ist der aktuelle. */
+      let kandidaten = [];
+      try {
+        for (let seite = 1; seite <= 3; seite++) {
+          const r = await fetch('https://api.github.com/gists?per_page=100&page=' + seite, {
+            headers: { Authorization: 'Bearer ' + this.sync.cfg.token, Accept: 'application/vnd.github+json' }
+          });
+          if (!r.ok) break;
+          const liste = await r.json();
+          if (!Array.isArray(liste) || !liste.length) break;
+          liste.forEach(x => { if (x.files && x.files['pkv-stand.json']) kandidaten.push(x); });
+          if (liste.length < 100) break;
+        }
+      } catch (e) {}
+      kandidaten.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
+      const id = kandidaten.length ? kandidaten[0].id : await fremd.findGist();
       if (!id) { this._pkvAufraeumen(); this.setState({ pkvLaeuft: false, pkvHinweis: 'Kein Gist mit pkv-stand.json gefunden. Hat der Token das Gist-Recht?' }); return; }
+      const mehrfach = kandidaten.length > 1
+        ? '\nEs gibt ' + kandidaten.length + ' Gists mit pkv-stand.json — genommen wurde der zuletzt geänderte vom '
+          + new Date(kandidaten[0].updated_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr.'
+        : '';
       await fremd.setConfig({ gistId: id });
       this.setState({ pkvHinweis: 'entschlüsselt …' });
       const res = await fremd.downloadState();
@@ -2902,18 +2922,15 @@ class Component extends DCLogic {
       if (!g) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Der Gist enthält keine Einträge im erwarteten Format.' }); return; }
       const d = g.diagnose || {};
       const jahreListe = Object.entries(d.jahre || {}).sort((a, b) => b[0].localeCompare(a[0])).map(([j, n]) => j + ': ' + n).join(', ');
-      const bericht = 'Im Gist stehen ' + (d.roh || 0) + ' Datensätze'
-        + (d.gesamtEintraege !== d.roh ? ', aufgelöst zu ' + d.gesamtEintraege + ' Positionen' : '')
-        + (jahreListe ? ' (' + jahreListe + ')' : '')
-        + (d.ohneJahr ? ', davon ' + d.ohneJahr + ' ohne erkennbares Datum' : '') + '.'
-        + '\nFelder je Eintrag: ' + (d.feldNamen || []).join(', ') + '.'
-        + '\nOberste Ebene: ' + (d.oberFelder || []).join(', ') + '.'
-        + '\nNach Rechnungsdatum: ' + Object.entries(d.jahreDatum || {}).sort((a, b) => b[0].localeCompare(a[0])).map(([j, n]) => j + ': ' + n).join(', ') + '.'
+      const wann = d.gespeichert ? new Date(d.gespeichert) : null;
+      const arten = Object.entries(g.nachArt).sort((a, b) => b[1].brutto - a[1].brutto)
+        .map(([a, w]) => a + ': ' + eur(w.brutto) + ' gezahlt' + (w.brutto - w.eigen > 0.004 ? ', davon ' + eur(w.brutto - w.eigen) + ' erstattet' : ''));
+      const bericht = 'Der Gist enthält ' + (d.roh || 0) + ' Einträge'
+        + (jahreListe ? ' (' + jahreListe + ')' : '') + '.'
+        + (wann && !isNaN(wann) ? '\nStand dieses Gists: ' + wann.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr. Fehlen Einträge, ist der Gist älter als dein PKV-Projekt — dort einmal hochladen und hier erneut holen.' : '')
         + '\nJe Person: ' + (g.personen || []).map(p => p.name + ' ' + p.posten + '×' + ' ' + eur(p.selbst)).join(' · ') + '.'
-        + '\nArten: ' + Object.entries(g.nachArt || {}).sort((a, b) => b[1] - a[1]).map(([a, w]) => a + ' ' + eur(w)).join(' · ') + '.'
-        + '\nBeispiel: ' + (d.beispiel || '—');
+        + '\nArten: ' + arten.join(' · ') + '.' + mehrfach;
       if (!g.posten) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Gelesen, aber für ' + jahr + ' war nichts dabei. ' + bericht }); return; }
-      const arten = Object.entries(g.nachArt).sort((a, b) => b[1] - a[1]).map(([a, w]) => a + ' ' + eur(w));
 
       this._gesundheitSetzen({
         selbst: Math.round(g.selbst * 100) / 100,
@@ -2924,6 +2941,7 @@ class Component extends DCLogic {
         aus: [],
         quelle: g.posten + (g.posten === 1 ? ' Eintrag' : ' Einträge') + ' aus dem PKV-Projekt',
         felder: arten.join(' · '),
+        gesamt: g.gesamt,
         rueckDetail: g.rueckDetail.join(', '),
         stand: new Date().toISOString()
       });
@@ -3771,6 +3789,9 @@ class Component extends DCLogic {
       wkUrteil: wkSumme > 1230
         ? eur(wkSumme - 1230) + ' über dem Pauschbetrag von 1.230 € — die Aufstellung lohnt sich.'
         : 'Noch ' + eur(1230 - wkSumme) + ' unter dem Pauschbetrag von 1.230 €, den das Finanzamt ohnehin ansetzt.',
+      gesBrutto: Number(gesJ.gesamt) > 0
+        ? 'Gezahlt hast du im Jahr ' + eur(Number(gesJ.gesamt)) + '. Davon sind ' + eur(Number(gesJ.erstattet) || 0) + ' erstattet — steuerlich zählt nur der Rest.'
+        : '',
       gesFelder: [
         { label: 'Selbst getragen €', wert: gesJ.selbst == null ? '' : String(gesJ.selbst), aendern: e => this._gesundheitSetzen({ selbst: e.target.value === '' ? '' : Number(e.target.value) || 0 }) },
         { label: 'Von der Kasse erstattet €', wert: gesJ.erstattet == null ? '' : String(gesJ.erstattet), aendern: e => this._gesundheitSetzen({ erstattet: e.target.value === '' ? '' : Number(e.target.value) || 0 }) },
