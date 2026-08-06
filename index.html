@@ -1285,7 +1285,10 @@
                 <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-3);margin-bottom:var(--space-2)">
                   <h3 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.03em;text-transform:uppercase">{{ z.bez }}</h3>
                   <span class="text-muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase">{{ z.antrieb }}</span>
-                  <span style="margin-left:auto;font-family:var(--font-heading);font-size:19px;font-variant-numeric:tabular-nums">{{ z.basis }}</span>
+                  <span style="margin-left:auto;text-align:right;line-height:1.15">
+                    <span style="display:block;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent)">Bemessungsgrundlage</span>
+                    <span style="font-family:var(--font-heading);font-size:19px;font-variant-numeric:tabular-nums">{{ z.basis }}</span>
+                  </span>
                   <span data-nodruck="1" style="display:flex;gap:var(--space-1)">
                     <button class="btn btn-ghost" onClick="{{ z.bearbeiten }}" style="min-height:30px;padding:2px 8px;border-radius:0">Ändern</button>
                     <button class="btn btn-ghost" onClick="{{ z.loeschen }}" style="min-height:30px;padding:2px 8px;border-radius:0">Löschen</button>
@@ -1353,22 +1356,33 @@
 
             <section style="border:1px solid var(--color-text);padding:var(--space-4)">
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
-              <table class="table" style="margin-top:var(--space-2)">
-                <tbody>
-                  <tr>
-                    <td>Geldwerter Vorteil, wie abgerechnet</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ dwVorteilPausch }}</td>
-                  </tr>
-                  <tr>
-                    <td>Mit Einzelbewertung der Fahrten</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ dwVorteilEinzel }}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight:600">Arbeitslohn nach unten korrigieren um</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ dwKorrektur }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div data-scrollbox="1" style="overflow-x:auto">
+                <table data-tabelle="1" class="table" style="margin-top:var(--space-2)">
+                  <thead>
+                    <tr>
+                      <th data-erstespalte="1"></th>
+                      <th style="text-align:right;white-space:nowrap">Wie abgerechnet</th>
+                      <th style="text-align:right;white-space:nowrap">Mit Einzelbewertung</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <sc-for list="{{ dwSummen }}" as="s" hint-placeholder-count="5">
+                      <tr>
+                        <td style="font-weight: {{ s.gewicht }}">
+                          <div>{{ s.label }}</div>
+                          <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ s.note }}</div>
+                        </td>
+                        <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-weight: {{ s.gewicht }};font-size: {{ s.groesse }}">{{ s.a }}</td>
+                        <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-weight: {{ s.gewicht }};font-size: {{ s.groesse }};color: {{ s.bFarbe }}">{{ s.b }}</td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-4);margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-text)">
+                <span style="font-weight:600">Arbeitslohn nach unten korrigieren um</span>
+                <span style="font-family:var(--font-heading);font-weight:600;font-size:19px;font-variant-numeric:tabular-nums">{{ dwKorrektur }}</span>
+              </div>
               <p style="margin:var(--space-3) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ dwErsparnis }}</p>
               <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px;max-width:66ch;text-wrap:pretty">{{ dwEigenHinweis }}</p>
               <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px;max-width:66ch;text-wrap:pretty">Der Wechsel zur Einzelbewertung ist in der Steuererklärung nachholbar, wenn der Arbeitgeber pauschal mit 0,03 % abgerechnet hat. Nötig sind eine monatsweise Aufstellung der Fahrten und die Lohnabrechnung; die Methode gilt dann für das ganze Jahr. Die Entfernungspauschale bleibt davon unberührt und wird weiter angesetzt.</p>
@@ -3207,12 +3221,30 @@ class Component extends DCLogic {
       })),
       dwPausch: eur(dw.pausch),
       dwEinzel: eur(dw.einzel),
-      dwVorteilPausch: eur(dw.steuerbarPausch),
-      dwVorteilEinzel: eur(dw.steuerbarEinzel),
+      dwSummen: (() => {
+        const g = (label, a, b, note, stark) => ({
+          label, note: note || '', a: eur(a), b: eur(b),
+          gewicht: stark ? '600' : '400', groesse: stark ? '17px' : '15px',
+          bFarbe: stark && b < a ? 'var(--color-accent-800)' : 'inherit'
+        });
+        const r = [
+          g('Privatnutzung', dw.privat, dw.privat, '1 % der Bemessungsgrundlage im Monat'),
+          g('Arbeitsweg', dw.pausch, dw.einzel, '0,03 % im Monat gegenüber 0,002 % je tatsächlicher Fahrt'),
+          g('Vorteil zusammen', dw.privat + dw.pausch, dw.privat + dw.einzel, '')
+        ];
+        if (dw.eigen > 0) r.push({ label: 'Eigenanteil', note: 'was du selbst zahlst', a: '− ' + eur(dw.eigen), b: '− ' + eur(dw.eigen), gewicht: '400', groesse: '15px', bFarbe: 'inherit' });
+        r.push(g('Zu versteuern', dw.steuerbarPausch, dw.steuerbarEinzel, '', true));
+        return r;
+      })(),
       dwKorrektur: eur(dw.korrektur),
-      dwEigenHinweis: dw.eigen > 0
-        ? 'Der Eigenanteil von ' + eur(dw.eigen) + ' im Jahr wird vom gesamten Vorteil abgezogen, also auch vom Arbeitsweg. Deshalb fällt die Korrektur kleiner aus als der reine Unterschied zwischen den beiden Methoden von ' + eur(Math.max(0, dw.pausch - dw.einzel)) + '.'
-        : '',
+      dwEigenHinweis: (() => {
+        if (!(dw.eigen > 0)) return '';
+        const roh = Math.max(0, dw.pausch - dw.einzel);
+        const verpufft = Math.max(0, dw.eigen - (dw.privat + dw.einzel));
+        const t = 'Der Eigenanteil von ' + eur(dw.eigen) + ' im Jahr wird vom gesamten Vorteil abgezogen, also auch vom Arbeitsweg.';
+        if (verpufft <= 0) return t + ' Deshalb fällt die Korrektur kleiner aus als der reine Unterschied zwischen den beiden Methoden von ' + eur(roh) + '.';
+        return t + ' Bei der Einzelbewertung übersteigt er den Vorteil um ' + eur(verpufft) + ' — dieser Teil wirkt sich nicht aus, weil ein Eigenanteil den Arbeitslohn nicht unter null drücken kann. Vom rechnerischen Unterschied der beiden Methoden von ' + eur(roh) + ' bleiben deshalb nur ' + eur(dw.korrektur) + ' übrig.';
+      })(),
       dwFahrten: String(dw.fahrtenGesamt),
       dwGrenzeHinweis: dw.fahrtenGesamt > DW_EINZEL_GRENZE
         ? 'Es sind ' + dw.fahrtenGesamt + ' Präsenztage erfasst. Die Einzelbewertung erkennt höchstens ' + DW_EINZEL_GRENZE + ' Fahrten im Jahr an, gerechnet wurde mit ' + DW_EINZEL_GRENZE + '.'
