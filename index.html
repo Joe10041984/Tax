@@ -1908,7 +1908,10 @@ function gesundheitLesen(stand, jahr) {
   const eintraege = [];
   roh.forEach(e => {
     if (!e || typeof e !== 'object') return;
-    const unter = ['positionen', 'posten', 'leistungen', 'zeilen', 'items'].map(k => e[k]).find(v => Array.isArray(v) && v.length);
+    const betragFeld = ['betrag', 'summe', 'kosten', 'preis', 'rechnungsbetrag', 'gesamt', 'brutto'];
+    const eigenerBetrag = o => o && typeof o === 'object' && betragFeld.some(k => o[k] != null && o[k] !== '');
+    const unter = ['positionen', 'posten', 'leistungen', 'zeilen', 'items'].map(k => e[k])
+      .find(v => Array.isArray(v) && v.length && v.every(eigenerBetrag));
     if (unter) unter.forEach(u => eintraege.push({ ...e, ...u, patient: u.patient || e.patient, datum: u.datum || e.datum, jahr: u.jahr || e.jahr }));
     else eintraege.push(e);
   });
@@ -2907,19 +2910,44 @@ class Component extends DCLogic {
         }
       } catch (e) {}
       kandidaten.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
-      const id = kandidaten.length ? kandidaten[0].id : await fremd.findGist();
-      if (!id) { this._pkvAufraeumen(); this.setState({ pkvLaeuft: false, pkvHinweis: 'Kein Gist mit pkv-stand.json gefunden. Hat der Token das Gist-Recht?' }); return; }
-      const mehrfach = kandidaten.length > 1
-        ? '\nEs gibt ' + kandidaten.length + ' Gists mit pkv-stand.json — genommen wurde der zuletzt geänderte vom '
-          + new Date(kandidaten[0].updated_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr.'
-        : '';
-      await fremd.setConfig({ gistId: id });
-      this.setState({ pkvHinweis: 'entschlüsselt …' });
-      const res = await fremd.downloadState();
+      if (!kandidaten.length) {
+        const alt = await fremd.findGist();
+        if (alt) kandidaten = [{ id: alt, updated_at: '' }];
+      }
+      if (!kandidaten.length) { this._pkvAufraeumen(); this.setState({ pkvLaeuft: false, pkvHinweis: 'Kein Gist mit pkv-stand.json gefunden. Hat der Token das Gist-Recht?' }); return; }
+
+      /* Jeden Kandidaten öffnen. Maßgeblich ist der jüngste Stand im Inhalt, nicht die
+         Änderungszeit bei GitHub — die kippt schon durch eine Umbenennung. */
+      const offen = [];
+      let gesperrte = 0;
+      for (const k of kandidaten) {
+        this.setState({ pkvHinweis: 'öffne Gist ' + (offen.length + gesperrte + 1) + ' von ' + kandidaten.length + ' …' });
+        try {
+          await fremd.setConfig({ gistId: k.id });
+          const r = await fremd.downloadState();
+          if (r.gesperrt || !r.stand) { gesperrte++; continue; }
+          const gg = gesundheitLesen(r.stand, jahr);
+          if (!gg) { gesperrte++; continue; }
+          const innen = Date.parse(gg.diagnose && gg.diagnose.gespeichert) || Date.parse(k.updated_at) || 0;
+          offen.push({ id: k.id, g: gg, innen, updated: k.updated_at });
+        } catch (e) { gesperrte++; }
+      }
       this._pkvAufraeumen();
-      if (res.gesperrt) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Der Stand ließ sich mit dieser PIN nicht öffnen.' }); return; }
-      const g = gesundheitLesen(res.stand, jahr);
-      if (!g) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Der Gist enthält keine Einträge im erwarteten Format.' }); return; }
+      if (!offen.length) {
+        this.setState({ pkvLaeuft: false, pkvHinweis: kandidaten.length === 1
+          ? 'Der Stand ließ sich mit dieser PIN nicht öffnen.'
+          : 'Keiner der ' + kandidaten.length + ' gefundenen Gists ließ sich mit dieser PIN öffnen.' });
+        return;
+      }
+      offen.sort((a, b) => b.innen - a.innen);
+      const gewaehlt = offen[0];
+      const g = gewaehlt.g;
+      const mehrfach = kandidaten.length > 1
+        ? '\n' + kandidaten.length + ' Gists führen pkv-stand.json: ' + offen.length + ' geöffnet'
+          + (gesperrte ? ', ' + gesperrte + ' nicht lesbar' : '')
+          + '. Genommen wurde der mit dem jüngsten Stand'
+          + (offen.length > 1 ? ' — die anderen enthielten ' + offen.slice(1).map(o => (o.g.diagnose && o.g.diagnose.roh) || 0).join(' und ') + ' Einträge.' : '.')
+        : '';
       const d = g.diagnose || {};
       const jahreListe = Object.entries(d.jahre || {}).sort((a, b) => b[0].localeCompare(a[0])).map(([j, n]) => j + ': ' + n).join(', ');
       const wann = d.gespeichert ? new Date(d.gespeichert) : null;
