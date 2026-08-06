@@ -1590,7 +1590,7 @@
             <input class="input" type="password" autoComplete="off" placeholder="leer = gleiche PIN" value="{{ pkvPin }}" onChange="{{ pkvPinTippen }}" style="min-height:40px;border-radius:0;letter-spacing:0.18em">
           </div>
           <button class="btn btn-secondary" onClick="{{ pkvHolen }}" style="margin-top:var(--space-3);border-radius:0;min-height:40px">Werte für {{ jahr }} holen</button>
-          <div class="text-muted" style="margin-top:var(--space-2);min-height:18px;font-size:12px;text-wrap:pretty">{{ pkvHinweis }}</div>
+          <div class="text-muted" style="margin-top:var(--space-2);min-height:18px;font-size:12px;white-space:pre-wrap;text-wrap:pretty">{{ pkvHinweis }}</div>
         </section>
 
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
@@ -1902,6 +1902,9 @@ function gesundheitLesen(stand, jahr) {
   const jahre = {};
   let ohneJahr = 0;
   eintraege.forEach(e => { const j = jahrVon(e); if (j == null) ohneJahr++; else jahre[j] = (jahre[j] || 0) + 1; });
+  const feldNamen = [];
+  eintraege.slice(0, 40).forEach(e => Object.keys(e).forEach(k => { if (!feldNamen.includes(k)) feldNamen.push(k); }));
+  const oberFelder = Object.keys(stand).filter(k => k !== 'eintraege');
   const imJahr = eintraege.filter(e => jahrVon(e) === jahr);
   let gesamt = 0, erstattet = 0, wartend = 0, selbst = 0;
   const nachArt = {}, nachPerson = {};
@@ -1933,7 +1936,7 @@ function gesundheitLesen(stand, jahr) {
   const rund = n => Math.round(n * 100) / 100;
   return {
     gesamt, erstattet, wartend, selbst, rueck, rueckDetail, posten: imJahr.length, nachArt,
-    diagnose: { gesamtEintraege: eintraege.length, ohneJahr, jahre },
+    diagnose: { gesamtEintraege: eintraege.length, ohneJahr, jahre, feldNamen, oberFelder, roh: roh.length },
     personen: Object.values(nachPerson)
       .map(p => ({ name: p.name, selbst: rund(p.selbst), erstattet: rund(p.erstattet), wartend: rund(p.wartend), posten: p.posten }))
       .sort((a, b) => b.selbst - a.selbst)
@@ -2883,9 +2886,13 @@ class Component extends DCLogic {
       if (!g) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Der Gist enthält keine Einträge im erwarteten Format.' }); return; }
       const d = g.diagnose || {};
       const jahreListe = Object.entries(d.jahre || {}).sort((a, b) => b[0].localeCompare(a[0])).map(([j, n]) => j + ': ' + n).join(', ');
-      const bericht = 'Im Gist stehen ' + (d.gesamtEintraege || 0) + ' Einträge'
+      const bericht = 'Im Gist stehen ' + (d.roh || 0) + ' Datensätze'
+        + (d.gesamtEintraege !== d.roh ? ', aufgelöst zu ' + d.gesamtEintraege + ' Positionen' : '')
         + (jahreListe ? ' (' + jahreListe + ')' : '')
-        + (d.ohneJahr ? ', davon ' + d.ohneJahr + ' ohne erkennbares Datum' : '') + '.';
+        + (d.ohneJahr ? ', davon ' + d.ohneJahr + ' ohne erkennbares Datum' : '') + '.'
+        + '\nFelder je Eintrag: ' + (d.feldNamen || []).join(', ') + '.'
+        + '\nOberste Ebene: ' + (d.oberFelder || []).join(', ') + '.'
+        + '\nJe Person: ' + (g.personen || []).map(p => p.name + ' ' + p.posten + '×' + ' ' + eur(p.selbst)).join(' · ') + '.';
       if (!g.posten) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Gelesen, aber für ' + jahr + ' war nichts dabei. ' + bericht }); return; }
       const arten = Object.entries(g.nachArt).sort((a, b) => b[1] - a[1]).map(([a, w]) => a + ' ' + eur(w));
 
@@ -2901,7 +2908,7 @@ class Component extends DCLogic {
         rueckDetail: g.rueckDetail.join(', '),
         stand: new Date().toISOString()
       });
-      this.setState({ pkvLaeuft: false, pkvPin: '', pkvHinweis: g.posten + ' Einträge für ' + jahr + ' gelesen.' + (g.wartend > 0.004 ? ' ' + eur(g.wartend) + ' warten noch auf Abrechnung und sind nicht enthalten.' : '') });
+      this.setState({ pkvLaeuft: false, pkvPin: '', pkvHinweis: g.posten + ' Einträge für ' + jahr + ' gelesen, selbst getragen ' + eur(g.selbst) + '.\n' + bericht });
     } catch (e) {
       this._pkvAufraeumen();
       this.setState({ pkvLaeuft: false, pkvHinweis: e.message });
