@@ -174,7 +174,7 @@
       <div data-screen-label="Kalender" data-zweispaltig="1" style="display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:var(--space-8);align-items:start">
         <div data-monatsgitter="1" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:var(--space-6)">
           <sc-for list="{{ monate }}" as="m" hint-placeholder-count="12">
-            <section data-monat="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
+            <section data-monat="1" id="{{ m.id }}" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--space-3)">
                 <h2 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.04em;text-transform:uppercase">{{ m.name }}</h2>
                 <span class="text-muted" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase">{{ m.info }}</span>
@@ -252,6 +252,15 @@
     <sc-if value="{{ istWochen }}" hint-placeholder-val="{{ false }}">
       <div data-screen-label="Wochen">
         <h2 style="margin:0 0 var(--space-6);font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Kalenderwochen {{ jahr }}</h2>
+        <section class="blueprint" data-nodruck="1" style="position:relative;padding:var(--space-6);background:transparent;margin-bottom:var(--space-6)">
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Kontrolle</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">{{ kontrollText }}</p>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+            <sc-for list="{{ kontrollen }}" as="c" hint-placeholder-count="0">
+              <button class="btn btn-secondary" onClick="{{ c.klick }}" style="border-radius:0;font-variant-numeric:tabular-nums;background: {{ c.bg }};border-color: {{ c.rand }};color: {{ c.fg }}">{{ c.label }}</button>
+            </sc-for>
+          </div>
+        </section>
         <div data-scrollbox="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent;overflow-x:auto">
           <table data-tabelle="1" class="table" style="min-width:860px">
             <thead>
@@ -265,9 +274,11 @@
             </thead>
             <tbody>
               <sc-for list="{{ wochenZeilen }}" as="z" hint-placeholder-count="12">
-                <tr>
-                  <td style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ z.kw }}</td>
-                  <td data-nurbreit="1" style="white-space:nowrap">{{ z.monat }}</td>
+                <tr id="{{ z.id }}" style="background: {{ z.zeilenBg }};box-shadow: {{ z.zeilenRahmen }}">
+                  <td style="padding:0">
+                    <button onClick="{{ z.zumKalender }}" title="Diese Woche im Kalender öffnen" style="width:100%;min-height:34px;padding:4px 6px;border:0;border-radius:0;background:transparent;font-family:var(--font-heading);font-size:15px;font-variant-numeric:tabular-nums;font-weight: {{ z.kwGewicht }};color: {{ z.kwFarbe }};text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px" style-hover="text-decoration-color: currentColor">{{ z.kw }}</button>
+                  </td>
+                  <td data-nurbreit="1" style="white-space:nowrap">{{ z.monat }}<span class="text-muted" style="display:block;font-size:10px;font-variant-numeric:tabular-nums">{{ z.fehlt }}</span></td>
                   <sc-for list="{{ z.zellen }}" as="c" hint-placeholder-count="8">
                     <td style="text-align:center;padding:3px 4px">
                       <input data-zahlfeld="1" class="input" type="number" min="0" max="7" value="{{ c.wert }}" onChange="{{ c.aendern }}" style="width:46px;min-height:30px;padding:3px;border-radius:0;border-color:transparent;background: {{ c.bg }};text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;color: {{ c.fg }}">
@@ -343,40 +354,257 @@
           </section>
         </div>
 
-        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent;margin-bottom:var(--space-8)">
-          <h3 style="margin:0 0 var(--space-4);font-family:var(--font-heading);font-size:18px">Monatsübersicht</h3>
-          <div data-scrollbox="1" style="overflow-x:auto">
-            <table data-tabelle="1" class="table" style="min-width:760px">
-              <thead>
-                <tr>
-                  <th data-erstespalte="1"><span data-nurbreit="1">Monat</span></th>
-                  <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
-                    <th style="text-align:center;white-space:nowrap"><span data-nurbreit="1">{{ k.name }}</span><span data-nurschmal="1">{{ k.code }}</span></th>
-                  </sc-for>
-                  <th style="text-align:center"><span data-nurbreit="1">Gesamt</span><span data-nurschmal="1">Σ</span></th>
-                </tr>
-              </thead>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:var(--space-6);margin-bottom:var(--space-8)">
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Aufwendungen</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Belege</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Über alle Personen, Abschreibungen mit ihrer Jahresrate.</p>
+            <sc-if value="{{ belegAnsatzLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist noch kein Beleg erfasst.</p>
+            </sc-if>
+            <table class="table">
               <tbody>
-                <sc-for list="{{ monatsZeilen }}" as="r" hint-placeholder-count="13">
+                <sc-for list="{{ belegArtZeilen }}" as="r" hint-placeholder-count="3">
                   <tr>
-                    <td style="white-space:nowrap;font-weight: {{ r.gewicht }}"><span data-nurbreit="1">{{ r.monat }}</span><span data-nurschmal="1">{{ r.monatKurz }}</span></td>
-                    <sc-for list="{{ r.werte }}" as="v" hint-placeholder-count="8">
-                      <td style="text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px;color: {{ v.fg }}">{{ v.wert }}</td>
-                    </sc-for>
-                    <td style="text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px;font-weight: {{ r.gewicht }}">{{ r.gesamt }}</td>
+                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
+                  </tr>
+                </sc-for>
+                <tr>
+                  <td style="font-weight:600">Ansatz</td>
+                  <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600">{{ belegAnsatzGesamt }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <button data-nodruck="1" class="btn btn-ghost" onClick="{{ zuBelege }}" style="margin-top:var(--space-3);padding:2px 0;border-radius:0;min-height:28px;font-size:12px;text-decoration:underline;text-underline-offset:2px">Zu den Belegen</button>
+          </section>
+
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Beiträge</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Versicherungen</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Ansetzbare Beiträge nach Abzugsart, anteilig für die Laufzeit im Jahr.</p>
+            <sc-if value="{{ versAnsatzLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist noch keine Versicherung erfasst.</p>
+            </sc-if>
+            <table class="table">
+              <tbody>
+                <sc-for list="{{ versArtZeilen }}" as="r" hint-placeholder-count="3">
+                  <tr>
+                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
+                  </tr>
+                </sc-for>
+                <tr>
+                  <td style="font-weight:600">Ansatz</td>
+                  <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600">{{ versAnsatzGesamt }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px">{{ versNichtText }}</p>
+            <button data-nodruck="1" class="btn btn-ghost" onClick="{{ zuVersicherungen }}" style="margin-top:var(--space-1);padding:2px 0;border-radius:0;min-height:28px;font-size:12px;text-decoration:underline;text-underline-offset:2px">Zu den Versicherungen</button>
+          </section>
+
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 33 EStG</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Gesundheitskosten</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px;text-wrap:pretty">Außergewöhnliche Belastungen, kein Sonderausgabenabzug. Wirksam wird nur, was die zumutbare Belastung übersteigt — 1 bis 7 % der Einkünfte, je nach Familienstand und Kindern.</p>
+            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+              <sc-for list="{{ gesFelder }}" as="fd" hint-placeholder-count="3">
+                <div class="field" style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)">
+                  <label style="margin:0">{{ fd.label }}</label>
+                  <input class="input" type="number" step="0.01" inputMode="decimal" value="{{ fd.wert }}" onChange="{{ fd.aendern }}" style="width:124px;min-height:38px;border-radius:0;text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums">
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-divider)">
+              <div class="field">
+                <label>Zumutbare Belastung nach</label>
+                <select class="input" value="{{ zbGruppe }}" onChange="{{ zbGruppeAendern }}" style="min-height:38px;border-radius:0">
+                  <sc-for list="{{ zbOptionen }}" as="o" hint-placeholder-count="4">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+              <p style="margin:var(--space-2) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ gesGrenze }}</p>
+            </div>
+            <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ gesQuelle }}</p>
+            <p class="text-muted" style="margin:2px 0 0;font-size:11px;text-wrap:pretty">{{ gesArten }}</p>
+            <p class="text-muted" style="margin:2px 0 0;font-size:11px;text-wrap:pretty">{{ gesWartend }}</p>
+            <p class="text-muted" style="margin:2px 0 0;font-size:11px;text-wrap:pretty">{{ gesRueckHinweis }}</p>
+            <button data-nodruck="1" class="btn btn-secondary" onClick="{{ pkvHolen }}" style="margin-top:var(--space-3);border-radius:0;min-height:36px;font-size:13px">Aus dem PKV-Projekt holen</button>
+            <div data-nodruck="1" class="text-muted" style="margin-top:var(--space-2);min-height:16px;font-size:11px;text-wrap:pretty">{{ pkvHinweis }}</div>
+          </section>
+
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 10 EStG</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Sonderausgaben zusammen</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Vorsorgeaufwendungen und übrige Sonderausgaben in einer Zeile.</p>
+            <table class="table">
+              <tbody>
+                <sc-for list="{{ saZeilen }}" as="r" hint-placeholder-count="5">
+                  <tr>
+                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
                   </tr>
                 </sc-for>
               </tbody>
             </table>
-          </div>
-        </section>
+            <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ saUrteil }}</p>
+            <p style="margin:var(--space-2) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ gsErsparnisSa }}</p>
+          </section>
 
-        <section class="blueprint" data-nodruck="1" style="position:relative;padding:var(--space-6);background:transparent">
-          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Kontrolle</h3>
-          <p class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">{{ kontrollText }}</p>
-          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
-            <sc-for list="{{ kontrollen }}" as="c" hint-placeholder-count="0">
-              <button class="btn btn-secondary" onClick="{{ c.klick }}" style="border-radius:0;font-variant-numeric:tabular-nums">{{ c.label }}</button>
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 9a Satz 1 Nr. 1a EStG</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Werbungskosten zusammen</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Pauschalen und beruflich veranlasste Beträge in einer Zeile.</p>
+            <table class="table">
+              <tbody>
+                <sc-for list="{{ wkZeilen }}" as="r" hint-placeholder-count="5">
+                  <tr>
+                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+            <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ wkUrteil }}</p>
+            <p style="margin:var(--space-2) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ gsErsparnisWk }}</p>
+          </section>
+
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 35a EStG</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Haushalt und Handwerker</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Steuerermäßigung, keine Ausgabe — sie mindert die Steuer direkt.</p>
+            <table class="table">
+              <tbody>
+                <sc-for list="{{ hwZeilen }}" as="r" hint-placeholder-count="5">
+                  <tr>
+                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+            <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ hwUrteil }}</p>
+          </section>
+
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 8 Abs. 2 EStG</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Dienstwagen</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Einzelbewertung der Fahrten gegen die 0,03-%-Pauschale.</p>
+            <sc-if value="{{ dwLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Kein Fahrzeug erfasst.</p>
+            </sc-if>
+            <table class="table">
+              <tbody>
+                <tr>
+                  <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Arbeitsweg pauschal</td>
+                  <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ dwPausch }}</td>
+                </tr>
+                <tr>
+                  <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">bei {{ dwFahrten }} Fahrten</td>
+                  <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ dwEinzel }}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600">Korrektur des Arbeitslohns</td>
+                  <td style="text-align:right;font-family:var(--font-heading);font-weight:600;font-variant-numeric:tabular-nums;font-size:16px">{{ dwKorrektur }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p style="margin:var(--space-3) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ dwErsparnis }}</p>
+            <p class="text-muted" style="margin:2px 0 0;font-size:11px;text-wrap:pretty">{{ dwGrenzeHinweis }}</p>
+          </section>
+
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 10 Abs. 1 Nr. 5 EStG</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Kinderbetreuung</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Je Kind gedeckelt, Verpflegung schon abgezogen.</p>
+            <sc-if value="{{ btKarteLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist keine Betreuung erfasst.</p>
+            </sc-if>
+            <table class="table">
+              <tbody>
+                <sc-for list="{{ btKarte }}" as="r" hint-placeholder-count="1">
+                  <tr>
+                    <td>
+                      <div>{{ r.kind }}</div>
+                      <div class="text-muted" style="font-size:11px">{{ r.basis }} · {{ r.hinweis }}</div>
+                    </td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ r.ansatz }}</td>
+                  </tr>
+                </sc-for>
+                <tr>
+                  <td style="font-weight:600">Als Sonderausgaben</td>
+                  <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600">{{ btKarteSumme }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ btKarteUrteil }}</p>
+          </section>
+
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 7 EStG</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Abschreibungen</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Was in {{ jahr }} läuft und was in den Folgejahren noch kommt.</p>
+            <sc-if value="{{ afaLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Kein Gegenstand mit Nutzungsdauer über einem Jahr erfasst.</p>
+            </sc-if>
+            <table class="table">
+              <tbody>
+                <sc-for list="{{ afaZeilen }}" as="r" hint-placeholder-count="2">
+                  <tr>
+                    <td>
+                      <div>{{ r.bez }}</div>
+                      <div class="text-muted" style="font-size:11px">{{ r.jahrText }}</div>
+                    </td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ r.rate }}</td>
+                  </tr>
+                </sc-for>
+                <sc-for list="{{ afaKommend }}" as="r" hint-placeholder-count="2">
+                  <tr>
+                    <td style="color:color-mix(in srgb, var(--color-text) 55%, transparent)">noch offen in {{ r.label }}</td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ r.wert }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Kontrolle</div>
+            <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Beitragsentwicklung</h3>
+            <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Alle Versicherungsbeiträge im Jahr, über alle Personen.</p>
+            <sc-if value="{{ beitragLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Noch keine Versicherung erfasst.</p>
+            </sc-if>
+            <table class="table">
+              <tbody>
+                <sc-for list="{{ beitragZeilen }}" as="r" hint-placeholder-count="3">
+                  <tr>
+                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent);font-weight: {{ r.gewicht }}">{{ r.label }}</td>
+                    <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-size:12px;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ r.delta }}</td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent;margin-bottom:var(--space-8)">
+          <h3 style="margin:0 0 var(--space-1);font-family:var(--font-heading);font-size:18px">Monatsübersicht</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Erfasste Tage je Monat, gestapelt nach Kategorie. Balkenlänge im Verhältnis zum stärksten Monat.</p>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <sc-for list="{{ monatsBalken }}" as="b" hint-placeholder-count="12">
+              <div style="display:grid;grid-template-columns:38px minmax(0,1fr) 34px;align-items:center;gap:var(--space-3)">
+                <div class="text-muted" style="font-family:var(--font-heading);font-size:12px;letter-spacing:0.04em;text-transform:uppercase">{{ b.monat }}</div>
+                <div style="display:flex;align-items:stretch;height:26px;background:color-mix(in srgb, var(--color-text) 4%, transparent)">
+                  <sc-for list="{{ b.segmente }}" as="s" hint-placeholder-count="3">
+                    <div title="{{ s.titel }}" style="width: {{ s.breite }};background: {{ s.farbe }};color: {{ s.auf }};display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:12px;font-variant-numeric:tabular-nums;overflow:hidden">{{ s.zahl }}</div>
+                  </sc-for>
+                </div>
+                <div style="font-family:var(--font-heading);font-size:13px;font-variant-numeric:tabular-nums;text-align:right;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ b.gesamt }}</div>
+              </div>
             </sc-for>
           </div>
         </section>
@@ -503,6 +731,13 @@
                   </sc-for>
                 </select>
               </div>
+              <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ bfKatHinweis }}</div>
+              <sc-if value="{{ bfArbeitSichtbar }}" hint-placeholder-val="{{ false }}">
+                <div class="field">
+                  <label>davon Arbeits- und Fahrtkosten € — nur diese zählen für § 35a</label>
+                  <input class="input" type="number" step="0.01" min="0" inputMode="decimal" value="{{ bfArbeit }}" onChange="{{ bfArbeitAendern }}" style="min-height:40px;border-radius:0">
+                </div>
+              </sc-if>
               <div class="field">
                 <label>Person</label>
                 <select class="input" value="{{ bfPerson }}" onChange="{{ bfPersonAendern }}" style="min-height:40px;border-radius:0">
@@ -538,6 +773,689 @@
         </div>
       </div>
     </sc-if>
+
+
+    <sc-if value="{{ istVertraege }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Versicherungen">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6)">
+          <h2 style="margin:0;font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Versicherungen {{ jahr }}</h2>
+          <button data-nodruck="1" class="btn btn-secondary" onClick="{{ drucken }}" style="border-radius:0;min-height:36px">Als PDF drucken</button>
+          <div data-nodruck="1" class="seg" style="border-color:var(--color-divider);margin-left:auto">
+            <sc-for list="{{ vertragPersonFilter }}" as="p" hint-placeholder-count="2">
+              <button onClick="{{ p.klick }}" style="min-height:32px;padding:var(--space-1) var(--space-4);border:0;border-left:1px solid var(--color-divider);background: {{ p.bg }};color: {{ p.fg }};font-family:var(--font-heading);font-weight:var(--font-heading-weight);cursor:pointer">{{ p.name }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div data-zweispaltig="1" style="display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:var(--space-8);align-items:start">
+          <div style="display:flex;flex-direction:column;gap:var(--space-6)">
+            <sc-if value="{{ vertragLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist noch keine Versicherung erfasst. Rechts anlegen — die Art bestimmt, wie das Finanzamt den Beitrag behandelt.</p>
+            </sc-if>
+            <sc-for list="{{ vertragGruppen }}" as="g" hint-placeholder-count="2">
+              <section style="border:1px solid var(--color-divider);padding:var(--space-4)">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-3)">
+                  <h3 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.03em;text-transform:uppercase">{{ g.name }}</h3>
+                  <span class="text-muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase">{{ g.norm }}</span>
+                  <span style="margin-left:auto;font-family:var(--font-heading);font-size:19px;font-variant-numeric:tabular-nums">{{ g.summe }}</span>
+                </div>
+                <p class="text-muted" style="margin:2px 0 var(--space-3);font-size:11px;max-width:62ch;text-wrap:pretty">{{ g.grenze }}</p>
+                <div data-scrollbox="1" style="overflow-x:auto">
+                  <table data-tabelle="1" class="table">
+                    <thead>
+                      <tr>
+                        <th data-erstespalte="1">Vertrag</th>
+                        <th data-nurbreit="1">Person</th>
+                        <th data-nurbreit="1" style="white-space:nowrap">Laufzeit</th>
+                        <th style="text-align:right;white-space:nowrap">Jahresbeitrag</th>
+                        <th style="text-align:right;white-space:nowrap">Anteil</th>
+                        <th style="text-align:right;white-space:nowrap">Absetzbar</th>
+                        <th data-nodruck="1"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <sc-for list="{{ g.zeilen }}" as="z" hint-placeholder-count="2">
+                        <tr>
+                          <td>
+                            <div>{{ z.bez }}</div>
+                            <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.gesellschaft }} · {{ z.detail }}</div>
+                          </td>
+                          <td data-nurbreit="1" style="white-space:nowrap">{{ z.person }}</td>
+                          <td data-nurbreit="1" style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.laufzeit }}</td>
+                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.beitrag }}</td>
+                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 60%, transparent)">{{ z.anteil }}</td>
+                          <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.anrechnung }}</td>
+                          <td data-nodruck="1" style="text-align:right;white-space:nowrap">
+                            <button class="btn btn-ghost" onClick="{{ z.bearbeiten }}" style="min-height:30px;padding:2px 8px;border-radius:0">Ändern</button>
+                            <button class="btn btn-ghost" onClick="{{ z.loeschen }}" style="min-height:30px;padding:2px 8px;border-radius:0">Löschen</button>
+                          </td>
+                        </tr>
+                      </sc-for>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </sc-for>
+
+            <section style="border:1px solid var(--color-text);padding:var(--space-4)">
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
+              <table class="table" style="margin-top:var(--space-2)">
+                <tbody>
+                  <tr>
+                    <td>Beitragslast je Monat</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ vertragMonatlich }}</td>
+                  </tr>
+                  <tr>
+                    <td>Beitrag im Jahr — {{ vertragAnzahl }} Verträge im Bestand</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ vertragBeitragGesamt }}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:600">Davon steuerlich ansetzbar</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ vertragAbsetzbar }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;max-width:62ch;text-wrap:pretty">Ansetzbar heißt erklärt, nicht erstattet. Was davon wirkt, entscheiden die Höchstbeträge der jeweiligen Gruppe.</p>
+            </section>
+          </div>
+
+          <aside data-seitenspalte="1" data-nodruck="1" style="position:sticky;top:78px;border:1px solid var(--color-text);padding:var(--space-4)">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Erfassen</div>
+            <h3 style="margin:0 0 var(--space-3);font-family:var(--font-heading);font-size:17px">{{ vertragTitel }}</h3>
+
+            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+              <div class="field">
+                <label>Art des Vertrags</label>
+                <select class="input" value="{{ vfArt }}" onChange="{{ vfArtAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ artOptionen }}" as="o" hint-placeholder-count="12">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+              <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ vfArtHinweis }}</div>
+
+              <sc-for list="{{ vertragFelder }}" as="fd" hint-placeholder-count="5">
+                <div class="field">
+                  <label>{{ fd.label }}</label>
+                  <input class="input" type="{{ fd.typ }}" step="{{ fd.schritt }}" value="{{ fd.wert }}" onChange="{{ fd.aendern }}" style="min-height:40px;border-radius:0">
+                </div>
+              </sc-for>
+
+              <sc-if value="{{ vfBasisSichtbar }}" hint-placeholder-val="{{ false }}">
+                <div class="field">
+                  <label>{{ vfBasisLabel }}</label>
+                  <input class="input" type="number" step="0.01" min="0" inputMode="decimal" value="{{ vfBasis }}" onChange="{{ vfBasisAendern }}" style="min-height:40px;border-radius:0">
+                </div>
+              </sc-if>
+
+              <div style="margin-top:var(--space-1);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Beitragsänderungen</div>
+              <div class="text-muted" style="font-size:11px;text-wrap:pretty">Ändert sich der Beitrag, hier den Monat und den neuen Betrag eintragen. Der Vertrag bleibt einer — gerechnet wird monatsgenau.</div>
+              <div style="display:flex;flex-direction:column;gap:var(--space-1)">
+                <sc-for list="{{ vfStufen }}" as="st" hint-placeholder-count="0">
+                  <div style="display:flex;align-items:center;gap:var(--space-2)">
+                    <input class="input" type="month" value="{{ st.ab }}" onChange="{{ st.abAendern }}" style="flex:1;min-width:0;min-height:36px;border-radius:0;font-size:13px">
+                    <input class="input" type="number" step="0.01" inputMode="decimal" placeholder="€" value="{{ st.betrag }}" onChange="{{ st.betragAendern }}" style="width:92px;min-height:36px;border-radius:0;font-size:13px">
+                    <button class="btn btn-ghost" onClick="{{ st.weg }}" style="min-height:36px;padding:2px 8px;border-radius:0">Weg</button>
+                  </div>
+                </sc-for>
+              </div>
+              <button class="btn btn-secondary" onClick="{{ vfStufeHinzu }}" style="align-self:flex-start;border-radius:0;border-style:dashed;min-height:36px;font-size:13px">Beitragsänderung</button>
+
+              <div class="field">
+                <label>Zahlweise</label>
+                <select class="input" value="{{ vfRhythmus }}" onChange="{{ vfRhythmusAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ rhythmusOptionen }}" as="o" hint-placeholder-count="4">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Person</label>
+                <select class="input" value="{{ vfPerson }}" onChange="{{ vfPersonAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ personOptionen }}" as="o" hint-placeholder-count="2">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+
+              <div style="margin-top:var(--space-2);border:1px solid var(--color-text);padding:var(--space-3)">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-2)">
+                  <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Absetzbarkeit</div>
+                  <div class="text-muted" style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase">{{ vfUrteilNorm }}</div>
+                </div>
+                <div style="margin-top:2px;font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:17px;line-height:1.2;color: {{ vfUrteilFarbe }}">{{ vfUrteil }}</div>
+                <div style="margin-top:2px;font-size:12px;font-variant-numeric:tabular-nums">{{ vfRechnung }}</div>
+                <div class="text-muted" style="margin-top:var(--space-2);font-size:11px;text-wrap:pretty">{{ vfAbzugHinweis }}</div>
+                <sc-if value="{{ vfAnteilKnopfSichtbar }}" hint-placeholder-val="{{ true }}">
+                  <button class="btn btn-ghost" onClick="{{ vfAnteilFreiSchalten }}" style="margin-top:var(--space-2);padding:2px 0;border-radius:0;min-height:28px;font-size:12px;text-decoration:underline;text-underline-offset:2px">{{ vfAnteilKnopf }}</button>
+                </sc-if>
+                <sc-if value="{{ vfAnteilFrei }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:var(--space-2);margin-top:var(--space-2);padding-top:var(--space-3);border-top:1px solid var(--color-divider)">
+                    <div class="field">
+                      <label>Zählt als</label>
+                      <select class="input" value="{{ vfAbzug }}" onChange="{{ vfAbzugAendern }}" style="min-height:40px;border-radius:0">
+                        <sc-for list="{{ abzugOptionen }}" as="o" hint-placeholder-count="7">
+                          <option value="{{ o.id }}">{{ o.name }}</option>
+                        </sc-for>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Absetzbarer Anteil %</label>
+                      <input class="input" type="number" step="1" min="0" max="100" inputMode="decimal" value="{{ vfAnteil }}" onChange="{{ vfAnteilAendern }}" style="min-height:40px;border-radius:0">
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+
+              <div class="field">
+                <label>Notiz</label>
+                <textarea class="input" rows="2" value="{{ vfNotiz }}" onChange="{{ vfNotizAendern }}" style="min-height:56px;border-radius:0"></textarea>
+              </div>
+            </div>
+
+            <div style="margin-top:var(--space-2);min-height:16px;font-size:12px;color:var(--color-accent-800)">{{ vertragFehler }}</div>
+            <div class="text-muted" style="min-height:16px;font-size:11px">{{ vertragHinweis }}</div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-2)">
+              <button class="btn btn-primary" onClick="{{ vertragSpeichern }}" style="border-radius:0;min-height:40px">Vertrag speichern</button>
+              <button class="btn btn-secondary" onClick="{{ vertragVerwerfen }}" style="border-radius:0;min-height:40px">Leeren</button>
+              <sc-if value="{{ vfVorhanden }}" hint-placeholder-val="{{ false }}">
+                <button class="btn btn-ghost" onClick="{{ vertragLoeschen }}" style="border-radius:0;min-height:40px">Löschen</button>
+              </sc-if>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </sc-if>
+
+
+    <sc-if value="{{ istBetreuung }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Betreuung">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6)">
+          <h2 style="margin:0;font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Kinderbetreuung {{ jahr }}</h2>
+          <button data-nodruck="1" class="btn btn-secondary" onClick="{{ drucken }}" style="border-radius:0;min-height:36px">Als PDF drucken</button>
+        </div>
+
+        <div data-zweispaltig="1" style="display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:var(--space-8);align-items:start">
+          <div style="display:flex;flex-direction:column;gap:var(--space-6)">
+            <sc-if value="{{ btLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist noch keine Betreuung erfasst. Ändert sich der Beitrag im Jahr, kommt er nicht als zweiter Eintrag, sondern als Änderung ab einem Monat dazu.</p>
+            </sc-if>
+            <sc-for list="{{ btGruppen }}" as="g" hint-placeholder-count="1">
+              <section style="border:1px solid var(--color-divider);padding:var(--space-4)">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-3)">
+                  <h3 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.03em;text-transform:uppercase">{{ g.kind }}</h3>
+                  <span class="text-muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase">Betreuungskosten {{ g.basis }}</span>
+                  <span style="margin-left:auto;font-family:var(--font-heading);font-size:19px;font-variant-numeric:tabular-nums">{{ g.ansatz }}</span>
+                </div>
+                <p class="text-muted" style="margin:2px 0 var(--space-3);font-size:11px;text-wrap:pretty">{{ g.deckelHinweis }}</p>
+                <div data-scrollbox="1" style="overflow-x:auto">
+                  <table data-tabelle="1" class="table">
+                    <thead>
+                      <tr>
+                        <th data-erstespalte="1">Betreuung</th>
+                        <th data-nurbreit="1" style="white-space:nowrap">Laufzeit</th>
+                        <th style="text-align:right;white-space:nowrap">Gezahlt</th>
+                        <th style="text-align:right;white-space:nowrap">Betreuungsanteil</th>
+                        <th data-nodruck="1"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <sc-for list="{{ g.zeilen }}" as="z" hint-placeholder-count="1">
+                        <tr>
+                          <td>
+                            <div>{{ z.bez }}</div>
+                            <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.einrichtung }} · {{ z.detail }}</div>
+                          </td>
+                          <td data-nurbreit="1" style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.laufzeit }}</td>
+                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.brutto }}</td>
+                          <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.basis }}</td>
+                          <td data-nodruck="1" style="text-align:right;white-space:nowrap">
+                            <button class="btn btn-ghost" onClick="{{ z.bearbeiten }}" style="min-height:30px;padding:2px 8px;border-radius:0">Ändern</button>
+                            <button class="btn btn-ghost" onClick="{{ z.loeschen }}" style="min-height:30px;padding:2px 8px;border-radius:0">Löschen</button>
+                          </td>
+                        </tr>
+                      </sc-for>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </sc-for>
+
+            <section style="border:1px solid var(--color-text);padding:var(--space-4)">
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
+              <table class="table" style="margin-top:var(--space-2)">
+                <tbody>
+                  <tr>
+                    <td>Betreuungskosten ohne Verpflegung</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ btBasisGesamt }}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:600">Als Sonderausgaben ansetzbar</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ btAnsatzGesamt }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;max-width:62ch;text-wrap:pretty">{{ btKarteUrteil }}</p>
+            </section>
+          </div>
+
+          <aside data-seitenspalte="1" data-nodruck="1" style="position:sticky;top:78px;border:1px solid var(--color-text);padding:var(--space-4)">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Erfassen</div>
+            <h3 style="margin:0 0 var(--space-3);font-family:var(--font-heading);font-size:17px">{{ btTitel }}</h3>
+
+            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+              <div class="field">
+                <label>Art der Betreuung</label>
+                <select class="input" value="{{ btArt }}" onChange="{{ btArtAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ btArtOptionen }}" as="o" hint-placeholder-count="8">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+
+              <sc-for list="{{ btFelder }}" as="fd" hint-placeholder-count="6">
+                <div class="field">
+                  <label>{{ fd.label }}</label>
+                  <input class="input" type="{{ fd.typ }}" step="{{ fd.schritt }}" value="{{ fd.wert }}" onChange="{{ fd.aendern }}" style="min-height:40px;border-radius:0">
+                </div>
+              </sc-for>
+
+              <div class="field">
+                <label>Zahlweise</label>
+                <select class="input" value="{{ btRhythmus }}" onChange="{{ btRhythmusAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ rhythmusOptionen }}" as="o" hint-placeholder-count="4">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+
+              <div style="margin-top:var(--space-1);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Beitragsänderungen</div>
+              <div class="text-muted" style="font-size:11px;text-wrap:pretty">Steigt der Beitrag mitten im Jahr, hier den Monat und den neuen Betrag eintragen. Gerechnet wird monatsgenau.</div>
+              <div style="display:flex;flex-direction:column;gap:var(--space-1)">
+                <sc-for list="{{ btStufen }}" as="st" hint-placeholder-count="0">
+                  <div style="display:flex;align-items:center;gap:var(--space-2)">
+                    <input class="input" type="month" value="{{ st.ab }}" onChange="{{ st.abAendern }}" style="flex:1;min-width:0;min-height:36px;border-radius:0;font-size:13px">
+                    <input class="input" type="number" step="0.01" inputMode="decimal" placeholder="€" value="{{ st.betrag }}" onChange="{{ st.betragAendern }}" style="width:92px;min-height:36px;border-radius:0;font-size:13px">
+                    <button class="btn btn-ghost" onClick="{{ st.weg }}" style="min-height:36px;padding:2px 8px;border-radius:0">Weg</button>
+                  </div>
+                </sc-for>
+              </div>
+              <button class="btn btn-secondary" onClick="{{ btStufeHinzu }}" style="align-self:flex-start;border-radius:0;border-style:dashed;min-height:36px;font-size:13px">Beitragsänderung</button>
+
+              <div class="field">
+                <label>Notiz</label>
+                <textarea class="input" rows="2" value="{{ btNotiz }}" onChange="{{ btNotizAendern }}" style="min-height:56px;border-radius:0"></textarea>
+              </div>
+            </div>
+
+            <div style="margin-top:var(--space-2);min-height:16px;font-size:12px;color:var(--color-accent-800)">{{ btFehler }}</div>
+            <div class="text-muted" style="min-height:16px;font-size:11px">{{ btHinweis }}</div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-2)">
+              <button class="btn btn-primary" onClick="{{ btSpeichern }}" style="border-radius:0;min-height:40px">Speichern</button>
+              <button class="btn btn-secondary" onClick="{{ btVerwerfen }}" style="border-radius:0;min-height:40px">Leeren</button>
+              <sc-if value="{{ btVorhanden }}" hint-placeholder-val="{{ false }}">
+                <button class="btn btn-ghost" onClick="{{ btLoeschen }}" style="border-radius:0;min-height:40px">Löschen</button>
+              </sc-if>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </sc-if>
+
+
+    <sc-if value="{{ istTelekom }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Telekom">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6)">
+          <h2 style="margin:0;font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Telekommunikation {{ jahr }}</h2>
+          <button data-nodruck="1" class="btn btn-secondary" onClick="{{ drucken }}" style="border-radius:0;min-height:36px">Als PDF drucken</button>
+        </div>
+
+        <div data-zweispaltig="1" style="display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:var(--space-8);align-items:start">
+          <div style="display:flex;flex-direction:column;gap:var(--space-6)">
+            <sc-if value="{{ tkLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist noch kein Vertrag erfasst. Tarifwechsel im Jahr gehören als Änderung in denselben Eintrag, nicht als zweiter.</p>
+            </sc-if>
+            <sc-for list="{{ tkGruppen }}" as="g" hint-placeholder-count="1">
+              <section style="border:1px solid var(--color-divider);padding:var(--space-4)">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-3);margin-bottom:var(--space-2)">
+                  <h3 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.03em;text-transform:uppercase">{{ g.person }}</h3>
+                  <span class="text-muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase">Rechnungen {{ g.brutto }}</span>
+                  <span style="margin-left:auto;font-family:var(--font-heading);font-size:19px;font-variant-numeric:tabular-nums">{{ g.ansatz }}</span>
+                </div>
+                <div data-scrollbox="1" style="overflow-x:auto">
+                  <table data-tabelle="1" class="table">
+                    <thead>
+                      <tr>
+                        <th data-erstespalte="1">Vertrag</th>
+                        <th data-nurbreit="1" style="white-space:nowrap">Laufzeit</th>
+                        <th style="text-align:right;white-space:nowrap">Gezahlt</th>
+                        <th style="text-align:right;white-space:nowrap">Anteil</th>
+                        <th style="text-align:right;white-space:nowrap">Absetzbar</th>
+                        <th data-nodruck="1"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <sc-for list="{{ g.zeilen }}" as="z" hint-placeholder-count="1">
+                        <tr>
+                          <td>
+                            <div>{{ z.bez }}</div>
+                            <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.anbieter }} · {{ z.detail }}</div>
+                          </td>
+                          <td data-nurbreit="1" style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.laufzeit }}</td>
+                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.brutto }}</td>
+                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 60%, transparent)">{{ z.anteil }}</td>
+                          <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.ansatz }}</td>
+                          <td data-nodruck="1" style="text-align:right;white-space:nowrap">
+                            <button class="btn btn-ghost" onClick="{{ z.bearbeiten }}" style="min-height:30px;padding:2px 8px;border-radius:0">Ändern</button>
+                            <button class="btn btn-ghost" onClick="{{ z.loeschen }}" style="min-height:30px;padding:2px 8px;border-radius:0">Löschen</button>
+                          </td>
+                        </tr>
+                      </sc-for>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </sc-for>
+
+            <section style="border:1px solid var(--color-text);padding:var(--space-4)">
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
+              <table class="table" style="margin-top:var(--space-2)">
+                <tbody>
+                  <tr>
+                    <td>Rechnungen im Jahr</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ tkBruttoGesamt }}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:600">Als Werbungskosten ansetzbar</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ tkAnsatzGesamt }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;max-width:62ch;text-wrap:pretty">Der Betrag zählt zu den Werbungskosten und wirkt erst über dem Pauschbetrag von 1.230 €.</p>
+            </section>
+          </div>
+
+          <aside data-seitenspalte="1" data-nodruck="1" style="position:sticky;top:78px;border:1px solid var(--color-text);padding:var(--space-4)">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Erfassen</div>
+            <h3 style="margin:0 0 var(--space-3);font-family:var(--font-heading);font-size:17px">{{ tkTitel }}</h3>
+
+            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+              <div class="field">
+                <label>Art</label>
+                <select class="input" value="{{ tkArt }}" onChange="{{ tkArtAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ tkArtOptionen }}" as="o" hint-placeholder-count="5">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+
+              <sc-for list="{{ tkFelder }}" as="fd" hint-placeholder-count="4">
+                <div class="field">
+                  <label>{{ fd.label }}</label>
+                  <input class="input" type="{{ fd.typ }}" step="{{ fd.schritt }}" value="{{ fd.wert }}" onChange="{{ fd.aendern }}" style="min-height:40px;border-radius:0">
+                </div>
+              </sc-for>
+
+              <div class="field">
+                <label>Zahlweise</label>
+                <select class="input" value="{{ tkRhythmus }}" onChange="{{ tkRhythmusAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ rhythmusOptionen }}" as="o" hint-placeholder-count="4">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Person</label>
+                <select class="input" value="{{ tkPerson }}" onChange="{{ tkPersonAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ personOptionen }}" as="o" hint-placeholder-count="2">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+
+              <div style="margin-top:var(--space-1);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Beitragsänderungen</div>
+              <div style="display:flex;flex-direction:column;gap:var(--space-1)">
+                <sc-for list="{{ tkStufen }}" as="st" hint-placeholder-count="0">
+                  <div style="display:flex;align-items:center;gap:var(--space-2)">
+                    <input class="input" type="month" value="{{ st.ab }}" onChange="{{ st.abAendern }}" style="flex:1;min-width:0;min-height:36px;border-radius:0;font-size:13px">
+                    <input class="input" type="number" step="0.01" inputMode="decimal" placeholder="€" value="{{ st.betrag }}" onChange="{{ st.betragAendern }}" style="width:92px;min-height:36px;border-radius:0;font-size:13px">
+                    <button class="btn btn-ghost" onClick="{{ st.weg }}" style="min-height:36px;padding:2px 8px;border-radius:0">Weg</button>
+                  </div>
+                </sc-for>
+              </div>
+              <button class="btn btn-secondary" onClick="{{ tkStufeHinzu }}" style="align-self:flex-start;border-radius:0;border-style:dashed;min-height:36px;font-size:13px">Beitragsänderung</button>
+
+              <div style="margin-top:var(--space-2);border:1px solid var(--color-text);padding:var(--space-3)">
+                <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Beruflicher Anteil</div>
+                <div class="field" style="margin-top:var(--space-2)">
+                  <select class="input" value="{{ tkMethode }}" onChange="{{ tkMethodeAendern }}" style="min-height:40px;border-radius:0">
+                    <sc-for list="{{ tkMethodeOptionen }}" as="o" hint-placeholder-count="2">
+                      <option value="{{ o.id }}">{{ o.name }}</option>
+                    </sc-for>
+                  </select>
+                </div>
+                <div class="field" style="margin-top:var(--space-2)">
+                  <label>Anteil %</label>
+                  <input class="input" type="number" step="1" min="0" max="100" inputMode="decimal" value="{{ tkAnteil }}" onChange="{{ tkAnteilAendern }}" style="min-height:40px;border-radius:0">
+                </div>
+                <div class="text-muted" style="margin-top:var(--space-2);font-size:11px;text-wrap:pretty">{{ tkMethodeHinweis }}</div>
+              </div>
+
+              <div class="field">
+                <label>Notiz</label>
+                <textarea class="input" rows="2" value="{{ tkNotiz }}" onChange="{{ tkNotizAendern }}" style="min-height:56px;border-radius:0"></textarea>
+              </div>
+            </div>
+
+            <div style="margin-top:var(--space-2);min-height:16px;font-size:12px;color:var(--color-accent-800)">{{ tkFehler }}</div>
+            <div class="text-muted" style="min-height:16px;font-size:11px">{{ tkHinweis }}</div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-2)">
+              <button class="btn btn-primary" onClick="{{ tkSpeichern }}" style="border-radius:0;min-height:40px">Speichern</button>
+              <button class="btn btn-secondary" onClick="{{ tkVerwerfen }}" style="border-radius:0;min-height:40px">Leeren</button>
+              <sc-if value="{{ tkVorhanden }}" hint-placeholder-val="{{ false }}">
+                <button class="btn btn-ghost" onClick="{{ tkLoeschen }}" style="border-radius:0;min-height:40px">Löschen</button>
+              </sc-if>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </sc-if>
+
+
+    <sc-if value="{{ istDienstwagen }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Dienstwagen">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6)">
+          <h2 style="margin:0;font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Dienstwagen {{ jahr }}</h2>
+          <button data-nodruck="1" class="btn btn-secondary" onClick="{{ drucken }}" style="border-radius:0;min-height:36px">Als PDF drucken</button>
+        </div>
+
+        <div data-zweispaltig="1" style="display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:var(--space-8);align-items:start">
+          <div style="display:flex;flex-direction:column;gap:var(--space-6)">
+            <sc-if value="{{ dwLeer }}" hint-placeholder-val="{{ false }}">
+              <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist kein Fahrzeug erfasst. Jeder Wagen kommt mit seinem Überlassungszeitraum als eigener Eintrag — bei einem Wechsel im Jahr also zwei.</p>
+            </sc-if>
+
+            <sc-for list="{{ dwZeilen }}" as="z" hint-placeholder-count="1">
+              <section style="border:1px solid var(--color-divider);padding:var(--space-4)">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-3);margin-bottom:var(--space-2)">
+                  <h3 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.03em;text-transform:uppercase">{{ z.bez }}</h3>
+                  <span class="text-muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase">{{ z.antrieb }}</span>
+                  <span style="margin-left:auto;font-family:var(--font-heading);font-size:19px;font-variant-numeric:tabular-nums">{{ z.basis }}</span>
+                  <span data-nodruck="1" style="display:flex;gap:var(--space-1)">
+                    <button class="btn btn-ghost" onClick="{{ z.bearbeiten }}" style="min-height:30px;padding:2px 8px;border-radius:0">Ändern</button>
+                    <button class="btn btn-ghost" onClick="{{ z.loeschen }}" style="min-height:30px;padding:2px 8px;border-radius:0">Löschen</button>
+                  </span>
+                </div>
+                <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.laufzeit }} · {{ z.detail }}</div>
+                <table class="table" style="margin-top:var(--space-3)">
+                  <tbody>
+                    <tr>
+                      <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Privatnutzung, 1 % im Monat</td>
+                      <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ z.privat }}</td>
+                    </tr>
+                    <tr>
+                      <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Arbeitsweg pauschal, 0,03 %</td>
+                      <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ z.pausch }}</td>
+                    </tr>
+                    <tr>
+                      <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Arbeitsweg je Fahrt, 0,002 %</td>
+                      <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ z.einzel }}</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600">Unterschied</td>
+                      <td style="text-align:right;font-family:var(--font-heading);font-weight:600;font-variant-numeric:tabular-nums;font-size:16px">{{ z.diff }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+            </sc-for>
+
+            <section style="border:1px solid var(--color-divider);padding:var(--space-4)">
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Monat für Monat</div>
+              <h3 style="margin:0 0 var(--space-1);font-family:var(--font-heading);font-size:17px">Pauschal gegen Einzelbewertung</h3>
+              <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2)">
+                <label class="text-muted" style="margin:0;font-size:12px;white-space:nowrap">Entfernung einfach</label>
+                <input class="input" type="number" step="1" min="0" value="{{ km }}" onChange="{{ kmAendern }}" style="width:84px;min-height:34px;border-radius:0;font-family:var(--font-heading);font-variant-numeric:tabular-nums">
+                <span class="text-muted" style="font-size:12px">km</span>
+              </div>
+              <p class="text-muted" style="margin:0 0 var(--space-3);font-size:11px;text-wrap:pretty">{{ dwKmHinweis }} Grün heißt: die Einzelbewertung ist in diesem Monat günstiger.</p>
+              <div data-scrollbox="1" style="overflow-x:auto">
+                <table data-tabelle="1" class="table">
+                  <thead>
+                    <tr>
+                      <th data-erstespalte="1">Monat</th>
+                      <th style="text-align:center">Fahrten</th>
+                      <th style="text-align:right;white-space:nowrap">0,03 % pauschal</th>
+                      <th style="text-align:right;white-space:nowrap">0,002 % je Fahrt</th>
+                      <th style="text-align:right">Günstiger</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <sc-for list="{{ dwMonate }}" as="r" hint-placeholder-count="12">
+                      <tr style="background: {{ r.bg }}">
+                        <td style="white-space:nowrap">{{ r.monat }}</td>
+                        <td style="text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px">{{ r.fahrten }}</td>
+                        <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ r.pausch }}</td>
+                        <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ r.einzel }}</td>
+                        <td style="text-align:right;white-space:nowrap;font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent)">{{ r.besser }}</td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+              <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ dwGrenzeHinweis }}</p>
+            </section>
+
+            <section style="border:1px solid var(--color-text);padding:var(--space-4)">
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
+              <table class="table" style="margin-top:var(--space-2)">
+                <tbody>
+                  <tr>
+                    <td>Geldwerter Vorteil, wie abgerechnet</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ dwVorteilPausch }}</td>
+                  </tr>
+                  <tr>
+                    <td>Mit Einzelbewertung der Fahrten</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ dwVorteilEinzel }}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:600">Arbeitslohn nach unten korrigieren um</td>
+                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ dwKorrektur }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p style="margin:var(--space-3) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ dwErsparnis }}</p>
+              <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px;max-width:66ch;text-wrap:pretty">{{ dwEigenHinweis }}</p>
+              <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px;max-width:66ch;text-wrap:pretty">Der Wechsel zur Einzelbewertung ist in der Steuererklärung nachholbar, wenn der Arbeitgeber pauschal mit 0,03 % abgerechnet hat. Nötig sind eine monatsweise Aufstellung der Fahrten und die Lohnabrechnung; die Methode gilt dann für das ganze Jahr. Die Entfernungspauschale bleibt davon unberührt und wird weiter angesetzt.</p>
+            </section>
+          </div>
+
+          <aside data-seitenspalte="1" data-nodruck="1" style="position:sticky;top:78px;border:1px solid var(--color-text);padding:var(--space-4)">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Erfassen</div>
+            <h3 style="margin:0 0 var(--space-3);font-family:var(--font-heading);font-size:17px">{{ dwTitel }}</h3>
+
+            <label class="btn btn-primary" style="border-radius:0;min-height:40px;margin-bottom:var(--space-2);cursor:pointer">
+              Fahrzeugabrechnung hochladen
+              <input type="file" accept="application/pdf" onChange="{{ dwAbrechnungWaehlen }}" style="display:none">
+            </label>
+            <div class="text-muted" style="margin-bottom:var(--space-3);font-size:11px;text-wrap:pretty">Die persönliche Fahrzeugabrechnung des Arbeitgebers als PDF — Modell, Listenpreis, Bemessungsgrundlage, Monatsrate und Stichtag werden übernommen.</div>
+
+            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+              <div class="field">
+                <label>Antrieb</label>
+                <select class="input" value="{{ dwAntrieb }}" onChange="{{ dwAntriebAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-for list="{{ dwAntriebOptionen }}" as="o" hint-placeholder-count="5">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                </select>
+              </div>
+              <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ dwFormHinweis }}</div>
+
+              <sc-for list="{{ dwFelder }}" as="fd" hint-placeholder-count="7">
+                <div class="field">
+                  <label>{{ fd.label }}</label>
+                  <input class="input" type="{{ fd.typ }}" step="{{ fd.schritt }}" value="{{ fd.wert }}" onChange="{{ fd.aendern }}" style="min-height:40px;border-radius:0">
+                </div>
+              </sc-for>
+
+              <div class="field">
+                <label>Notiz</label>
+                <textarea class="input" rows="2" value="{{ dwNotiz }}" onChange="{{ dwNotizAendern }}" style="min-height:56px;border-radius:0"></textarea>
+              </div>
+            </div>
+
+            <div style="margin-top:var(--space-2);min-height:16px;font-size:12px;color:var(--color-accent-800)">{{ dwFehler }}</div>
+            <div class="text-muted" style="min-height:16px;font-size:11px">{{ dwHinweis }}</div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-2)">
+              <button class="btn btn-primary" onClick="{{ dwSpeichern }}" style="border-radius:0;min-height:40px">Speichern</button>
+              <button class="btn btn-secondary" onClick="{{ dwVerwerfen }}" style="border-radius:0;min-height:40px">Leeren</button>
+              <sc-if value="{{ dwVorhanden }}" hint-placeholder-val="{{ false }}">
+                <button class="btn btn-ghost" onClick="{{ dwLoeschen }}" style="border-radius:0;min-height:40px">Löschen</button>
+              </sc-if>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ istUebergabe }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Übergabe" style="max-width:820px">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-bottom:var(--space-2)">
+          <h2 style="margin:0;font-family:var(--font-heading);font-size:22px;letter-spacing:0.03em;text-transform:uppercase">Übergabe {{ jahr }}</h2>
+          <button data-nodruck="1" class="btn btn-secondary" onClick="{{ drucken }}" style="border-radius:0;min-height:36px">Als PDF drucken</button>
+        </div>
+        <p class="text-muted" style="margin:0 0 var(--space-6);font-size:12px;max-width:70ch;text-wrap:pretty">Jede Zahl steht neben dem Feld, in das sie gehört. Angegeben sind Eingabewerte, keine Ergebnisse: Höchstbeträge, Pauschbeträge und Prozentsätze rechnet die Steuersoftware selbst. Zeilennummern der Vordrucke ändern sich jährlich, deshalb stehen hier die Feldbezeichnungen.</p>
+
+        <div style="display:flex;flex-direction:column;gap:var(--space-6)">
+          <sc-for list="{{ uebergabe }}" as="b" hint-placeholder-count="3">
+            <section style="border:1px solid var(--color-text);padding:var(--space-4)">
+              <h3 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.03em;text-transform:uppercase">{{ b.titel }}</h3>
+              <p class="text-muted" style="margin:2px 0 var(--space-3);font-size:11px;max-width:70ch;text-wrap:pretty">{{ b.hinweis }}</p>
+              <table class="table">
+                <tbody>
+                  <sc-for list="{{ b.zeilen }}" as="z" hint-placeholder-count="4">
+                    <tr>
+                      <td>
+                        <div>{{ z.feld }}</div>
+                        <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.note }}</div>
+                      </td>
+                      <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-size:17px;font-variant-numeric:tabular-nums">{{ z.wert }}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </section>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
 
     <sc-if value="{{ istEinstellungen }}" hint-placeholder-val="{{ false }}">
       <div data-screen-label="Einstellungen" style="max-width:680px;display:flex;flex-direction:column;gap:var(--space-6)">
@@ -609,6 +1527,28 @@
 
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
           <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">06</div>
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Grenzsteuersatz</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px;text-wrap:pretty">Der Satz, mit dem der letzte verdiente Euro besteuert wird — er steht im letzten Bescheid oder liegt bei den meisten Angestellten zwischen 30 und 42 %. Damit rechnet die Auswertung Ansätze in ersparte Steuer um. Leer lassen heißt: keine Umrechnung.</p>
+          <div class="field" style="display:flex;align-items:center;gap:var(--space-3)">
+            <input class="input" type="number" step="1" min="0" max="50" inputMode="decimal" placeholder="z. B. 42" value="{{ grenzsteuer }}" onChange="{{ grenzsteuerAendern }}" style="width:96px;min-height:40px;border-radius:0;font-family:var(--font-heading);font-variant-numeric:tabular-nums">
+            <span class="text-muted" style="font-size:12px">%</span>
+          </div>
+        </section>
+
+        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">07</div>
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">PKV-Projekt</h3>
+          <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px;text-wrap:pretty">Holt die Jahressummen aus dem Gist des PKV-Dashboards — selbst getragene Behandlungskosten, Erstattungen und die voraussichtliche Beitragsrückerstattung. Gesucht wird der Gist mit <em>pkv-stand.json</em> unter demselben Token. Die PIN wird nur für diesen Abruf verwendet und nicht gespeichert; ist das Feld leer, gilt die PIN dieser App.</p>
+          <div class="field">
+            <label>PIN des PKV-Projekts</label>
+            <input class="input" type="password" autoComplete="off" placeholder="leer = gleiche PIN" value="{{ pkvPin }}" onChange="{{ pkvPinTippen }}" style="min-height:40px;border-radius:0;letter-spacing:0.18em">
+          </div>
+          <button class="btn btn-secondary" onClick="{{ pkvHolen }}" style="margin-top:var(--space-3);border-radius:0;min-height:40px">Werte für {{ jahr }} holen</button>
+          <div class="text-muted" style="margin-top:var(--space-2);min-height:18px;font-size:12px;text-wrap:pretty">{{ pkvHinweis }}</div>
+        </section>
+
+        <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">08</div>
           <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Belegauslesen prüfen</h3>
           <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Testet, ob Texterkennung und PDF-Leser auf diesem Gerät geladen und gelesen werden können. Stand {{ bauStand }}.</p>
           <button class="btn btn-secondary" onClick="{{ pruefeErkennung }}" style="border-radius:0;min-height:40px">Prüfung starten</button>
@@ -659,8 +1599,8 @@ const KAT = [
 ];
 const KAT_MAP = Object.fromEntries(KAT.map(k => [k.id, k]));
 const MONATE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-const TABS = [['kalender','Kalender'],['wochen','Wochen'],['belege','Belege'],['auswertung','Auswertung'],['einstellungen','Einstellungen']];
-const BAU_STAND = '05.08.2026';
+const TABS = [['kalender','Kalender'],['wochen','Wochen'],['belege','Belege'],['vertraege','Versicherungen'],['betreuung','Betreuung'],['telekom','Telekom'],['dienstwagen','Dienstwagen'],['auswertung','Auswertung'],['uebergabe','Übergabe'],['einstellungen','Einstellungen']];
+const BAU_STAND = '06.08.2026 · Versicherungen, § 35a, AfA';
 const AUSGABE_KAT = [
   { id: 'arbeitsmittel',  name: 'Arbeitsmittel',              art: 'Werbungskosten' },
   { id: 'fachliteratur',  name: 'Fachliteratur',              art: 'Werbungskosten' },
@@ -669,11 +1609,287 @@ const AUSGABE_KAT = [
   { id: 'steuerberatung', name: 'Steuerberatung',             art: 'Werbungskosten' },
   { id: 'spenden',        name: 'Spenden',                    art: 'Sonderausgaben' },
   { id: 'versicherung',   name: 'Versicherungen',             art: 'Sonderausgaben' },
-  { id: 'handwerker',     name: 'Handwerker und haushaltsnahe Dienste', art: 'Haushaltsnah' },
+  { id: 'handwerker',     name: 'Handwerkerleistungen',        art: 'Haushaltsnah' },
+  { id: 'haushaltsnah',   name: 'Haushaltsnahe Dienste',       art: 'Haushaltsnah' },
   { id: 'sonstiges',      name: 'Sonstiges',                  art: 'Sonstiges' }
 ];
 const AUSGABE_MAP = Object.fromEntries(AUSGABE_KAT.map(k => [k.id, k]));
-const LEER_BELEG = { id: '', datum: '', bez: '', haendler: '', betrag: '', ust: '', kat: 'arbeitsmittel', person: '', anteil: '100', nd: '', notiz: '', dateien: [] };
+const LEER_BELEG = { id: '', datum: '', bez: '', haendler: '', betrag: '', ust: '', kat: 'arbeitsmittel', person: '', anteil: '100', nd: '', arbeit: '', notiz: '', dateien: [] };
+const RHYTHMUS = [
+  { id: 'monatlich',        name: 'monatlich',        faktor: 12 },
+  { id: 'vierteljaehrlich', name: 'vierteljährlich',  faktor: 4 },
+  { id: 'halbjaehrlich',    name: 'halbjährlich',     faktor: 2 },
+  { id: 'jaehrlich',        name: 'jährlich',         faktor: 1 }
+];
+const RHYTHMUS_MAP = Object.fromEntries(RHYTHMUS.map(r => [r.id, r]));
+const ABZUG = [
+  { id: 'altersvorsorge', name: 'Altersvorsorge',            norm: '§ 10 Abs. 1 Nr. 2 EStG',  grenze: 'Voll ansetzbar bis zum Höchstbeitrag der knappschaftlichen Rentenversicherung. Bei Arbeitnehmern zählt der Arbeitgeberanteil mit.' },
+  { id: 'basis',          name: 'Basis Kranken und Pflege',  norm: '§ 10 Abs. 1 Nr. 3 EStG',  grenze: 'Ohne Höchstbetrag abziehbar, soweit es die Basisabsicherung betrifft.' },
+  { id: 'sonstige',       name: 'Sonstige Vorsorge',         norm: '§ 10 Abs. 1 Nr. 3a EStG', grenze: 'Höchstens 1.900 € bei Arbeitnehmern. Dieser Betrag ist durch die Basisbeiträge zur Kranken- und Pflegeversicherung meist schon ausgeschöpft.' },
+  { id: 'riester',        name: 'Riester',                   norm: '§ 10a EStG',              grenze: 'Bis 2.100 € im Jahr einschließlich der Zulagen, Anlage AV. Das Finanzamt prüft, ob Abzug oder Zulage günstiger ist.' },
+  { id: 'werbung',        name: 'Werbungskosten',            norm: '§ 9 EStG',                grenze: 'Wirkt erst, sobald alle Werbungskosten zusammen über dem Pauschbetrag von 1.230 € liegen.' },
+  { id: 'spenden',        name: 'Spenden',                   norm: '§ 10b EStG',              grenze: 'Bis 20 % des Gesamtbetrags der Einkünfte, Nachweis über die Zuwendungsbestätigung.' },
+  { id: 'keine',          name: 'Nicht absetzbar',           norm: 'private Lebensführung',   grenze: 'Sachversicherungen des privaten Bereichs bleiben außen vor.' }
+];
+const ABZUG_MAP = Object.fromEntries(ABZUG.map(a => [a.id, a]));
+const VERTRAGSART = [
+  { id: 'kv_gesetzlich',       name: 'Krankenversicherung gesetzlich',      abzug: 'basis',          anteil: 96,  hinweis: 'Vom Arbeitnehmerbeitrag zählen 96 % zur Basisabsicherung. Die übrigen 4 % entfallen auf das Krankengeld und gehören zur sonstigen Vorsorge.' },
+  { id: 'kv_privat',           name: 'Krankenversicherung privat',          abzug: 'basis',          anteil: 100, basisteilung: true, hinweis: 'Trag unten den Basisanteil aus der Bescheinigung der Gesellschaft ein. Er ist unbegrenzt abziehbar, der Rest für Wahlleistungen wie Einbettzimmer oder Chefarzt wandert von allein in die sonstige Vorsorge.' },
+  { id: 'pflege_privat',       name: 'Pflegepflichtversicherung privat',    abzug: 'basis',          anteil: 100, basisteilung: true, hinweis: 'Der Pflichtteil ist voll abziehbar. Einen Zusatzbaustein über den Basisanteil abgrenzen.' },
+  { id: 'kv_zusatz',           name: 'Krankenzusatz — Zahn, Ausland, Klinik', abzug: 'sonstige',     anteil: 100, hinweis: 'Zählt nur im Rahmen des Höchstbetrags für sonstige Vorsorge und läuft bei Arbeitnehmern meist ins Leere.' },
+  { id: 'pflege',              name: 'Pflegepflichtversicherung',           abzug: 'basis',          anteil: 100, hinweis: 'Vollständig abziehbar.' },
+  { id: 'pflege_zusatz',       name: 'Pflegezusatz',                        abzug: 'sonstige',       anteil: 100, hinweis: 'Sonstige Vorsorge und damit meist ohne Wirkung.' },
+  { id: 'rente_gesetzlich',    name: 'Gesetzliche Rentenversicherung',      abzug: 'altersvorsorge', anteil: 100, hinweis: 'Steht bereits in der Lohnsteuerbescheinigung. Hier nur erfassen, wenn du freiwillig einzahlst.' },
+  { id: 'ruerup',              name: 'Basisrente Rürup',                    abzug: 'altersvorsorge', anteil: 100, hinweis: 'Voll als Altersvorsorge ansetzbar.' },
+  { id: 'riester',             name: 'Riester-Rente',                       abzug: 'riester',        anteil: 100, hinweis: 'Eigener Abzug bis 2.100 € einschließlich Zulagen.' },
+  { id: 'bu',                  name: 'Berufsunfähigkeitsversicherung',      abzug: 'sonstige',       anteil: 100, hinweis: 'Die selbständige BU zählt zur sonstigen Vorsorge. Als Zusatz zu einer Rürup-Rente gehört sie zur Altersvorsorge.' },
+  { id: 'unfall',              name: 'Unfallversicherung',                  abzug: 'sonstige',       anteil: 50,  hinweis: 'Der beruflich veranlasste Anteil, in der Regel die Hälfte, lässt sich als Werbungskosten ansetzen. Dafür einen zweiten Eintrag mit Abzug Werbungskosten anlegen.' },
+  { id: 'haftpflicht_privat',  name: 'Private Haftpflicht',                 abzug: 'sonstige',       anteil: 100, hinweis: 'Sonstige Vorsorge.' },
+  { id: 'haftpflicht_beruf',   name: 'Berufs- oder Diensthaftpflicht',      abzug: 'werbung',        anteil: 100, hinweis: 'Beruflich veranlasst und damit voll als Werbungskosten abziehbar.' },
+  { id: 'kfz_haftpflicht',     name: 'Kfz-Haftpflicht',                     abzug: 'sonstige',       anteil: 100, hinweis: 'Nur der Haftpflichtteil zählt. Wer die Entfernungspauschale ansetzt, hat die Fahrzeugkosten damit bereits abgegolten.' },
+  { id: 'kfz_kasko',           name: 'Kfz-Kasko',                           abzug: 'keine',          anteil: 0,   hinweis: 'Kaskoschutz ist Sachversicherung und bleibt privat.' },
+  { id: 'rechtsschutz',        name: 'Rechtsschutz privat',                 abzug: 'keine',          anteil: 0,   hinweis: 'Nur der Beitragsanteil für Arbeitsrecht ist Werbungskosten. Die Gesellschaft weist ihn auf Nachfrage aus.' },
+  { id: 'rechtsschutz_arbeit', name: 'Rechtsschutz Arbeitsrecht',           abzug: 'werbung',        anteil: 100, hinweis: 'Der vom Versicherer bescheinigte Arbeitsrechtsanteil.' },
+  { id: 'risiko_leben',        name: 'Risikolebensversicherung',            abzug: 'sonstige',       anteil: 100, hinweis: 'Sonstige Vorsorge.' },
+  { id: 'kapital_leben',       name: 'Kapitallebensversicherung vor 2005',  abzug: 'sonstige',       anteil: 88,  hinweis: 'Altverträge mit Abschluss bis 2004 zählen mit 88 % des Beitrags.' },
+  { id: 'arbeitslos',          name: 'Arbeitslosenversicherung',            abzug: 'sonstige',       anteil: 100, hinweis: 'Sonstige Vorsorge.' },
+  { id: 'hausrat',             name: 'Hausrat',                             abzug: 'keine',          anteil: 0,   hinweis: 'Nur mit anerkanntem Arbeitszimmer anteilig ansetzbar.' },
+  { id: 'wohngebaeude',        name: 'Wohngebäude',                         abzug: 'keine',          anteil: 0,   hinweis: 'Bei vermieteten Objekten Werbungskosten aus Vermietung, sonst privat.' },
+  { id: 'tier',                name: 'Tierhalterhaftpflicht',               abzug: 'keine',          anteil: 0,   hinweis: 'Privat und nicht absetzbar.' },
+  { id: 'verband',             name: 'Berufsverband oder Gewerkschaft',     abzug: 'werbung',        anteil: 100, hinweis: 'Voll als Werbungskosten abziehbar.' },
+  { id: 'dauerspende',         name: 'Dauerspende',                         abzug: 'spenden',        anteil: 100, hinweis: 'Bis 20 % der Einkünfte.' },
+  { id: 'sonstiger',           name: 'Andere Versicherung',                 abzug: 'sonstige',       anteil: 100, hinweis: 'Abzugsart und Anteil selbst festlegen.' }
+];
+const ART_MAP = Object.fromEntries(VERTRAGSART.map(a => [a.id, a]));
+const LEER_VERTRAG = { id: '', art: 'kv_gesetzlich', gesellschaft: '', nummer: '', beitrag: '', basis: '', rhythmus: 'monatlich', von: '', bis: '', person: '', abzug: 'basis', anteil: '96', notiz: '', aenderungen: [] };
+const BETREUUNG_QUOTE = 80, BETREUUNG_DECKEL = 4800;
+const BETREUUNG_ART = [
+  { id: 'kita',      name: 'Kindertagesstätte' },
+  { id: 'kiga',      name: 'Kindergarten' },
+  { id: 'tagesmutter', name: 'Tagesmutter oder Tagespflege' },
+  { id: 'hort',      name: 'Hort oder Nachmittagsbetreuung' },
+  { id: 'ferien',    name: 'Ferienbetreuung' },
+  { id: 'babysitter', name: 'Babysitter oder Kinderfrau' },
+  { id: 'aupair',    name: 'Au-pair' },
+  { id: 'sonstige',  name: 'Sonstige Betreuung' }
+];
+const BETREUUNG_MAP = Object.fromEntries(BETREUUNG_ART.map(a => [a.id, a]));
+const LEER_BETREUUNG = { id: '', kind: '', einrichtung: '', art: 'kita', beitrag: '', verpflegung: '', rhythmus: 'monatlich', von: '', bis: '', notiz: '', aenderungen: [] };
+/** Betreuungskosten eines Jahres, je Kind gedeckelt. Verpflegung zählt nicht mit. */
+function betreuungPosten(store, jahr) {
+  const liste = Object.values(store || {}).map(b => {
+    const monate = vertragMonate(b, jahr), brutto = vertragJahr(b, jahr);
+    const p = Number(b.beitrag) > 0 && Number(b.verpflegung) > 0 ? Math.min(100, Number(b.verpflegung) / Number(b.beitrag) * 100) : 0;
+    const verpflegung = brutto * p / 100;
+    return { b, monate, brutto, verpflegung, basis: brutto - verpflegung };
+  }).filter(x => x.monate > 0);
+  const namen = [...new Set(liste.map(x => x.b.kind || 'Ohne Namen'))].sort((a, b) => a.localeCompare(b));
+  const gruppen = namen.map(k => {
+    const teil = liste.filter(x => (x.b.kind || 'Ohne Namen') === k);
+    const basis = teil.reduce((s, x) => s + x.basis, 0);
+    const quote = basis * BETREUUNG_QUOTE / 100;
+    return { kind: k, teil, basis, quote, ansatz: Math.min(quote, BETREUUNG_DECKEL), gedeckelt: quote > BETREUUNG_DECKEL };
+  });
+  return { liste, gruppen, basis: gruppen.reduce((s, g) => s + g.basis, 0), ansatz: gruppen.reduce((s, g) => s + g.ansatz, 0) };
+}
+const DW_EINZEL_GRENZE = 180; // höchstens 180 Einzelfahrten im Jahr
+const DW_ANTRIEB = [
+  { id: 'bev',        name: 'Vollelektrisch',                     wagen: true },
+  { id: 'hybrid',     name: 'Plug-in-Hybrid, förderfähig',        wagen: true, faktor: 0.5 },
+  { id: 'verbrenner', name: 'Verbrenner',                         wagen: true, faktor: 1 },
+  { id: 'rad_umwand', name: 'Dienstrad, Entgeltumwandlung',       faktor: 0.25, keinWeg: true },
+  { id: 'rad_extra',  name: 'Dienstrad, Gehaltsextra — steuerfrei', faktor: 0, keinWeg: true }
+];
+const DW_ANTRIEB_MAP = Object.fromEntries(DW_ANTRIEB.map(a => [a.id, a]));
+const LEER_DW = { id: '', bez: '', antrieb: 'bev', blp: '', basis: '', von: '', bis: '', eigenanteil: '', zuzahlung: '', notiz: '' };
+/** Bemessungsgrundlage: bei Elektro ein Viertel bis zur Preisgrenze, darüber die Hälfte. */
+function dwFaktor(w) {
+  const a = DW_ANTRIEB_MAP[w.antrieb] || DW_ANTRIEB_MAP.verbrenner;
+  if (w.antrieb !== 'bev') return a.faktor;
+  const grenze = (w.von || '9999') >= '2025-07' ? 100000 : 70000;
+  return (Number(w.blp) || 0) <= grenze ? 0.25 : 0.5;
+}
+function dwGrenze(w) { return (w.von || '9999') >= '2025-07' ? 100000 : 70000; }
+/**
+ * Geldwerter Vorteil je Fahrzeug im Jahr: 1 % Privatnutzung je Monat plus Arbeitsweg,
+ * einmal pauschal mit 0,03 % je Kilometer und Monat, einmal mit 0,002 % je tatsächlicher Fahrt.
+ */
+function dienstwagenJahr(store, jahr, tage, km) {
+  const fahrtenM = Array(12).fill(0);
+  Object.keys(tage || {}).forEach(d => {
+    if (d.slice(0, 4) === String(jahr) && tage[d] === 'praesenz') fahrtenM[Number(d.slice(5, 7)) - 1]++;
+  });
+  const liste = Object.values(store || {}).map(w => {
+    const faktor = dwFaktor(w);
+    const basis = Number(w.basis) > 0 ? Number(w.basis) : (Number(w.blp) || 0) * faktor;
+    const a = DW_ANTRIEB_MAP[w.antrieb] || {};
+    let monate = 0, privat = 0, pausch = 0, fahrtenRoh = 0;
+    for (let m = 1; m <= 12; m++) {
+      if (!monatAktiv(w, jahr, m)) continue;
+      monate++;
+      privat += basis * 0.01;
+      if (!a.keinWeg) { pausch += basis * 0.0003 * km; fahrtenRoh += fahrtenM[m - 1]; }
+    }
+    return { w, faktor, basis, monate, privat, pausch, fahrtenRoh, keinWeg: !!a.keinWeg };
+  }).filter(x => x.monate > 0);
+  let rest = DW_EINZEL_GRENZE;
+  liste.forEach(x => {
+    const f = Math.min(x.fahrtenRoh, Math.max(0, rest));
+    rest -= f;
+    x.fahrten = f;
+    x.einzel = x.basis * 0.00002 * km * f;
+    x.eigen = (Number(x.w.eigenanteil) || 0) * x.monate + (Number(x.w.zuzahlung) || 0);
+  });
+  const summe = k => liste.reduce((s, x) => s + x[k], 0);
+  const steuerbar = art => liste.reduce((s, x) => s + Math.max(0, x.privat + x[art] - x.eigen), 0);
+  const fahrtenGesamt = liste.reduce((s, x) => s + x.fahrtenRoh, 0);
+  const monatsZeilen = [];
+  for (let m = 1; m <= 12; m++) {
+    const aktiv = liste.filter(x => !x.keinWeg && monatAktiv(x.w, jahr, m));
+    if (!aktiv.length) continue;
+    const bas = aktiv.reduce((s, x) => s + x.basis, 0);
+    monatsZeilen.push({ m, fahrten: fahrtenM[m - 1], pausch: bas * 0.0003 * km, einzel: bas * 0.00002 * km * fahrtenM[m - 1] });
+  }
+  return {
+    liste, monatsZeilen,
+    privat: summe('privat'), pausch: summe('pausch'), einzel: summe('einzel'), eigen: summe('eigen'),
+    fahrtenGesamt, fahrtenGezaehlt: summe('fahrten'),
+    steuerbarPausch: steuerbar('pausch'), steuerbarEinzel: steuerbar('einzel'),
+    korrektur: Math.max(0, steuerbar('pausch') - steuerbar('einzel'))
+  };
+}
+const TK_DECKEL_MONAT = 20, TK_QUOTE = 20;
+const TK_ART = [
+  { id: 'internet',  name: 'Internetanschluss' },
+  { id: 'mobil',     name: 'Mobilfunk' },
+  { id: 'festnetz',  name: 'Festnetztelefon' },
+  { id: 'kombi',     name: 'Kombipaket Internet und Telefon' },
+  { id: 'sonstige',  name: 'Sonstige Telekommunikation' }
+];
+const TK_MAP = Object.fromEntries(TK_ART.map(a => [a.id, a]));
+const LEER_TELEKOM = { id: '', art: 'internet', anbieter: '', beitrag: '', rhythmus: 'monatlich', von: '', bis: '', person: '', methode: 'pauschal', anteil: '20', notiz: '', aenderungen: [] };
+/** Telekommunikationskosten eines Jahres. Pauschal: Anteil, aber höchstens 20 € je Monat. */
+function telekomPosten(store, jahr, personen) {
+  const liste = Object.values(store || {}).map(t => {
+    const monate = vertragMonate(t, jahr), brutto = vertragJahr(t, jahr);
+    const anteil = Number(t.anteil) || 0;
+    const roh = brutto * anteil / 100;
+    const deckel = t.methode === 'nachweis' ? Infinity : TK_DECKEL_MONAT * monate;
+    return { t, monate, brutto, roh, deckel, ansatz: Math.min(roh, deckel), gedeckelt: roh > deckel + 0.004 };
+  }).filter(x => x.monate > 0);
+  const namen = [...new Set(liste.map(x => x.t.person || (personen && personen[0]) || 'Ich'))]
+    .sort((a, b) => a.localeCompare(b));
+  const gruppen = namen.map(n => {
+    const teil = liste.filter(x => (x.t.person || (personen && personen[0]) || 'Ich') === n);
+    return { person: n, teil, brutto: teil.reduce((s, x) => s + x.brutto, 0), ansatz: teil.reduce((s, x) => s + x.ansatz, 0) };
+  });
+  return { liste, gruppen, brutto: gruppen.reduce((s, g) => s + g.brutto, 0), ansatz: gruppen.reduce((s, g) => s + g.ansatz, 0) };
+}
+const ZB_GRUPPEN = [
+  { id: 'einzeln',  name: 'Einzelveranlagung, keine Kinder', saetze: [5, 6, 7] },
+  { id: 'zusammen', name: 'Zusammenveranlagung, keine Kinder', saetze: [4, 5, 6] },
+  { id: 'k12',      name: 'Ein oder zwei Kinder', saetze: [2, 3, 4] },
+  { id: 'k3',       name: 'Drei oder mehr Kinder', saetze: [1, 1, 2] }
+];
+const ZB_MAP = Object.fromEntries(ZB_GRUPPEN.map(g => [g.id, g]));
+/**
+ * Umgekehrte zumutbare Belastung nach § 33 Abs. 3 EStG, stufenweise gerechnet:
+ * bis zu welchem Gesamtbetrag der Einkünfte bleibt von diesen Kosten etwas übrig?
+ */
+function einkuenfteGrenze(kosten, saetze) {
+  if (!(kosten > 0)) return 0;
+  const [a, b, c] = saetze.map(x => x / 100);
+  const s1 = a * 15340, s2 = s1 + b * (51130 - 15340);
+  if (kosten <= s1) return kosten / a;
+  if (kosten <= s2) return 15340 + (kosten - s1) / b;
+  return 51130 + (kosten - s2) / c;
+}
+const PKV_STAFFEL = [300, 400, 500, 600, 700, 800]; // Beitragsrückerstattung ab 2026 nach berücksichtigungsfähigen Jahren
+/**
+ * Liest den Datenstand des PKV-Projekts (pkv-stand.json): Einträge mit
+ * betrag, erstattet, eingereicht, vorsorge, patient, jahr, art.
+ * Gibt null zurück, wenn der Stand nicht so aussieht.
+ */
+function gesundheitLesen(stand, jahr) {
+  const eintraege = stand && Array.isArray(stand.eintraege) ? stand.eintraege : null;
+  if (!eintraege) return null;
+  const zahl = v => { const n = Number(String(v == null ? 0 : v).replace(',', '.')); return isFinite(n) ? n : 0; };
+  const imJahr = eintraege.filter(e => (Number(e.jahr) || Number(String(e.datum || '').slice(0, 4))) === jahr);
+  let gesamt = 0, erstattet = 0, wartend = 0, selbst = 0;
+  const nachArt = {};
+  imJahr.forEach(e => {
+    const b = zahl(e.betrag), er = zahl(e.erstattet);
+    gesamt += b; erstattet += er;
+    if (e.eingereicht && !(er > 0)) { wartend += b; return; }
+    const eigen = Math.max(0, b - er);
+    selbst += eigen;
+    const a = e.art || 'Sonstiges';
+    nachArt[a] = (nachArt[a] || 0) + eigen;
+  });
+  let rueck = 0;
+  const rueckDetail = [];
+  if (jahr >= 2026) ((stand.settings && stand.settings.personen) || []).forEach(p => {
+    const eigene = imJahr.filter(e => e.patient === p.name);
+    const intakt = !eigene.some(e => e.eingereicht && !e.vorsorge);
+    const j = Math.min(6, Math.max(0, Number(p.jahre) || 0));
+    const wert = intakt && j >= 1 ? PKV_STAFFEL[j - 1] : 0;
+    if (wert) { rueck += wert; rueckDetail.push(p.name + ' ' + wert + ' €'); }
+  });
+  return { gesamt, erstattet, wartend, selbst, rueck, rueckDetail, posten: imJahr.length, nachArt };
+}
+/** Verträge eines Jahres, aufgeteilt in ihre steuerlichen Bestandteile. */
+function vertragsPosten(vertraege, jahr, person) {
+  const liste = Object.values(vertraege || {})
+    .filter(v => !person || person === 'alle' || v.person === person)
+    .map(v => ({ v, monate: vertragMonate(v, jahr), beitragJahr: vertragJahr(v, jahr) }))
+    .filter(x => x.monate > 0)
+    .sort((a, b) => ((ART_MAP[a.v.art] || {}).name || '').localeCompare((ART_MAP[b.v.art] || {}).name || ''));
+  const teile = [];
+  liste.forEach(x => {
+    const v = x.v, p = basisProzent(v);
+    if (p == null) { teile.push({ x, abzug: v.abzug || 'sonstige', anteil: Number(v.anteil) || 0, betragJahr: x.beitragJahr, zusatz: '' }); return; }
+    teile.push({ x, abzug: 'basis', anteil: 100, betragJahr: x.beitragJahr * p / 100, zusatz: 'Basisabsicherung' });
+    if (p < 99.95) teile.push({ x, abzug: 'sonstige', anteil: 100, betragJahr: x.beitragJahr * (100 - p) / 100, zusatz: 'Wahlleistungen' });
+  });
+  teile.forEach(t => { t.anrechnung = t.betragJahr * t.anteil / 100; });
+  return { liste, teile };
+}
+/** Anteil des Beitrags, der auf die Basisabsicherung entfällt — null heißt keine Aufteilung. */
+function basisProzent(v) {
+  const art = ART_MAP[v.art];
+  const basis = Number(v.basis) || 0, beitrag = Number(v.beitrag) || 0;
+  if (!art || !art.basisteilung || !(basis > 0) || !(beitrag > 0)) return null;
+  return Math.min(100, basis / beitrag * 100);
+}
+const monatSchluessel = (jahr, monat) => jahr + '-' + String(monat).padStart(2, '0');
+/** Läuft der Vertrag in diesem Monat? Leeres Ende heißt laufend. */
+function monatAktiv(v, jahr, monat) {
+  const k = monatSchluessel(jahr, monat);
+  if (v.von && k < v.von) return false;
+  if (v.bis && k > v.bis) return false;
+  return true;
+}
+/** Monate, die ein Vertrag im gewählten Jahr läuft. */
+function vertragMonate(v, jahr) {
+  let n = 0;
+  for (let m = 1; m <= 12; m++) if (monatAktiv(v, jahr, m)) n++;
+  return n;
+}
+/** Beitrag, der in diesem Monat gilt — die letzte Änderung bis einschließlich des Monats sticht. */
+function beitragImMonat(v, jahr, monat) {
+  const k = monatSchluessel(jahr, monat);
+  let b = Number(v.beitrag) || 0;
+  (v.aenderungen || []).filter(a => a.ab).sort((a, c) => a.ab < c.ab ? -1 : 1)
+    .forEach(a => { if (a.ab <= k) b = Number(a.beitrag) || 0; });
+  return b;
+}
+/** Beitrag, der im gewählten Jahr tatsächlich fließt — Beitragsänderungen monatsgenau. */
+function vertragJahr(v, jahr) {
+  const f = (RHYTHMUS_MAP[v.rhythmus] || RHYTHMUS_MAP.monatlich).faktor;
+  let s = 0;
+  for (let m = 1; m <= 12; m++) if (monatAktiv(v, jahr, m)) s += beitragImMonat(v, jahr, m) * f / 12;
+  return s;
+}
 const eur = n => (Number(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 /** Betrag, der steuerlich zählt: Bruttobetrag mal beruflicher Anteil. */
 function absetzbar(p) {
@@ -799,11 +2015,17 @@ class Component extends DCLogic {
   state = {
     jahr: new Date().getFullYear(),
     tab: 'kalender',
-    tage: {}, notizen: {}, belege: {}, posten: {},
+    tage: {}, notizen: {}, belege: {}, posten: {}, vertraege: {}, gesundheit: {}, betreuung: {}, telekom: {}, dienstwagen: {},
     settings: { sperreHash: null, hoSatz: 6, km: 0, personen: 'Ich, Konrad, Ehefrau' },
     belegForm: { ...LEER_BELEG },
     belegPerson: 'alle', belegText: '', ocrHinweis: '', belegFehler: '',
-    aktiveKat: 'praesenz',
+    vertragForm: { ...LEER_VERTRAG },
+    vertragPerson: 'alle', vertragFehler: '', vertragHinweis: '',
+    pkvPin: '', pkvHinweis: '', pkvLaeuft: false,
+    betreuungForm: { ...LEER_BETREUUNG }, betreuungFehler: '', betreuungHinweis: '',
+    telekomForm: { ...LEER_TELEKOM }, telekomFehler: '', telekomHinweis: '',
+    dwForm: { ...LEER_DW }, dwFehler: '', dwHinweis: '',
+    aktiveKat: 'praesenz', markiereKw: null,
     gewaehlt: null,
     gesperrt: false,
     pinEingabe: '', neuePin: '', pinFehler: '',
@@ -845,6 +2067,11 @@ class Component extends DCLogic {
       notizen: (lokal && lokal.notizen) || {},
       belege: (lokal && lokal.belege) || {},
       posten: (lokal && lokal.posten) || {},
+      vertraege: (lokal && lokal.vertraege) || {},
+      gesundheit: (lokal && lokal.gesundheit) || {},
+      betreuung: (lokal && lokal.betreuung) || {},
+      telekom: (lokal && lokal.telekom) || {},
+      dienstwagen: (lokal && lokal.dienstwagen) || {},
       settings,
       gespeichert: (lokal && lokal.gespeichert) || null,
       geladen: true,
@@ -876,7 +2103,7 @@ class Component extends DCLogic {
   // ---------- Speichern ----------
   _stand(patch) {
     const s = { ...this.state, ...(patch || {}) };
-    return { tage: s.tage, notizen: s.notizen, belege: s.belege, posten: s.posten, settings: s.settings, gespeichert: new Date().toISOString() };
+    return { tage: s.tage, notizen: s.notizen, belege: s.belege, posten: s.posten, vertraege: s.vertraege, gesundheit: s.gesundheit, betreuung: s.betreuung, telekom: s.telekom, dienstwagen: s.dienstwagen, settings: s.settings, gespeichert: new Date().toISOString() };
   }
   _merken(patch, still) {
     if (!still) this._bearbeitet = true;
@@ -945,7 +2172,7 @@ class Component extends DCLogic {
         this._version = (this._version || 0) + 1;
         const zusammen = { ...fern, settings: { ...this.state.settings, ...(fern.settings || {}) } };
         this.setState({
-          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {}, posten: fern.posten || {},
+          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {}, posten: fern.posten || {}, vertraege: fern.vertraege || {}, gesundheit: fern.gesundheit || {}, betreuung: fern.betreuung || {}, telekom: fern.telekom || {}, dienstwagen: fern.dienstwagen || {},
           settings: zusammen.settings,
           gespeichert: fern.gespeichert, syncStatus: fernTage + ' Tage geladen', frisch: false
         });
@@ -956,7 +2183,7 @@ class Component extends DCLogic {
       if ((fern.gespeichert || '') > lokalTs) {
         this._version = (this._version || 0) + 1;
         this.setState({
-          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {}, posten: fern.posten || {},
+          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {}, posten: fern.posten || {}, vertraege: fern.vertraege || {}, gesundheit: fern.gesundheit || {}, betreuung: fern.betreuung || {}, telekom: fern.telekom || {}, dienstwagen: fern.dienstwagen || {},
           settings: { ...this.state.settings, ...(fern.settings || {}) },
           gespeichert: fern.gespeichert, syncStatus: 'Stand von GitHub geladen', frisch: false
         });
@@ -994,6 +2221,30 @@ class Component extends DCLogic {
     const tage = { ...this.state.tage };
     delete tage[datum];
     this._merken({ tage, gewaehlt: datum });
+  }
+  /** Aus der Kontrolle zur Woche springen: Zeile anfahren und kurz markieren. */
+  _zurKw(kw) {
+    this.setState({ tab: 'wochen', markiereKw: kw });
+    requestAnimationFrame(() => {
+      const el = document.getElementById('kw-' + kw);
+      if (!el) return;
+      const oben = el.getBoundingClientRect().top + window.scrollY - 150;
+      window.scrollTo({ top: Math.max(0, oben), behavior: 'smooth' });
+    });
+    clearTimeout(this._kwT);
+    this._kwT = setTimeout(() => this.setState({ markiereKw: null }), 2600);
+  }
+  /** Aus der Wochentabelle in den Kalender: Monat anfahren, Montag der Woche auswählen. */
+  _zumKalender(kw) {
+    const mo = kwMontag(this.state.jahr, kw);
+    const mi = new Date(mo.getTime() + 3 * TAG).getUTCMonth();
+    this.setState({ tab: 'kalender', gewaehlt: iso(mo), markiereKw: null });
+    requestAnimationFrame(() => {
+      const el = document.getElementById('monat-' + mi);
+      if (!el) return;
+      const oben = el.getBoundingClientRect().top + window.scrollY - 100;
+      window.scrollTo({ top: Math.max(0, oben), behavior: 'smooth' });
+    });
   }
   _wochenTage(jahr, kw) {
     const mo = kwMontag(jahr, kw), raus = [];
@@ -1042,6 +2293,68 @@ class Component extends DCLogic {
     const tage = { ...this.state.tage };
     const kandidaten = this._wochenTage(jahr, kw);
     kandidaten.forEach(d => { delete tage[d]; });
+    const istVertraege = S.tab === 'vertraege';
+    const VF = S.vertragForm;
+    const { liste: vertragListe, teile: vertragTeile } = vertragsPosten(S.vertraege, jahr, S.vertragPerson);
+    const vertragGruppen = ABZUG.map(g => {
+      const teil = vertragTeile.filter(t => t.abzug === g.id);
+      if (!teil.length) return null;
+      return {
+        name: g.name, norm: g.norm, grenze: g.grenze,
+        summe: eur(teil.reduce((s, t) => s + t.anrechnung, 0)),
+        zeilen: teil.map(({ x: { v, monate }, betragJahr, anteil, anrechnung, zusatz }) => {
+          const art = ART_MAP[v.art] || ART_MAP.sonstiger;
+          const rh = RHYTHMUS_MAP[v.rhythmus] || RHYTHMUS_MAP.monatlich;
+          const mon = m => m ? m.slice(5, 7) + '/' + m.slice(0, 4) : '';
+          const details = [];
+          if (v.nummer) details.push('Nr. ' + v.nummer);
+          const erster = v.von && v.von.slice(0, 4) === String(jahr) ? Number(v.von.slice(5, 7)) : 1;
+          const imJahrGeaendert = (v.aenderungen || []).filter(a => a.ab && a.ab.slice(0, 4) === String(jahr) && Number(a.ab.slice(5, 7)) > erster);
+          details.push(eur(beitragImMonat(v, jahr, erster)) + ' ' + rh.name
+            + imJahrGeaendert.map(a => ', ab ' + mon(a.ab) + ' ' + eur(a.beitrag)).join(''));
+          if (v.notiz) details.push(v.notiz);
+          return {
+            bez: zusatz ? art.name + ' — ' + zusatz : art.name,
+            gesellschaft: v.gesellschaft || '—',
+            detail: details.join(' · '),
+            person: v.person,
+            laufzeit: (v.von ? mon(v.von) : 'seit jeher') + ' – ' + (v.bis ? mon(v.bis) : 'laufend') + (monate < 12 ? ' · ' + monate + ' Monate' : ''),
+            beitrag: eur(betragJahr),
+            anteil: anteil + ' %',
+            anrechnung: eur(anrechnung),
+            bearbeiten: () => this._vertragBearbeiten(v),
+            loeschen: () => this._vertragLoeschen(v.id)
+          };
+        })
+      };
+    }).filter(Boolean);
+    const vfBasisP = basisProzent(VF);
+    const vfAnteilZahl = VF.abzug === 'keine' ? 0 : (VF.anteil === '' ? 0 : Number(VF.anteil) || 0);
+    const vfAbzugName = (ABZUG_MAP[VF.abzug] || {}).name || 'Sonstige Vorsorge';
+    const vfUrteil = vfBasisP != null
+        ? (vfBasisP >= 99.95 ? 'Voll absetzbar — Basis Kranken und Pflege' : 'Aufgeteilt — Basisanteil voll, Rest sonstige Vorsorge')
+      : vfAnteilZahl <= 0 ? 'Nicht absetzbar'
+      : vfAnteilZahl >= 100 ? 'Voll absetzbar — ' + vfAbzugName
+      : 'Zu ' + vfAnteilZahl + ' % absetzbar — ' + vfAbzugName;
+    const vfJahresbeitrag = vertragJahr({ beitrag: VF.beitrag, rhythmus: VF.rhythmus, von: VF.von, bis: VF.bis, aenderungen: VF.aenderungen }, jahr);
+    const vfRechnung = !(Number(VF.beitrag) > 0) ? ''
+      : vfBasisP != null
+        ? eur(vfJahresbeitrag) + ' im Jahr ' + jahr + ' — davon ' + eur(vfJahresbeitrag * vfBasisP / 100) + ' Basis'
+          + (vfBasisP < 99.95 ? ' und ' + eur(vfJahresbeitrag * (100 - vfBasisP) / 100) + ' sonstige Vorsorge' : '')
+        : eur(vfJahresbeitrag) + ' im Jahr ' + jahr + (vfAnteilZahl > 0 ? ', davon zählen ' + eur(vfJahresbeitrag * vfAnteilZahl / 100) : '');
+    const vertragBeitrag = vertragListe.reduce((s, x) => s + x.beitragJahr, 0);
+    const vertragAnrechnung = vertragTeile.reduce((s, t) => s + t.anrechnung, 0);
+
+    const istDienstwagen = S.tab === 'dienstwagen';
+    const DF = S.dwForm;
+    const dw = dienstwagenJahr(S.dienstwagen, jahr, S.tage, Number(S.settings.km) || 0);
+    const istTelekom = S.tab === 'telekom';
+    const TF = S.telekomForm;
+    const tkJahr = telekomPosten(S.telekom, jahr, personen);
+    const istBetreuung = S.tab === 'betreuung';
+    const BF2 = S.betreuungForm;
+    const btJahr = betreuungPosten(S.betreuung, jahr);
+    const btJahrAlle = btJahr;
     const ft = this._feiertage(jahr);
     const frei = new Set(kandidaten);
     let fz = zahlen.feiertag || 0;
@@ -1132,28 +2445,32 @@ class Component extends DCLogic {
     });
     if (!pruefen()) throw new Error(fehler);
   }
+  /** Rohtext aus der Textebene eines PDFs. */
+  async _pdfRohtext(datei, maxSeiten) {
+    await this._skript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
+      () => window.pdfjsLib, 'PDF-Leser konnte nicht geladen werden (keine Verbindung?)');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    const pdf = await window.pdfjsLib.getDocument({ data: await datei.arrayBuffer() }).promise;
+    let text = '';
+    for (let s = 1; s <= Math.min(pdf.numPages, maxSeiten || 4); s++) {
+      const seite = await pdf.getPage(s);
+      const inhalt = await seite.getTextContent();
+      let letztesY = null;
+      inhalt.items.forEach(i => {
+        const y = i.transform && i.transform[5];
+        if (letztesY != null && Math.abs(y - letztesY) > 2) text += '\n';
+        text += i.str + ' ';
+        letztesY = y;
+      });
+      text += '\n';
+    }
+    return text;
+  }
   /** Text aus einer PDF-Rechnung holen — ohne Bilderkennung, direkt aus der Textebene. */
   async _pdfText(datei) {
     try {
       this.setState({ ocrHinweis: 'liest PDF …' });
-      await this._skript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
-        () => window.pdfjsLib, 'PDF-Leser konnte nicht geladen werden (keine Verbindung?)');
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-      const puffer = await datei.arrayBuffer();
-      const pdf = await window.pdfjsLib.getDocument({ data: puffer }).promise;
-      let text = '';
-      for (let s = 1; s <= Math.min(pdf.numPages, 4); s++) {
-        const seite = await pdf.getPage(s);
-        const inhalt = await seite.getTextContent();
-        let letztesY = null;
-        inhalt.items.forEach(i => {
-          const y = i.transform && i.transform[5];
-          if (letztesY != null && Math.abs(y - letztesY) > 2) text += '\n';
-          text += i.str + ' ';
-          letztesY = y;
-        });
-        text += '\n';
-      }
+      const text = await this._pdfRohtext(datei, 4);
       if (!text.trim()) {
         this.setState({ ocrHinweis: 'Das PDF enthält keinen Text — es ist ein Scan. Als Bild anhängen oder abfotografieren.' });
         return;
@@ -1211,6 +2528,7 @@ class Component extends DCLogic {
       kat: f.kat, person: f.person || this._personen()[0],
       anteil: f.anteil === '' ? 100 : Number(f.anteil) || 0,
       nd: f.nd === '' ? '' : Number(f.nd) || '',
+      arbeit: f.arbeit === '' ? '' : Number(f.arbeit) || 0,
       notiz: f.notiz || '', dateien: f.dateien || []
     };
     this._merken({ posten: { ...this.state.posten, [id]: eintrag } });
@@ -1221,7 +2539,8 @@ class Component extends DCLogic {
       belegForm: {
         ...LEER_BELEG, ...p,
         betrag: String(p.betrag ?? ''), ust: p.ust === '' || p.ust == null ? '' : String(p.ust),
-        anteil: String(p.anteil ?? 100), nd: p.nd === '' || p.nd == null ? '' : String(p.nd)
+        anteil: String(p.anteil ?? 100), nd: p.nd === '' || p.nd == null ? '' : String(p.nd),
+        arbeit: p.arbeit === '' || p.arbeit == null ? '' : String(p.arbeit)
       },
       belegFehler: '', ocrHinweis: 'Beleg wird bearbeitet'
     });
@@ -1239,6 +2558,285 @@ class Component extends DCLogic {
       if (!datei) { this.setState({ belegFehler: 'Datei nicht gefunden' }); return; }
       window.open(URL.createObjectURL(datei), '_blank');
     } catch (e) { this.setState({ belegFehler: e.message }); }
+  }
+
+  // ---------- Dienstwagen ----------
+  /** Fahrzeugabrechnung des Arbeitgebers auslesen und ins Formular übernehmen. */
+  async _dwAbrechnung(datei) {
+    if (!datei) return;
+    this.setState({ dwFehler: '', dwHinweis: 'liest Abrechnung …' });
+    try {
+      const text = await this._pdfRohtext(datei, 8);
+      if (!text.trim()) { this.setState({ dwHinweis: 'Das PDF enthält keinen Text — es ist ein Scan.' }); return; }
+      const z = s => { const n = Number(String(s).replace(/\./g, '').replace(',', '.')); return isFinite(n) ? n : 0; };
+      const G = re => { const m = text.match(re); return m ? m[1].trim() : ''; };
+      const geld = '([\\d.]+,\\d{2})';
+      const patch = {}, gefunden = [];
+      const modell = G(/Modell:\s*(.+)/);
+      const kennz = G(/Kennzeichen:\s*([A-ZÄÖÜ]{1,3}[\s-]?[A-Z]{1,2}[\s-]?\d{1,4}\s?E?)/);
+      if (modell) { patch.bez = modell + (kennz ? ' · ' + kennz : ''); gefunden.push('Modell'); }
+      const blp = G(new RegExp('=\\s*Bruttolistenpreis Ihres Fahrzeugs\\s+' + geld))
+        || G(new RegExp('Bruttolistenpreis Ihres Fahrzeugs für die Rate:\\s*' + geld));
+      if (blp) { patch.blp = String(z(blp)); gefunden.push('Listenpreis'); }
+      const basis = G(new RegExp('\\(Bemessungsgrundlage\\)\\s*' + geld))
+        || G(new RegExp('Bruttolistenpreis Ihres Fahrzeugs für den gwV:\\s*' + geld));
+      if (basis) { patch.basis = String(z(basis)); gefunden.push('Bemessungsgrundlage'); }
+      const rate = G(new RegExp('Monatliche Gesamtrate:\\s*' + geld))
+        || G(new RegExp('monatliche Gesamtrate\\s*\\(auf ganze Euro abgerundet\\)\\s*' + geld));
+      if (rate) { patch.eigenanteil = String(z(rate)); gefunden.push('Monatsrate als Eigenanteil'); }
+      const stichtag = text.match(/Berechnet zum:\s*(\d{2})\.(\d{2})\.(\d{4})/);
+      if (stichtag) { patch.von = stichtag[3] + '-' + stichtag[2]; gefunden.push('Überlassung ab ' + stichtag[2] + '/' + stichtag[3]); }
+      if (/geviertelt/i.test(text)) { patch.antrieb = 'bev'; gefunden.push('Viertelung erkannt'); }
+      else if (/halbiert/i.test(text)) { patch.antrieb = 'hybrid'; gefunden.push('Halbierung erkannt'); }
+      if (!gefunden.length) { this.setState({ dwHinweis: 'Aus dem PDF ließ sich nichts lesen — bitte von Hand eintragen.' }); return; }
+      this._dwSetzen(patch);
+      this.setState({ dwHinweis: gefunden.join(' · ') + ' — bitte prüfen und speichern' });
+    } catch (e) { this.setState({ dwHinweis: e.message }); }
+  }
+  _dwSetzen(patch) { this.setState({ dwForm: { ...this.state.dwForm, ...patch } }); }
+  _dwSpeichern() {
+    const f = this.state.dwForm;
+    if (!f.bez.trim()) { this.setState({ dwFehler: 'Bezeichnung fehlt.' }); return; }
+    if (!(Number(f.blp) > 0) && f.antrieb !== 'rad_extra') { this.setState({ dwFehler: 'Bruttolistenpreis fehlt.' }); return; }
+    if (!f.von) { this.setState({ dwFehler: 'Überlassung ab wann?' }); return; }
+    const id = f.id || 'w' + Date.now().toString(36);
+    const eintrag = {
+      id, bez: f.bez.trim(), antrieb: f.antrieb,
+      blp: Number(f.blp) || 0, basis: f.basis === '' ? '' : Number(f.basis) || 0,
+      von: f.von, bis: f.bis || '',
+      eigenanteil: f.eigenanteil === '' ? '' : Number(f.eigenanteil) || 0,
+      zuzahlung: f.zuzahlung === '' ? '' : Number(f.zuzahlung) || 0,
+      notiz: f.notiz || ''
+    };
+    const alle = { ...this.state.dienstwagen, [id]: eintrag };
+    let beendet = '';
+    if (!f.id) Object.values(alle).forEach(v => {
+      if (v.id === id || v.bis || !v.von || v.von >= eintrag.von) return;
+      const d = new Date(Number(eintrag.von.slice(0, 4)), Number(eintrag.von.slice(5, 7)) - 2, 1);
+      alle[v.id] = { ...v, bis: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') };
+      beendet = v.bez;
+    });
+    this._merken({ dienstwagen: alle });
+    this.setState({
+      dwForm: { ...LEER_DW, antrieb: eintrag.antrieb }, dwFehler: '',
+      dwHinweis: beendet ? 'Gespeichert — ' + beendet + ' endet jetzt im Vormonat' : 'Gespeichert'
+    });
+  }
+  _dwBearbeiten(w) {
+    this.setState({
+      dwForm: {
+        ...LEER_DW, ...w, blp: String(w.blp ?? ''),
+        basis: w.basis === '' || w.basis == null ? '' : String(w.basis),
+        eigenanteil: w.eigenanteil === '' || w.eigenanteil == null ? '' : String(w.eigenanteil),
+        zuzahlung: w.zuzahlung === '' || w.zuzahlung == null ? '' : String(w.zuzahlung)
+      },
+      dwFehler: '', dwHinweis: 'Wird bearbeitet'
+    });
+  }
+  _dwLoeschen(id) {
+    const dienstwagen = { ...this.state.dienstwagen };
+    delete dienstwagen[id];
+    this._merken({ dienstwagen });
+    if (this.state.dwForm.id === id) this.setState({ dwForm: { ...LEER_DW }, dwHinweis: 'Gelöscht' });
+  }
+
+  // ---------- Telekommunikation ----------
+  _tkSetzen(patch) { this.setState({ telekomForm: { ...this.state.telekomForm, ...patch } }); }
+  _tkStufe(i, patch) {
+    this._tkSetzen({ aenderungen: (this.state.telekomForm.aenderungen || []).map((a, k) => k === i ? { ...a, ...patch } : a) });
+  }
+  _tkStufeHinzu() {
+    this._tkSetzen({ aenderungen: [...(this.state.telekomForm.aenderungen || []), { ab: String(this.state.jahr) + '-01', beitrag: '' }] });
+  }
+  _tkStufeWeg(i) {
+    this._tkSetzen({ aenderungen: (this.state.telekomForm.aenderungen || []).filter((a, k) => k !== i) });
+  }
+  _telekomSpeichern() {
+    const f = this.state.telekomForm;
+    if (!(Number(f.beitrag) > 0)) { this.setState({ telekomFehler: 'Betrag fehlt.' }); return; }
+    const id = f.id || 't' + Date.now().toString(36);
+    const eintrag = {
+      id, art: f.art, anbieter: (f.anbieter || '').trim(),
+      beitrag: Number(f.beitrag) || 0, rhythmus: f.rhythmus || 'monatlich',
+      von: f.von || '', bis: f.bis || '',
+      person: f.person || this._personen()[0],
+      methode: f.methode === 'nachweis' ? 'nachweis' : 'pauschal',
+      anteil: f.anteil === '' ? TK_QUOTE : Number(f.anteil) || 0,
+      aenderungen: (f.aenderungen || []).filter(a => a.ab && String(a.beitrag).trim() !== '')
+        .map(a => ({ ab: a.ab, beitrag: Number(a.beitrag) || 0 })).sort((a, c) => a.ab < c.ab ? -1 : 1),
+      notiz: f.notiz || ''
+    };
+    this._merken({ telekom: { ...this.state.telekom, [id]: eintrag } });
+    this.setState({ telekomForm: { ...LEER_TELEKOM, person: eintrag.person }, telekomFehler: '', telekomHinweis: 'Gespeichert' });
+  }
+  _telekomBearbeiten(t) {
+    this.setState({
+      telekomForm: {
+        ...LEER_TELEKOM, ...t,
+        beitrag: String(t.beitrag ?? ''), anteil: String(t.anteil ?? TK_QUOTE),
+        aenderungen: (t.aenderungen || []).map(a => ({ ab: a.ab, beitrag: String(a.beitrag) }))
+      },
+      telekomFehler: '', telekomHinweis: 'Wird bearbeitet'
+    });
+  }
+  _telekomLoeschen(id) {
+    const telekom = { ...this.state.telekom };
+    delete telekom[id];
+    this._merken({ telekom });
+    if (this.state.telekomForm.id === id) this.setState({ telekomForm: { ...LEER_TELEKOM }, telekomHinweis: 'Gelöscht' });
+  }
+
+  // ---------- Kinderbetreuung ----------
+  _btSetzen(patch) { this.setState({ betreuungForm: { ...this.state.betreuungForm, ...patch } }); }
+  _btStufe(i, patch) {
+    this._btSetzen({ aenderungen: (this.state.betreuungForm.aenderungen || []).map((a, k) => k === i ? { ...a, ...patch } : a) });
+  }
+  _btStufeHinzu() {
+    this._btSetzen({ aenderungen: [...(this.state.betreuungForm.aenderungen || []), { ab: String(this.state.jahr) + '-01', beitrag: '' }] });
+  }
+  _btStufeWeg(i) {
+    this._btSetzen({ aenderungen: (this.state.betreuungForm.aenderungen || []).filter((a, k) => k !== i) });
+  }
+  _betreuungSpeichern() {
+    const f = this.state.betreuungForm;
+    if (!f.kind.trim()) { this.setState({ betreuungFehler: 'Name des Kindes fehlt — er gruppiert den Höchstbetrag.' }); return; }
+    if (!(Number(f.beitrag) > 0)) { this.setState({ betreuungFehler: 'Betrag fehlt.' }); return; }
+    const id = f.id || 'k' + Date.now().toString(36);
+    const eintrag = {
+      id, kind: f.kind.trim(), einrichtung: (f.einrichtung || '').trim(), art: f.art,
+      beitrag: Number(f.beitrag) || 0,
+      verpflegung: f.verpflegung === '' ? '' : Number(f.verpflegung) || 0,
+      rhythmus: f.rhythmus || 'monatlich', von: f.von || '', bis: f.bis || '',
+      aenderungen: (f.aenderungen || []).filter(a => a.ab && String(a.beitrag).trim() !== '')
+        .map(a => ({ ab: a.ab, beitrag: Number(a.beitrag) || 0 })).sort((a, c) => a.ab < c.ab ? -1 : 1),
+      notiz: f.notiz || ''
+    };
+    this._merken({ betreuung: { ...this.state.betreuung, [id]: eintrag } });
+    this.setState({ betreuungForm: { ...LEER_BETREUUNG, kind: eintrag.kind }, betreuungFehler: '', betreuungHinweis: 'Gespeichert' });
+  }
+  _betreuungBearbeiten(b) {
+    this.setState({
+      betreuungForm: {
+        ...LEER_BETREUUNG, ...b,
+        beitrag: String(b.beitrag ?? ''),
+        verpflegung: b.verpflegung === '' || b.verpflegung == null ? '' : String(b.verpflegung),
+        aenderungen: (b.aenderungen || []).map(a => ({ ab: a.ab, beitrag: String(a.beitrag) }))
+      },
+      betreuungFehler: '', betreuungHinweis: 'Wird bearbeitet'
+    });
+  }
+  _betreuungLoeschen(id) {
+    const betreuung = { ...this.state.betreuung };
+    delete betreuung[id];
+    this._merken({ betreuung });
+    if (this.state.betreuungForm.id === id) this.setState({ betreuungForm: { ...LEER_BETREUUNG }, betreuungHinweis: 'Gelöscht' });
+  }
+
+  // ---------- Gesundheitskosten aus dem PKV-Projekt ----------
+  _gesundheitSetzen(patch) {
+    const jahr = String(this.state.jahr);
+    const alt = (this.state.gesundheit || {})[jahr] || {};
+    this._merken({ gesundheit: { ...this.state.gesundheit, [jahr]: { ...alt, ...patch } } });
+  }
+  async _pkvHolen() {
+    const jahr = this.state.jahr;
+    if (!this.sync || !this.sync.cfg.token) { this.setState({ pkvHinweis: 'Erst Token in Abschnitt 02 hinterlegen.' }); return; }
+    const pin = (this.state.pkvPin || '').trim() || this.sync._pin || '';
+    if (!pin) { this.setState({ pkvHinweis: 'PIN des PKV-Projekts eingeben.' }); return; }
+    this.setState({ pkvLaeuft: true, pkvHinweis: 'sucht den Gist des PKV-Projekts …' });
+    try {
+      const { SecureSync } = await import('./secure-sync.js');
+      const fremd = new SecureSync({ ns: 'pkvimport', header: 'PKVIMP1', gistFile: 'pkv-stand.json' });
+      await fremd.setConfig({ token: this.sync.cfg.token });
+      await fremd.unlock(pin, null);
+      const id = await fremd.findGist();
+      if (!id) { this._pkvAufraeumen(); this.setState({ pkvLaeuft: false, pkvHinweis: 'Kein Gist mit pkv-stand.json gefunden. Hat der Token das Gist-Recht?' }); return; }
+      await fremd.setConfig({ gistId: id });
+      this.setState({ pkvHinweis: 'entschlüsselt …' });
+      const res = await fremd.downloadState();
+      this._pkvAufraeumen();
+      if (res.gesperrt) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Der Stand ließ sich mit dieser PIN nicht öffnen.' }); return; }
+      const g = gesundheitLesen(res.stand, jahr);
+      if (!g) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Der Gist enthält keine Einträge im erwarteten Format.' }); return; }
+      if (!g.posten) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Gelesen — für ' + jahr + ' ist dort kein Eintrag erfasst.' }); return; }
+      const arten = Object.entries(g.nachArt).sort((a, b) => b[1] - a[1]).map(([a, w]) => a + ' ' + eur(w));
+      this._gesundheitSetzen({
+        selbst: Math.round(g.selbst * 100) / 100,
+        erstattet: Math.round(g.erstattet * 100) / 100,
+        rueck: Math.round(g.rueck * 100) / 100,
+        wartend: Math.round(g.wartend * 100) / 100,
+        quelle: g.posten + (g.posten === 1 ? ' Eintrag' : ' Einträge') + ' aus dem PKV-Projekt',
+        felder: arten.join(' · '),
+        rueckDetail: g.rueckDetail.join(', '),
+        stand: new Date().toISOString()
+      });
+      this.setState({ pkvLaeuft: false, pkvPin: '', pkvHinweis: g.posten + ' Einträge für ' + jahr + ' gelesen.' + (g.wartend > 0.004 ? ' ' + eur(g.wartend) + ' warten noch auf Abrechnung und sind nicht enthalten.' : '') });
+    } catch (e) {
+      this._pkvAufraeumen();
+      this.setState({ pkvLaeuft: false, pkvHinweis: e.message });
+    }
+  }
+  _pkvAufraeumen() {
+    ['pkvimport.sync.v1', 'pkvimport.tresor.v1'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+    ['pkvimport.schluessel', 'pkvimport.datenschluessel'].forEach(k => { try { sessionStorage.removeItem(k); } catch (e) {} });
+  }
+
+  // ---------- Verträge ----------
+  _vfSetzen(patch) { this.setState({ vertragForm: { ...this.state.vertragForm, ...patch } }); }
+  /** Art wechseln setzt Abzugsart und Anteil auf die übliche Behandlung — beides bleibt danach änderbar. */
+  _vfArt(id) {
+    const a = ART_MAP[id] || ART_MAP.sonstiger;
+    this._vfSetzen({ art: id, abzug: a.abzug, anteil: String(a.anteil), anteilFrei: false });
+  }
+  _vfStufe(i, patch) {
+    const aenderungen = (this.state.vertragForm.aenderungen || []).map((a, k) => k === i ? { ...a, ...patch } : a);
+    this._vfSetzen({ aenderungen });
+  }
+  _vfStufeHinzu() {
+    const vorhanden = this.state.vertragForm.aenderungen || [];
+    this._vfSetzen({ aenderungen: [...vorhanden, { ab: String(this.state.jahr) + '-01', beitrag: '' }] });
+  }
+  _vfStufeWeg(i) {
+    this._vfSetzen({ aenderungen: (this.state.vertragForm.aenderungen || []).filter((a, k) => k !== i) });
+  }
+  _vertragSpeichern() {
+    const f = this.state.vertragForm, a = ART_MAP[f.art] || ART_MAP.sonstiger;
+    if (!(Number(f.beitrag) > 0)) { this.setState({ vertragFehler: 'Beitrag fehlt.' }); return; }
+    const id = f.id || 'v' + Date.now().toString(36);
+    const eintrag = {
+      id, art: f.art,
+      gesellschaft: (f.gesellschaft || '').trim(), nummer: (f.nummer || '').trim(),
+      beitrag: Number(f.beitrag) || 0, basis: f.basis === '' ? '' : Number(f.basis) || 0,
+      rhythmus: f.rhythmus || 'monatlich',
+      von: f.von || '', bis: f.bis || '',
+      aenderungen: (f.aenderungen || [])
+        .filter(a => a.ab && String(a.beitrag).trim() !== '')
+        .map(a => ({ ab: a.ab, beitrag: Number(a.beitrag) || 0 }))
+        .sort((a, c) => a.ab < c.ab ? -1 : 1),
+      person: f.person || this._personen()[0],
+      abzug: f.abzug || a.abzug,
+      anteil: f.anteil === '' ? a.anteil : Number(f.anteil) || 0,
+      notiz: f.notiz || ''
+    };
+    this._merken({ vertraege: { ...this.state.vertraege, [id]: eintrag } });
+    this.setState({ vertragForm: { ...LEER_VERTRAG, person: eintrag.person }, vertragFehler: '', vertragHinweis: 'Vertrag gespeichert' });
+  }
+  _vertragBearbeiten(v) {
+    this.setState({
+      vertragForm: {
+        ...LEER_VERTRAG, ...v,
+        beitrag: String(v.beitrag ?? ''), basis: v.basis === '' || v.basis == null ? '' : String(v.basis), anteil: String(v.anteil ?? 100),
+        aenderungen: (v.aenderungen || []).map(a => ({ ab: a.ab, beitrag: String(a.beitrag) })),
+        anteilFrei: !ART_MAP[v.art] || Number(v.anteil) !== ART_MAP[v.art].anteil || v.abzug !== ART_MAP[v.art].abzug
+      },
+      vertragFehler: '', vertragHinweis: 'Vertrag wird bearbeitet'
+    });
+  }
+  _vertragLoeschen(id) {
+    const vertraege = { ...this.state.vertraege };
+    delete vertraege[id];
+    this._merken({ vertraege });
+    if (this.state.vertragForm.id === id) this.setState({ vertragForm: { ...LEER_VERTRAG }, vertragHinweis: 'Vertrag gelöscht' });
   }
 
   // ---------- Belege ----------
@@ -1293,6 +2891,7 @@ class Component extends DCLogic {
           if (Number(p.anteil) !== 100) details.push('beruflich ' + p.anteil + ' %');
           if (nd > 1) details.push('Abschreibung Jahr ' + (jahr - Number(p.jahr) + 1) + ' von ' + nd);
           if (p.ust !== '' && p.ust != null) details.push('USt ' + eur(p.ust));
+          if (Number(p.arbeit) > 0) details.push('Arbeitskosten ' + eur(p.arbeit));
           if ((p.dateien || []).length) details.push((p.dateien || []).length + ' Seite' + ((p.dateien || []).length === 1 ? '' : 'n'));
           if (p.notiz) details.push(p.notiz);
           return {
@@ -1309,6 +2908,68 @@ class Component extends DCLogic {
     const artSummen = ['Werbungskosten', 'Sonderausgaben', 'Haushaltsnah', 'Sonstiges']
       .map(a => ({ art: a, summe: eur(imJahr.filter(x => AUSGABE_MAP[x.p.kat] && AUSGABE_MAP[x.p.kat].art === a).reduce((s, x) => s + x.wert, 0)), roh: imJahr.filter(x => AUSGABE_MAP[x.p.kat] && AUSGABE_MAP[x.p.kat].art === a).length }))
       .filter(x => x.roh > 0);
+    const istVertraege = S.tab === 'vertraege';
+    const VF = S.vertragForm;
+    const { liste: vertragListe, teile: vertragTeile } = vertragsPosten(S.vertraege, jahr, S.vertragPerson);
+    const vertragGruppen = ABZUG.map(g => {
+      const teil = vertragTeile.filter(t => t.abzug === g.id);
+      if (!teil.length) return null;
+      return {
+        name: g.name, norm: g.norm, grenze: g.grenze,
+        summe: eur(teil.reduce((s, t) => s + t.anrechnung, 0)),
+        zeilen: teil.map(({ x: { v, monate }, betragJahr, anteil, anrechnung, zusatz }) => {
+          const art = ART_MAP[v.art] || ART_MAP.sonstiger;
+          const rh = RHYTHMUS_MAP[v.rhythmus] || RHYTHMUS_MAP.monatlich;
+          const mon = m => m ? m.slice(5, 7) + '/' + m.slice(0, 4) : '';
+          const details = [];
+          if (v.nummer) details.push('Nr. ' + v.nummer);
+          const erster = v.von && v.von.slice(0, 4) === String(jahr) ? Number(v.von.slice(5, 7)) : 1;
+          const imJahrGeaendert = (v.aenderungen || []).filter(a => a.ab && a.ab.slice(0, 4) === String(jahr) && Number(a.ab.slice(5, 7)) > erster);
+          details.push(eur(beitragImMonat(v, jahr, erster)) + ' ' + rh.name
+            + imJahrGeaendert.map(a => ', ab ' + mon(a.ab) + ' ' + eur(a.beitrag)).join(''));
+          if (v.notiz) details.push(v.notiz);
+          return {
+            bez: zusatz ? art.name + ' — ' + zusatz : art.name,
+            gesellschaft: v.gesellschaft || '—',
+            detail: details.join(' · '),
+            person: v.person,
+            laufzeit: (v.von ? mon(v.von) : 'seit jeher') + ' – ' + (v.bis ? mon(v.bis) : 'laufend') + (monate < 12 ? ' · ' + monate + ' Monate' : ''),
+            beitrag: eur(betragJahr),
+            anteil: anteil + ' %',
+            anrechnung: eur(anrechnung),
+            bearbeiten: () => this._vertragBearbeiten(v),
+            loeschen: () => this._vertragLoeschen(v.id)
+          };
+        })
+      };
+    }).filter(Boolean);
+    const vfBasisP = basisProzent(VF);
+    const vfAnteilZahl = VF.abzug === 'keine' ? 0 : (VF.anteil === '' ? 0 : Number(VF.anteil) || 0);
+    const vfAbzugName = (ABZUG_MAP[VF.abzug] || {}).name || 'Sonstige Vorsorge';
+    const vfUrteil = vfBasisP != null
+        ? (vfBasisP >= 99.95 ? 'Voll absetzbar — Basis Kranken und Pflege' : 'Aufgeteilt — Basisanteil voll, Rest sonstige Vorsorge')
+      : vfAnteilZahl <= 0 ? 'Nicht absetzbar'
+      : vfAnteilZahl >= 100 ? 'Voll absetzbar — ' + vfAbzugName
+      : 'Zu ' + vfAnteilZahl + ' % absetzbar — ' + vfAbzugName;
+    const vfJahresbeitrag = vertragJahr({ beitrag: VF.beitrag, rhythmus: VF.rhythmus, von: VF.von, bis: VF.bis, aenderungen: VF.aenderungen }, jahr);
+    const vfRechnung = !(Number(VF.beitrag) > 0) ? ''
+      : vfBasisP != null
+        ? eur(vfJahresbeitrag) + ' im Jahr ' + jahr + ' — davon ' + eur(vfJahresbeitrag * vfBasisP / 100) + ' Basis'
+          + (vfBasisP < 99.95 ? ' und ' + eur(vfJahresbeitrag * (100 - vfBasisP) / 100) + ' sonstige Vorsorge' : '')
+        : eur(vfJahresbeitrag) + ' im Jahr ' + jahr + (vfAnteilZahl > 0 ? ', davon zählen ' + eur(vfJahresbeitrag * vfAnteilZahl / 100) : '');
+    const vertragBeitrag = vertragListe.reduce((s, x) => s + x.beitragJahr, 0);
+    const vertragAnrechnung = vertragTeile.reduce((s, t) => s + t.anrechnung, 0);
+
+    const istDienstwagen = S.tab === 'dienstwagen';
+    const DF = S.dwForm;
+    const dw = dienstwagenJahr(S.dienstwagen, jahr, S.tage, Number(S.settings.km) || 0);
+    const istTelekom = S.tab === 'telekom';
+    const TF = S.telekomForm;
+    const tkJahr = telekomPosten(S.telekom, jahr, personen);
+    const istBetreuung = S.tab === 'betreuung';
+    const BF2 = S.betreuungForm;
+    const btJahr = betreuungPosten(S.betreuung, jahr);
+    const btJahrAlle = btJahr;
     const ft = this._feiertage(jahr);
     const anzahlKw = kwAnzahl(jahr), vorjahrKw = kwAnzahl(jahr - 1);
     const zaehler = {};
@@ -1350,17 +3011,29 @@ class Component extends DCLogic {
           wochen.push({ kw: String(idx < 1 ? vorjahrKw + idx : idx > anzahlKw ? idx - anzahlKw : idx), tage: zeile });
         }
       }
-      return { name, info: ftAnzahl ? ftAnzahl + ' Feiertag' + (ftAnzahl > 1 ? 'e' : '') : '', wochen };
+      return { id: 'monat-' + mi, name, info: ftAnzahl ? ftAnzahl + ' Feiertag' + (ftAnzahl > 1 ? 'e' : '') : '', wochen };
     });
 
     const wochen = this._wochenDaten(jahr);
     const wochenZeilen = [];
     for (let kw = istWochen ? 1 : anzahlKw + 1; kw <= anzahlKw; kw++) {
-      const { zahlen } = wochen[kw - 1];
+      const { zahlen, summe, tage: wtage } = wochen[kw - 1];
       const monatIdx = new Date(kwMontag(jahr, kw).getTime() + 3 * TAG).getUTCMonth();
+      const fehlend = wtage.length - summe;
+      const schwer = fehlend >= 2 || fehlend < 0;   // zwei und mehr fehlende Tage oder zu viel erfasst
+      const luecke = fehlend !== 0;
+      const warnFarbe = schwer ? '#9e4b45' : '#b0722c';
+      const markiert = S.markiereKw === kw;
       wochenZeilen.push({
         kw: String(kw),
         monat: MONATE[monatIdx],
+        id: 'kw-' + kw,
+        zumKalender: () => this._zumKalender(kw),
+        zeilenBg: markiert ? tint(warnFarbe, 32) : luecke ? tint(warnFarbe, schwer ? 14 : 18) : 'transparent',
+        zeilenRahmen: markiert ? 'inset 0 0 0 1px ' + warnFarbe : 'none',
+        kwFarbe: luecke ? warnFarbe : ink(55),
+        kwGewicht: luecke ? '600' : '400',
+        fehlt: luecke ? summe + ' von ' + wtage.length : '',
         zellen: KAT.map(k => ({
           wert: zahlen[k.id],
           bg: zahlen[k.id] ? tint(k.farbe, 25) : 'transparent',
@@ -1385,6 +3058,23 @@ class Component extends DCLogic {
         werte: werte.map(v => ({ wert: String(v), fg: v ? 'var(--color-text)' : ink(28) }))
       };
     });
+    const monatsMax = Math.max(1, ...monatsZeilen.map(z => Number(z.gesamt)));
+    const monatsBalken = monatsZeilen.map(z => ({
+      monat: z.monatKurz,
+      monatLang: z.monat,
+      gesamt: z.gesamt,
+      leer: Number(z.gesamt) === 0,
+      segmente: KAT.map((k, i) => ({ k, n: Number(z.werte[i].wert) })).filter(x => x.n > 0).map(({ k, n }) => {
+        const anteil = n / monatsMax * 100;
+        return {
+          breite: anteil + '%',
+          farbe: k.farbe,
+          auf: k.auf,
+          titel: k.name + ': ' + n + (n === 1 ? ' Tag' : ' Tage'),
+          zahl: anteil >= 3.5 ? String(n) : ''
+        };
+      })
+    }));
     if (istAuswertung) monatsZeilen.push({
       monat: 'Gesamt', monatKurz: 'Σ', gewicht: '600',
       gesamt: String(KAT.reduce((a, k) => a + zaehler[k.id], 0)),
@@ -1396,16 +3086,76 @@ class Component extends DCLogic {
     const km = Number(S.settings.km) || 0;
     const proTag = Math.min(km, 20) * 0.30 + Math.max(0, km - 20) * 0.38;
 
+    const istUebergabe = S.tab === 'uebergabe';
+    const rechne = istAuswertung || istUebergabe;
+    const alleBelege = !rechne ? [] : Object.values(S.posten || {})
+      .map(p => ({ p, wert: jahresAnteil(p, jahr) })).filter(x => x.wert > 0.004);
+    const alleVertraege = rechne ? vertragsPosten(S.vertraege, jahr, 'alle') : { liste: [], teile: [] };
+    const belegArtZeilen = ['Werbungskosten', 'Sonderausgaben', 'Haushaltsnah', 'Sonstiges'].map(a => {
+      const teil = alleBelege.filter(x => (AUSGABE_MAP[x.p.kat] || {}).art === a);
+      return { label: a, anzahl: teil.length, wert: teil.reduce((s, x) => s + x.wert, 0) };
+    }).filter(x => x.anzahl);
+    const belegAnsatz = alleBelege.reduce((s, x) => s + x.wert, 0);
+    const versArtZeilen = ABZUG.filter(g => g.id !== 'keine').map(g => {
+      const teil = alleVertraege.teile.filter(t => t.abzug === g.id);
+      return { label: g.name, anzahl: teil.length, wert: teil.reduce((s, t) => s + t.anrechnung, 0) };
+    }).filter(x => x.anzahl);
+    const versAnsatz = alleVertraege.teile.filter(t => t.abzug !== 'keine').reduce((s, t) => s + t.anrechnung, 0);
+    const versNichts = alleVertraege.teile.filter(t => t.abzug === 'keine').reduce((s, t) => s + t.betragJahr, 0);
+    const wkBelege = alleBelege.filter(x => (AUSGABE_MAP[x.p.kat] || {}).art === 'Werbungskosten').reduce((s, x) => s + x.wert, 0);
+    const wkVers = alleVertraege.teile.filter(t => t.abzug === 'werbung').reduce((s, t) => s + t.anrechnung, 0);
+    const tkAuswertung = rechne ? telekomPosten(S.telekom, jahr, personen) : { gruppen: [], liste: [], brutto: 0, ansatz: 0 };
+    const wkSumme = anerkannt * satz + proTag * zaehler.praesenz + wkBelege + wkVers + tkAuswertung.ansatz;
+    const teilSumme = id => alleVertraege.teile.filter(t => t.abzug === id).reduce((s, t) => s + t.anrechnung, 0);
+    const saAlter = teilSumme('altersvorsorge') + teilSumme('riester');
+    const saBasis = teilSumme('basis');
+    const saSonstige = teilSumme('sonstige');
+    const saBelege = alleBelege.filter(x => (AUSGABE_MAP[x.p.kat] || {}).art === 'Sonderausgaben').reduce((s, x) => s + x.wert, 0);
+    const saUebrige = teilSumme('spenden') + saBelege;
+    const btAuswertung = rechne ? betreuungPosten(S.betreuung, jahr) : { gruppen: [], liste: [], basis: 0, ansatz: 0 };
+    const saSumme = saAlter + saBasis + saSonstige + saUebrige + btAuswertung.ansatz;
+    const saPausch = (S.settings.zbGruppe || 'einzeln') === 'zusammen' ? 72 : 36;
+    const gs = Number(S.settings.grenzsteuer) || 0;
+    const a35 = (katId, deckel) => {
+      const teil = alleBelege.filter(x => x.p.kat === katId);
+      const basis = teil.reduce((s, x) => {
+        const brutto = Number(x.p.betrag) || 0, arbeit = Number(x.p.arbeit) || 0;
+        return s + (arbeit > 0 ? Math.min(arbeit, brutto) : brutto);
+      }, 0);
+      return { basis, ermaessigung: Math.min(basis * 0.2, deckel), deckel, anzahl: teil.length, ohneTrennung: teil.filter(x => !(Number(x.p.arbeit) > 0)).length };
+    };
+    const hwk = a35('handwerker', 1200), hhn = a35('haushaltsnah', 4000);
+    const afaListe = !istAuswertung ? [] : Object.values(S.posten || {})
+      .filter(p => Number(p.nd) >= 2)
+      .map(p => ({ p, rate: jahresAnteil(p, jahr), rest: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].reduce((s, k) => s + jahresAnteil(p, jahr + k), 0) }))
+      .filter(x => x.rate > 0.004 || x.rest > 0.004)
+      .sort((a, b) => (a.p.datum || '') < (b.p.datum || '') ? -1 : 1);
+    const afaKommend = !istAuswertung ? [] : [1, 2, 3, 4].map(k => ({
+      jahr: jahr + k,
+      wert: Object.values(S.posten || {}).reduce((s, p) => s + jahresAnteil(p, jahr + k), 0)
+    })).filter(x => x.wert > 0.004);
+    const beitragJahre = !istAuswertung ? [] : [jahr - 2, jahr - 1, jahr, jahr + 1].map(j => ({
+      j, wert: vertragsPosten(S.vertraege, j, 'alle').liste.reduce((s, x) => s + x.beitragJahr, 0)
+    })).filter(x => x.wert > 0.004);
+
+    const gesJ = (S.gesundheit || {})[String(jahr)] || {};
     const kontrollen = [];
-    if (istAuswertung) {
+    if (istWochen) {
       wochen.forEach(w => {
-        if (w.summe !== w.tage.length) kontrollen.push({ label: 'KW ' + w.kw + ' — ' + w.summe + ' von ' + w.tage.length, klick: () => this.setState({ tab: 'wochen' }) });
+        const fehlend = w.tage.length - w.summe;
+        if (fehlend === 0) return;
+        const farbe = fehlend >= 2 || fehlend < 0 ? '#9e4b45' : '#b0722c';
+        kontrollen.push({
+          label: 'KW ' + w.kw + ' — ' + w.summe + ' von ' + w.tage.length,
+          bg: tint(farbe, fehlend >= 2 || fehlend < 0 ? 14 : 18), rand: tint(farbe, 45), fg: farbe,
+          klick: () => this._zurKw(w.kw)
+        });
       });
       Object.keys(S.tage).forEach(d => {
         if (d.slice(0, 4) !== String(jahr)) return;
         const wd = new Date(d + 'T00:00:00Z').getUTCDay();
         if (wd !== 0 && wd !== 6) return;
-        kontrollen.push({ label: d + ' — Wochenende erfasst', klick: () => this.setState({ tab: 'kalender', gewaehlt: d }) });
+        kontrollen.push({ label: d + ' — Wochenende erfasst', bg: tint('#9e4b45', 14), rand: tint('#9e4b45', 45), fg: '#9e4b45', klick: () => this.setState({ tab: 'kalender', gewaehlt: d }) });
       });
     }
 
@@ -1414,17 +3164,287 @@ class Component extends DCLogic {
 
     return {
       jahr: String(jahr), gesperrt: S.gesperrt, frisch: S.frisch,
-      ohneSetup: !S.setupBlob,
       nie: false,
       einrichtenLabel: S.setupBlob ? 'Entsperren' : 'Einrichten',
       einrichtenText: S.setupBlob ? 'Bitte PIN eingeben.' : 'Dieses Gerät kennt deinen Stand noch nicht.',
       einrichtenHinweis: '',
       heuteLang: new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }),
       pinEingabe: S.pinEingabe, neuePin: S.neuePin, pinFehler: S.pinFehler, syncStatus: S.syncStatus,
-      istKalender, istWochen, istAuswertung, istEinstellungen, istBelege,
-      nichtBelege: !istBelege,
-      druckTitel: istBelege ? 'Belege und Aufwendungen ' + jahr : 'Anwesenheit und Home Office ' + jahr,
-      bereich: istEinstellungen ? 'Einstellungen' : istBelege ? 'Belege' : 'Home Office',
+      istKalender, istWochen, istAuswertung, istEinstellungen, istBelege, istVertraege, istBetreuung, istTelekom, istDienstwagen, istUebergabe,
+      nichtBelege: !istBelege && !istVertraege && !istBetreuung && !istTelekom && !istDienstwagen && !istUebergabe,
+      druckTitel: istUebergabe ? 'Übergabe an die Steuersoftware ' + jahr : istDienstwagen ? 'Dienstwagen ' + jahr : istTelekom ? 'Telekommunikation ' + jahr : istBetreuung ? 'Kinderbetreuung ' + jahr : istVertraege ? 'Versicherungen und Beiträge ' + jahr : istBelege ? 'Belege und Aufwendungen ' + jahr : 'Anwesenheit und Home Office ' + jahr,
+      bereich: istEinstellungen ? 'Einstellungen' : istUebergabe ? 'Übergabe' : istDienstwagen ? 'Dienstwagen' : istTelekom ? 'Telekom' : istBetreuung ? 'Betreuung' : istVertraege ? 'Versicherungen' : istBelege ? 'Belege' : 'Home Office',
+      dwZeilen: dw.liste.map(x => {
+        const mon = m => m ? m.slice(5, 7) + '/' + m.slice(0, 4) : '';
+        const a = DW_ANTRIEB_MAP[x.w.antrieb] || {};
+        const details = [];
+        if (Number(x.w.blp) > 0) details.push('Listenpreis ' + eur(x.w.blp) + ' × ' + (x.faktor === 0.25 ? 'ein Viertel' : x.faktor === 0.5 ? 'die Hälfte' : x.faktor === 0 ? 'steuerfrei' : 'voll'));
+        if (Number(x.w.eigenanteil) > 0) details.push('Eigenanteil ' + eur(x.w.eigenanteil) + ' im Monat');
+        if (Number(x.w.zuzahlung) > 0) details.push('Zuzahlung ' + eur(x.w.zuzahlung));
+        if (x.w.notiz) details.push(x.w.notiz);
+        return {
+          bez: x.w.bez,
+          antrieb: a.name || '',
+          detail: details.join(' · '),
+          laufzeit: mon(x.w.von) + ' – ' + (x.w.bis ? mon(x.w.bis) : 'laufend') + ' · ' + x.monate + (x.monate === 1 ? ' Monat' : ' Monate'),
+          basis: eur(x.basis),
+          privat: eur(x.privat),
+          pausch: x.keinWeg ? '—' : eur(x.pausch),
+          einzel: x.keinWeg ? '—' : eur(x.einzel) + ' · ' + x.fahrten + ' Fahrten',
+          diff: x.keinWeg ? '—' : eur(Math.max(0, x.pausch - x.einzel)),
+          bearbeiten: () => this._dwBearbeiten(x.w),
+          loeschen: () => this._dwLoeschen(x.w.id)
+        };
+      }),
+      dwLeer: !dw.liste.length,
+      dwMonate: dw.monatsZeilen.map(z => ({
+        monat: MONATE[z.m - 1],
+        fahrten: String(z.fahrten),
+        pausch: eur(z.pausch),
+        einzel: eur(z.einzel),
+        bg: z.einzel < z.pausch ? tint('#2f7a63', 12) : z.einzel > z.pausch ? tint('#9e4b45', 12) : 'transparent',
+        besser: z.einzel < z.pausch ? 'je Fahrt' : z.einzel > z.pausch ? 'pauschal' : 'gleich'
+      })),
+      dwPausch: eur(dw.pausch),
+      dwEinzel: eur(dw.einzel),
+      dwVorteilPausch: eur(dw.steuerbarPausch),
+      dwVorteilEinzel: eur(dw.steuerbarEinzel),
+      dwKorrektur: eur(dw.korrektur),
+      dwEigenHinweis: dw.eigen > 0
+        ? 'Der Eigenanteil von ' + eur(dw.eigen) + ' im Jahr wird vom gesamten Vorteil abgezogen, also auch vom Arbeitsweg. Deshalb fällt die Korrektur kleiner aus als der reine Unterschied zwischen den beiden Methoden von ' + eur(Math.max(0, dw.pausch - dw.einzel)) + '.'
+        : '',
+      dwFahrten: String(dw.fahrtenGesamt),
+      dwGrenzeHinweis: dw.fahrtenGesamt > DW_EINZEL_GRENZE
+        ? 'Es sind ' + dw.fahrtenGesamt + ' Präsenztage erfasst. Die Einzelbewertung erkennt höchstens ' + DW_EINZEL_GRENZE + ' Fahrten im Jahr an, gerechnet wurde mit ' + DW_EINZEL_GRENZE + '.'
+        : dw.fahrtenGesamt + ' von höchstens ' + DW_EINZEL_GRENZE + ' Fahrten im Jahr.',
+      dwErsparnis: (Number(S.settings.grenzsteuer) || 0) > 0 && dw.korrektur > 0
+        ? 'Bei ' + Number(S.settings.grenzsteuer) + ' % Grenzsteuersatz etwa ' + eur(dw.korrektur * Number(S.settings.grenzsteuer) / 100) + ' weniger Steuer.' : '',
+      dwTitel: DF.id ? 'Fahrzeug ändern' : 'Neues Fahrzeug',
+      dwVorhanden: !!DF.id,
+      dwAntrieb: DF.antrieb,
+      dwAntriebAendern: e => this._dwSetzen({ antrieb: e.target.value }),
+      dwAntriebOptionen: DW_ANTRIEB.map(a => ({ id: a.id, name: a.name })),
+      dwFelder: [
+        { label: 'Bezeichnung', typ: 'text', wert: DF.bez, schritt: '1', aendern: e => this._dwSetzen({ bez: e.target.value }) },
+        { label: 'Bruttolistenpreis €', typ: 'number', wert: DF.blp, schritt: '100', aendern: e => this._dwSetzen({ blp: e.target.value }) },
+        { label: 'Bemessungsgrundlage laut Abrechnung € — leer heißt selbst rechnen', typ: 'number', wert: DF.basis, schritt: '100', aendern: e => this._dwSetzen({ basis: e.target.value }) },
+        { label: 'Überlassung ab', typ: 'month', wert: DF.von, schritt: '1', aendern: e => this._dwSetzen({ von: e.target.value }) },
+        { label: 'bis — leer heißt laufend', typ: 'month', wert: DF.bis, schritt: '1', aendern: e => this._dwSetzen({ bis: e.target.value }) },
+        { label: 'Eigenanteil € im Monat', typ: 'number', wert: DF.eigenanteil, schritt: '0.01', aendern: e => this._dwSetzen({ eigenanteil: e.target.value }) },
+        { label: 'Einmalige Zuzahlung € im Jahr', typ: 'number', wert: DF.zuzahlung, schritt: '0.01', aendern: e => this._dwSetzen({ zuzahlung: e.target.value }) }
+      ],
+      dwAbrechnungWaehlen: e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; this._dwAbrechnung(f); },
+      dwNotiz: DF.notiz,
+      dwNotizAendern: e => this._dwSetzen({ notiz: e.target.value }),
+      dwSpeichern: () => this._dwSpeichern(),
+      dwVerwerfen: () => this.setState({ dwForm: { ...LEER_DW, antrieb: DF.antrieb }, dwFehler: '', dwHinweis: '' }),
+      dwLoeschen: () => this._dwLoeschen(DF.id),
+      dwFehler: S.dwFehler || '',
+      dwHinweis: S.dwHinweis || '',
+      dwFormHinweis: DF.antrieb === 'bev'
+        ? 'Vollelektrisch: ein Viertel des Listenpreises bis ' + eur(dwGrenze(DF)) + (DF.von >= '2025-07' ? '' : ' — für Überlassungen vor Juli 2025 gilt die alte Grenze') + ', darüber die Hälfte. Der Arbeitsweg-Zuschlag beruht auf derselben Grundlage.'
+        : DF.antrieb === 'rad_extra' ? 'Als Gehaltsextra ist das Dienstrad steuerfrei — es entsteht kein geldwerter Vorteil und für den Arbeitsweg kein Zuschlag. Die Entfernungspauschale bekommst du trotzdem.'
+        : DF.antrieb === 'rad_umwand' ? 'Bei Entgeltumwandlung zählt ein Viertel des Listenpreises, also 0,25 % im Monat. Ein Zuschlag für den Arbeitsweg fällt beim Rad nicht an.'
+        : DF.antrieb === 'hybrid' ? 'Förderfähige Plug-in-Hybride mit der Hälfte des Listenpreises — Voraussetzung sind 80 km elektrische Reichweite oder höchstens 50 g CO₂.'
+        : 'Verbrenner mit dem vollen Listenpreis.',
+      dwKmHinweis: (Number(S.settings.km) || 0) > 0
+        ? 'Gerechnet wird mit den Präsenztagen aus dem Kalender. Dieselbe Entfernung gilt für die Entfernungspauschale in der Auswertung.'
+        : 'Ohne Entfernung bleibt der Arbeitsweg bei null — bitte die einfache Entfernung eintragen.',
+      tkGruppen: tkJahr.gruppen.map(g => ({
+        person: g.person,
+        brutto: eur(g.brutto),
+        ansatz: eur(g.ansatz),
+        zeilen: g.teil.map(({ t, monate, brutto, roh, ansatz, gedeckelt }) => {
+          const mon = m => m ? m.slice(5, 7) + '/' + m.slice(0, 4) : '';
+          const rh = RHYTHMUS_MAP[t.rhythmus] || RHYTHMUS_MAP.monatlich;
+          const erster = t.von && t.von.slice(0, 4) === String(jahr) ? Number(t.von.slice(5, 7)) : 1;
+          const geaendert = (t.aenderungen || []).filter(a => a.ab && a.ab.slice(0, 4) === String(jahr) && Number(a.ab.slice(5, 7)) > erster);
+          const details = [eur(beitragImMonat(t, jahr, erster)) + ' ' + rh.name + geaendert.map(a => ', ab ' + mon(a.ab) + ' ' + eur(a.beitrag)).join('')];
+          details.push(t.methode === 'nachweis' ? 'nachgewiesen, ohne Deckel' : 'pauschal, höchstens ' + eur(TK_DECKEL_MONAT) + ' je Monat');
+          if (gedeckelt) details.push('gedeckelt, ' + eur(roh - ansatz) + ' bleiben liegen');
+          if (t.notiz) details.push(t.notiz);
+          return {
+            bez: (TK_MAP[t.art] || {}).name || 'Telekommunikation',
+            anbieter: t.anbieter || '—',
+            detail: details.join(' · '),
+            laufzeit: (t.von ? mon(t.von) : 'seit jeher') + ' – ' + (t.bis ? mon(t.bis) : 'laufend') + (monate < 12 ? ' · ' + monate + ' Monate' : ''),
+            brutto: eur(brutto),
+            anteil: (Number(t.anteil) || 0) + ' %',
+            ansatz: eur(ansatz),
+            bearbeiten: () => this._telekomBearbeiten(t),
+            loeschen: () => this._telekomLoeschen(t.id)
+          };
+        })
+      })),
+      tkLeer: !tkJahr.liste.length,
+      tkBruttoGesamt: eur(tkJahr.brutto),
+      tkAnsatzGesamt: eur(tkJahr.ansatz),
+      tkTitel: TF.id ? 'Vertrag ändern' : 'Neuer Vertrag',
+      tkVorhanden: !!TF.id,
+      tkArt: TF.art,
+      tkArtAendern: e => this._tkSetzen({ art: e.target.value }),
+      tkArtOptionen: TK_ART.map(a => ({ id: a.id, name: a.name })),
+      tkRhythmus: TF.rhythmus,
+      tkRhythmusAendern: e => this._tkSetzen({ rhythmus: e.target.value }),
+      tkPerson: TF.person || personen[0],
+      tkPersonAendern: e => this._tkSetzen({ person: e.target.value }),
+      tkMethode: TF.methode,
+      tkMethodeAendern: e => this._tkSetzen({ methode: e.target.value }),
+      tkMethodeOptionen: [
+        { id: 'pauschal', name: 'Pauschal — 20 %, höchstens 20 € im Monat' },
+        { id: 'nachweis', name: 'Nachgewiesen — Anteil aus drei Monaten, ohne Deckel' }
+      ],
+      tkAnteil: TF.anteil,
+      tkAnteilAendern: e => this._tkSetzen({ anteil: e.target.value }),
+      tkMethodeHinweis: TF.methode === 'nachweis'
+        ? 'Wer den beruflichen Anteil über drei zusammenhängende Monate mit Einzelverbindungsnachweisen belegt, darf ihn das ganze Jahr ansetzen — ohne Höchstbetrag. Die Nachweise gehören zu den Belegen.'
+        : 'Ohne Nachweis erkennt das Finanzamt 20 % der Rechnung an, höchstens 20 € im Monat. Das sind maximal 240 € im Jahr je Vertrag.',
+      tkFelder: [
+        { label: 'Anbieter', typ: 'text', wert: TF.anbieter, schritt: '1', aendern: e => this._tkSetzen({ anbieter: e.target.value }) },
+        { label: 'Betrag €', typ: 'number', wert: TF.beitrag, schritt: '0.01', aendern: e => this._tkSetzen({ beitrag: e.target.value }) },
+        { label: 'Beginn', typ: 'month', wert: TF.von, schritt: '1', aendern: e => this._tkSetzen({ von: e.target.value }) },
+        { label: 'Ende — leer heißt laufend', typ: 'month', wert: TF.bis, schritt: '1', aendern: e => this._tkSetzen({ bis: e.target.value }) }
+      ],
+      tkStufen: (TF.aenderungen || []).map((a, i) => ({
+        ab: a.ab, betrag: a.beitrag,
+        abAendern: e => this._tkStufe(i, { ab: e.target.value }),
+        betragAendern: e => this._tkStufe(i, { beitrag: e.target.value }),
+        weg: () => this._tkStufeWeg(i)
+      })),
+      tkStufeHinzu: () => this._tkStufeHinzu(),
+      tkNotiz: TF.notiz,
+      tkNotizAendern: e => this._tkSetzen({ notiz: e.target.value }),
+      tkSpeichern: () => this._telekomSpeichern(),
+      tkVerwerfen: () => this.setState({ telekomForm: { ...LEER_TELEKOM, person: TF.person }, telekomFehler: '', telekomHinweis: '' }),
+      tkLoeschen: () => this._telekomLoeschen(TF.id),
+      tkFehler: S.telekomFehler || '',
+      tkHinweis: S.telekomHinweis || '',
+      btGruppen: btJahr.gruppen.map(g => ({
+        kind: g.kind,
+        basis: eur(g.basis),
+        ansatz: eur(g.ansatz),
+        deckelHinweis: g.gedeckelt
+          ? 'Höchstbetrag erreicht — ' + eur(BETREUUNG_DECKEL) + ' je Kind, ' + eur(g.quote - BETREUUNG_DECKEL) + ' bleiben unberücksichtigt.'
+          : BETREUUNG_QUOTE + ' % von ' + eur(g.basis) + ', Höchstbetrag ' + eur(BETREUUNG_DECKEL) + ' je Kind.',
+        zeilen: g.teil.map(({ b, monate, brutto, verpflegung, basis }) => {
+          const mon = m => m ? m.slice(5, 7) + '/' + m.slice(0, 4) : '';
+          const rh = RHYTHMUS_MAP[b.rhythmus] || RHYTHMUS_MAP.monatlich;
+          const erster = b.von && b.von.slice(0, 4) === String(jahr) ? Number(b.von.slice(5, 7)) : 1;
+          const geaendert = (b.aenderungen || []).filter(a => a.ab && a.ab.slice(0, 4) === String(jahr) && Number(a.ab.slice(5, 7)) > erster);
+          const details = [eur(beitragImMonat(b, jahr, erster)) + ' ' + rh.name + geaendert.map(a => ', ab ' + mon(a.ab) + ' ' + eur(a.beitrag)).join('')];
+          if (Number(b.verpflegung) > 0) details.push('Verpflegung ' + eur(verpflegung) + ' abgezogen');
+          if (b.notiz) details.push(b.notiz);
+          return {
+            bez: (BETREUUNG_MAP[b.art] || {}).name || 'Betreuung',
+            einrichtung: b.einrichtung || '—',
+            detail: details.join(' · '),
+            laufzeit: (b.von ? mon(b.von) : 'seit jeher') + ' – ' + (b.bis ? mon(b.bis) : 'laufend') + (monate < 12 ? ' · ' + monate + ' Monate' : ''),
+            brutto: eur(brutto),
+            basis: eur(basis),
+            bearbeiten: () => this._betreuungBearbeiten(b),
+            loeschen: () => this._betreuungLoeschen(b.id)
+          };
+        })
+      })),
+      btLeer: !btJahr.liste.length,
+      btBasisGesamt: eur(btJahr.basis),
+      btAnsatzGesamt: eur(btJahr.ansatz),
+      btTitel: BF2.id ? 'Betreuung ändern' : 'Neue Betreuung',
+      btVorhanden: !!BF2.id,
+      btArt: BF2.art,
+      btArtAendern: e => this._btSetzen({ art: e.target.value }),
+      btArtOptionen: BETREUUNG_ART.map(a => ({ id: a.id, name: a.name })),
+      btRhythmus: BF2.rhythmus,
+      btRhythmusAendern: e => this._btSetzen({ rhythmus: e.target.value }),
+      btFelder: [
+        { label: 'Kind', typ: 'text', wert: BF2.kind, schritt: '1', aendern: e => this._btSetzen({ kind: e.target.value }) },
+        { label: 'Einrichtung oder Person', typ: 'text', wert: BF2.einrichtung, schritt: '1', aendern: e => this._btSetzen({ einrichtung: e.target.value }) },
+        { label: 'Betrag €', typ: 'number', wert: BF2.beitrag, schritt: '0.01', aendern: e => this._btSetzen({ beitrag: e.target.value }) },
+        { label: 'davon Verpflegung € — zählt nicht mit', typ: 'number', wert: BF2.verpflegung, schritt: '0.01', aendern: e => this._btSetzen({ verpflegung: e.target.value }) },
+        { label: 'Beginn', typ: 'month', wert: BF2.von, schritt: '1', aendern: e => this._btSetzen({ von: e.target.value }) },
+        { label: 'Ende — leer heißt laufend', typ: 'month', wert: BF2.bis, schritt: '1', aendern: e => this._btSetzen({ bis: e.target.value }) }
+      ],
+      btStufen: (BF2.aenderungen || []).map((a, i) => ({
+        ab: a.ab, betrag: a.beitrag,
+        abAendern: e => this._btStufe(i, { ab: e.target.value }),
+        betragAendern: e => this._btStufe(i, { beitrag: e.target.value }),
+        weg: () => this._btStufeWeg(i)
+      })),
+      btStufeHinzu: () => this._btStufeHinzu(),
+      btNotiz: BF2.notiz,
+      btNotizAendern: e => this._btSetzen({ notiz: e.target.value }),
+      btSpeichern: () => this._betreuungSpeichern(),
+      btVerwerfen: () => this.setState({ betreuungForm: { ...LEER_BETREUUNG, kind: BF2.kind }, betreuungFehler: '', betreuungHinweis: '' }),
+      btLoeschen: () => this._betreuungLoeschen(BF2.id),
+      btFehler: S.betreuungFehler || '',
+      btHinweis: S.betreuungHinweis || '',
+      vertragGruppen,
+      vertragLeer: !vertragListe.length,
+      vertragAnzahl: String(vertragListe.length),
+      vertragBeitragGesamt: eur(vertragBeitrag),
+      vertragMonatlich: eur(vertragBeitrag / 12),
+      vertragAbsetzbar: eur(vertragAnrechnung),
+      vertragPersonFilter: ['alle', ...personen].map(n => ({
+        name: n === 'alle' ? 'Alle' : n,
+        bg: S.vertragPerson === n ? 'var(--color-accent)' : 'transparent',
+        fg: S.vertragPerson === n ? 'var(--color-bg)' : ink(60),
+        klick: () => this.setState({ vertragPerson: n })
+      })),
+      vertragTitel: VF.id ? 'Vertrag ändern' : 'Neuer Vertrag',
+      vfUrteilNorm: vfBasisP != null && vfBasisP < 99.95 ? '§ 10 Abs. 1 Nr. 3 und 3a EStG' : (ABZUG_MAP[VF.abzug] || {}).norm || '',
+      vfBasisSichtbar: !!(ART_MAP[VF.art] && ART_MAP[VF.art].basisteilung),
+      vfBasis: VF.basis,
+      vfBasisAendern: e => this._vfSetzen({ basis: e.target.value }),
+      vfBasisLabel: 'Davon Basisabsicherung € — laut Bescheinigung, je Zahlung',
+      vfVorhanden: !!VF.id,
+      vfArt: VF.art,
+      vfArtHinweis: (ART_MAP[VF.art] || {}).hinweis || '',
+      vfArtAendern: e => this._vfArt(e.target.value),
+      artOptionen: VERTRAGSART.map(a => ({ id: a.id, name: a.name })),
+      vfRhythmus: VF.rhythmus,
+      vfRhythmusAendern: e => this._vfSetzen({ rhythmus: e.target.value }),
+      rhythmusOptionen: RHYTHMUS.map(r => ({ id: r.id, name: r.name })),
+      vfAbzug: VF.abzug,
+      vfAbzugAendern: e => this._vfSetzen({ abzug: e.target.value }),
+      abzugOptionen: ABZUG.map(a => ({ id: a.id, name: a.name })),
+      vfAbzugHinweis: (ABZUG_MAP[VF.abzug] || {}).grenze || '',
+      vfAnteil: VF.anteil,
+      vfAnteilAendern: e => this._vfSetzen({ anteil: e.target.value }),
+      vfAnteilFrei: !!VF.anteilFrei,
+      vfAnteilFreiSchalten: () => {
+        const a = ART_MAP[VF.art] || ART_MAP.sonstiger;
+        if (VF.anteilFrei) this._vfSetzen({ anteilFrei: false, abzug: a.abzug, anteil: String(a.anteil) });
+        else this._vfSetzen({ anteilFrei: true });
+      },
+      vfAnteilKnopf: VF.anteilFrei ? 'Wieder der Regel folgen' : 'Abweichend festlegen',
+      vfAnteilKnopfSichtbar: vfBasisP == null,
+      vfUrteil: vfUrteil,
+      vfUrteilFarbe: vfAnteilZahl > 0 ? 'var(--color-accent-800)' : ink(55),
+      vfRechnung: vfRechnung,
+      vfPerson: VF.person || personen[0],
+      vfPersonAendern: e => this._vfSetzen({ person: e.target.value }),
+      vfNotiz: VF.notiz,
+      vfNotizAendern: e => this._vfSetzen({ notiz: e.target.value }),
+      vertragFelder: [
+        { label: 'Gesellschaft', typ: 'text', wert: VF.gesellschaft, schritt: '1', aendern: e => this._vfSetzen({ gesellschaft: e.target.value }) },
+        { label: 'Vertragsnummer', typ: 'text', wert: VF.nummer, schritt: '1', aendern: e => this._vfSetzen({ nummer: e.target.value }) },
+        { label: 'Beitrag €', typ: 'number', wert: VF.beitrag, schritt: '0.01', aendern: e => this._vfSetzen({ beitrag: e.target.value }) },
+        { label: 'Beginn', typ: 'month', wert: VF.von, schritt: '1', aendern: e => this._vfSetzen({ von: e.target.value }) },
+        { label: 'Ende — leer heißt laufend', typ: 'month', wert: VF.bis, schritt: '1', aendern: e => this._vfSetzen({ bis: e.target.value }) }
+      ],
+      vfStufen: (VF.aenderungen || []).map((a, i) => ({
+        ab: a.ab, betrag: a.beitrag,
+        abAendern: e => this._vfStufe(i, { ab: e.target.value }),
+        betragAendern: e => this._vfStufe(i, { beitrag: e.target.value }),
+        weg: () => this._vfStufeWeg(i)
+      })),
+      vfStufeHinzu: () => this._vfStufeHinzu(),
+      vertragSpeichern: () => this._vertragSpeichern(),
+      vertragVerwerfen: () => this.setState({ vertragForm: { ...LEER_VERTRAG, person: VF.person }, vertragFehler: '', vertragHinweis: '' }),
+      vertragLoeschen: () => this._vertragLoeschen(VF.id),
+      vertragFehler: S.vertragFehler || '',
+      vertragHinweis: S.vertragHinweis || '',
+      bfKatHinweis: F.kat === 'versicherung' ? 'Laufende Versicherungsbeiträge besser im Reiter Versicherungen erfassen — dort steht auch, wie weit sie absetzbar sind.' : '',
       belegGruppen, artSummen,
       belegAnzahl: String(imJahr.length),
       belegGesamt: eur(imJahr.reduce((a, x) => a + x.wert, 0)),
@@ -1452,6 +3472,9 @@ class Component extends DCLogic {
         { label: 'Beruflicher Anteil %', typ: 'number', wert: F.anteil, schritt: '1', aendern: e => this._formSetzen({ anteil: e.target.value }) },
         { label: 'Nutzungsdauer Jahre — leer bedeutet sofort absetzbar', typ: 'number', wert: F.nd, schritt: '1', aendern: e => this._formSetzen({ nd: e.target.value }) }
       ],
+      bfArbeitSichtbar: F.kat === 'handwerker' || F.kat === 'haushaltsnah',
+      bfArbeit: F.arbeit,
+      bfArbeitAendern: e => this._formSetzen({ arbeit: e.target.value }),
       bfDateien: (F.dateien || []).map(d => ({
         name: d.name,
         oeffnen: () => this._belegDateiOeffnen(d),
@@ -1496,7 +3519,160 @@ class Component extends DCLogic {
         rand: S.aktiveKat === k.id ? 'var(--color-text)' : 'var(--color-divider)',
         klick: () => this.setState({ aktiveKat: k.id })
       })),
-      monate, wochenZeilen, monatsZeilen, kontrollen,
+      belegArtZeilen: belegArtZeilen.map(z => ({ label: z.label + ' — ' + z.anzahl + (z.anzahl === 1 ? ' Beleg' : ' Belege'), wert: eur(z.wert), gewicht: '400' })),
+      belegAnsatzGesamt: eur(belegAnsatz),
+      belegAnsatzLeer: !belegArtZeilen.length,
+      versArtZeilen: versArtZeilen.map(z => ({ label: z.label, wert: eur(z.wert), gewicht: '400' })),
+      versAnsatzGesamt: eur(versAnsatz),
+      versAnsatzLeer: !versArtZeilen.length,
+      versNichtText: versNichts > 0.004 ? 'Nicht absetzbar: ' + eur(versNichts) + ' Beitrag im Jahr.' : '',
+      zuBelege: () => this.setState({ tab: 'belege' }),
+      zuVersicherungen: () => this.setState({ tab: 'vertraege' }),
+      wkZeilen: [
+        { label: 'Home-Office-Pauschale', wert: eur(anerkannt * satz), gewicht: '400' },
+        { label: 'Entfernungspauschale', wert: eur(proTag * zaehler.praesenz), gewicht: '400' },
+        { label: 'Belege', wert: eur(wkBelege), gewicht: '400' },
+        { label: 'Versicherungsbeiträge', wert: eur(wkVers), gewicht: '400' },
+        { label: 'Telekommunikation', wert: eur(tkAuswertung.ansatz), gewicht: '400' },
+        { label: 'Zusammen', wert: eur(wkSumme), gewicht: '600' }
+      ],
+      btKarte: btAuswertung.gruppen.map(g => ({
+        kind: g.kind,
+        basis: eur(g.basis),
+        ansatz: eur(g.ansatz),
+        hinweis: g.gedeckelt ? 'gedeckelt' : BETREUUNG_QUOTE + ' %'
+      })),
+      btKarteLeer: !btAuswertung.gruppen.length,
+      btKarteSumme: eur(btAuswertung.ansatz),
+      btKarteUrteil: 'Abziehbar sind ' + BETREUUNG_QUOTE + ' % der Betreuungskosten, höchstens ' + eur(BETREUUNG_DECKEL) + ' je Kind und Jahr, bis zum 14. Geburtstag. Verpflegung, Nachhilfe und Sport zählen nicht mit, und es braucht eine Rechnung samt Überweisung.',
+      hwZeilen: [
+        { label: 'Handwerker — Arbeits- und Fahrtkosten', wert: eur(hwk.basis), gewicht: '400' },
+        { label: '20 % davon, höchstens ' + eur(1200), wert: eur(hwk.ermaessigung), gewicht: '400' },
+        { label: 'Haushaltsnahe Dienste', wert: eur(hhn.basis), gewicht: '400' },
+        { label: '20 % davon, höchstens ' + eur(4000), wert: eur(hhn.ermaessigung), gewicht: '400' },
+        { label: 'Weniger Steuer', wert: eur(hwk.ermaessigung + hhn.ermaessigung), gewicht: '600' }
+      ],
+      hwUrteil: (hwk.anzahl + hhn.anzahl === 0
+        ? 'Noch kein Beleg in diesen beiden Kategorien.'
+        : 'Nur Arbeits- und Fahrtkosten zählen, nicht das Material. '
+          + ((n => n === 0 ? 'Bei allen Belegen ist der Arbeitsanteil eingetragen.'
+              : n === 1 ? 'Bei einem Beleg ist der Arbeitsanteil nicht eingetragen — dort rechnet die App mit dem vollen Betrag.'
+              : 'Bei ' + n + ' Belegen ist der Arbeitsanteil nicht eingetragen — dort rechnet die App mit dem vollen Betrag.')(hwk.ohneTrennung + hhn.ohneTrennung)))
+        + ' Voraussetzung bleibt die Zahlung per Überweisung; Barzahlung erkennt das Finanzamt nicht an.',
+      afaZeilen: afaListe.map(({ p, rate }) => ({
+        bez: p.bez,
+        jahrText: 'Jahr ' + (jahr - (Number(p.jahr) || jahr) + 1) + ' von ' + p.nd,
+        rate: eur(rate)
+      })),
+      afaLeer: !afaListe.length,
+      afaKommend: afaKommend.map(x => ({ label: String(x.jahr), wert: eur(x.wert) })),
+      beitragZeilen: beitragJahre.map((x, i) => ({
+        label: String(x.j) + (x.j === jahr ? ' — gewähltes Jahr' : x.j > jahr ? ' — nach heutigem Stand' : ''),
+        wert: eur(x.wert),
+        gewicht: x.j === jahr ? '600' : '400',
+        delta: i === 0 || !(beitragJahre[i - 1].wert > 0) ? '' :
+          ((v => (v === 0 ? '±' : v > 0 ? '+' : '−') + Math.abs(v).toLocaleString('de-DE') + ' %')(Math.round((x.wert / beitragJahre[i - 1].wert - 1) * 1000) / 10))
+      })),
+      beitragLeer: !beitragJahre.length,
+      gsErsparnisWk: gs > 0 && wkSumme > 1230 ? 'Bei ' + gs + ' % Grenzsteuersatz sind das etwa ' + eur((wkSumme - 1230) * gs / 100) + ' weniger Steuer.' : '',
+      gsErsparnisSa: gs > 0 && (btAuswertung.ansatz + Math.max(0, saUebrige - saPausch)) > 0
+        ? 'Kinderbetreuung und übrige Sonderausgaben über dem Pauschbetrag sparen bei ' + gs + ' % Grenzsteuersatz etwa '
+          + eur((btAuswertung.ansatz + Math.max(0, saUebrige - saPausch)) * gs / 100)
+          + '. Die Vorsorgeaufwendungen sind hier nicht eingerechnet — sie sind bei Arbeitnehmern durch die Basisbeiträge meist schon ausgeschöpft.'
+        : '',
+      grenzsteuer: String(S.settings.grenzsteuer ?? ''),
+      grenzsteuerAendern: e => this._merken({ settings: { ...S.settings, grenzsteuer: e.target.value === '' ? '' : Math.max(0, Math.min(50, Number(e.target.value) || 0)) } }),
+      saZeilen: [
+        { label: 'Altersvorsorge und Riester', wert: eur(saAlter), gewicht: '400' },
+        { label: 'Basis Kranken und Pflege', wert: eur(saBasis), gewicht: '400' },
+        { label: 'Sonstige Vorsorge', wert: eur(saSonstige), gewicht: '400' },
+        { label: 'Kinderbetreuung', wert: eur(btAuswertung.ansatz), gewicht: '400' },
+        { label: 'Spenden und übrige', wert: eur(saUebrige), gewicht: '400' },
+        { label: 'Zusammen', wert: eur(saSumme), gewicht: '600' }
+      ],
+      saUrteil: 'Vorsorgeaufwendungen haben eigene Höchstbeträge und werden vom Pauschbetrag nicht berührt. Für die übrigen Sonderausgaben setzt das Finanzamt ohne Nachweis ' + eur(saPausch) + ' an — '
+        + (saUebrige > saPausch ? eur(saUebrige - saPausch) + ' liegen darüber.' : 'davon bist du noch ' + eur(saPausch - saUebrige) + ' entfernt.'),
+      wkUrteil: wkSumme > 1230
+        ? eur(wkSumme - 1230) + ' über dem Pauschbetrag von 1.230 € — die Aufstellung lohnt sich.'
+        : 'Noch ' + eur(1230 - wkSumme) + ' unter dem Pauschbetrag von 1.230 €, den das Finanzamt ohnehin ansetzt.',
+      gesFelder: [
+        { label: 'Selbst getragen €', wert: gesJ.selbst == null ? '' : String(gesJ.selbst), aendern: e => this._gesundheitSetzen({ selbst: e.target.value === '' ? '' : Number(e.target.value) || 0 }) },
+        { label: 'Von der Kasse erstattet €', wert: gesJ.erstattet == null ? '' : String(gesJ.erstattet), aendern: e => this._gesundheitSetzen({ erstattet: e.target.value === '' ? '' : Number(e.target.value) || 0 }) },
+        { label: 'Beitragsrückerstattung €', wert: gesJ.rueck == null ? '' : String(gesJ.rueck), aendern: e => this._gesundheitSetzen({ rueck: e.target.value === '' ? '' : Number(e.target.value) || 0 }) }
+      ],
+      gesQuelle: gesJ.quelle ? gesJ.quelle + (gesJ.stand ? ' · geholt am ' + new Date(gesJ.stand).toLocaleDateString('de-DE') : '') : 'Noch nichts geholt — Werte von Hand oder aus dem PKV-Projekt.',
+      gesArten: gesJ.felder || '',
+      zbGruppe: S.settings.zbGruppe || 'einzeln',
+      zbGruppeAendern: e => this._merken({ settings: { ...S.settings, zbGruppe: e.target.value } }),
+      zbOptionen: ZB_GRUPPEN.map(g => ({ id: g.id, name: g.name })),
+      gesGrenze: Number(gesJ.selbst) > 0
+        ? 'Bis zu einem Gesamtbetrag der Einkünfte von ' + eur(Math.floor(einkuenfteGrenze(Number(gesJ.selbst), (ZB_MAP[S.settings.zbGruppe || 'einzeln'] || ZB_MAP.einzeln).saetze)))
+          + ' übersteigen ' + eur(gesJ.selbst) + ' die zumutbare Belastung. Wer mehr verdient, setzt von diesen Kosten nichts ab.'
+        : 'Sobald hier ein selbst getragener Betrag steht, rechnet die App aus, bis zu welchen Einkünften er sich auswirkt.',
+      gesWartend: Number(gesJ.wartend) > 0.004 ? eur(gesJ.wartend) + ' sind eingereicht und noch nicht abgerechnet — erst nach der Abrechnung steht fest, was davon selbst getragen bleibt.' : '',
+      gesRueckHinweis: Number(gesJ.rueck) > 0
+        ? 'Die Beitragsrückerstattung von ' + eur(gesJ.rueck) + (gesJ.rueckDetail ? ' (' + gesJ.rueckDetail + ')' : '') + ' mindert im Jahr der Auszahlung den Sonderausgabenabzug der Basisbeiträge. Sie wird hier nicht automatisch abgezogen.'
+        : '',
+      pkvHolen: () => this._pkvHolen(),
+      uebergabe: !istUebergabe ? [] : (() => {
+        const katSumme = id => alleBelege.filter(x => x.p.kat === id).reduce((s, x) => s + x.wert, 0);
+        const zeile = (feld, wert, note) => ({ feld, wert, note: note || '' });
+        const geld = n => eur(n);
+        const bloecke = [];
+        bloecke.push({
+          titel: 'Anlage N — Werbungskosten',
+          hinweis: 'Trag die Werte so ein, wie sie hier stehen. Die Pauschbeträge und Höchstbeträge rechnet die Software selbst.',
+          zeilen: [
+            zeile('Wege zwischen Wohnung und erster Tätigkeitsstätte — Arbeitstage', String(zaehler.praesenz), 'aus dem Kalender, Kategorie Präsenz'),
+            zeile('Wege — einfache Entfernung', km + ' km', ''),
+            zeile('Tagespauschale für häusliche Tätigkeit — Anzahl der Tage', String(Math.min(zaehler.homeoffice, 210)), zaehler.homeoffice > 210 ? 'erfasst sind ' + zaehler.homeoffice + ' Tage, anerkannt werden 210' : ''),
+            zeile('Arbeitsmittel', geld(katSumme('arbeitsmittel')), 'Abschreibungen bereits mit der Jahresrate'),
+            zeile('Fachliteratur', geld(katSumme('fachliteratur')), ''),
+            zeile('Fortbildungskosten', geld(katSumme('fortbildung')), ''),
+            zeile('Beiträge zu Berufsverbänden', geld(katSumme('verband') + alleVertraege.teile.filter(t => t.abzug === 'werbung' && (t.x.v.art === 'verband')).reduce((s, t) => s + t.anrechnung, 0)), ''),
+            zeile('Telefon- und Internetkosten', geld(tkAuswertung.ansatz), 'beruflicher Anteil, Deckel bereits berücksichtigt'),
+            zeile('Beruflich veranlasste Versicherungen', geld(alleVertraege.teile.filter(t => t.abzug === 'werbung' && t.x.v.art !== 'verband').reduce((s, t) => s + t.anrechnung, 0)), 'Berufshaftpflicht, Arbeitsrechtsschutz, beruflicher Unfallanteil'),
+            zeile('Steuerberatungskosten', geld(katSumme('steuerberatung')), ''),
+            zeile('Sonstige Werbungskosten', geld(katSumme('sonstiges')), '')
+          ].filter(z => z.wert !== '0,00 €')
+        });
+        if (dw.korrektur > 0) bloecke.push({
+          titel: 'Anlage N — Dienstwagen, Einzelbewertung',
+          hinweis: 'Kein eigenes Feld: der Bruttoarbeitslohn wird gegenüber der Lohnsteuerbescheinigung nach unten korrigiert. In WISO über die Korrektur des Arbeitslohns mit Begründung, dazu die Monatsaufstellung als Anlage.',
+          zeilen: [
+            zeile('Zu versteuern laut Abrechnung, Arbeitsweg pauschal', eur(dw.steuerbarPausch), ''),
+            zeile('Zu versteuern bei Einzelbewertung', eur(dw.steuerbarEinzel), dw.fahrtenGesamt + ' Fahrten im Jahr'),
+            zeile('Bruttoarbeitslohn mindern um', eur(dw.korrektur), '')
+          ]
+        });
+        const vg = id => alleVertraege.teile.filter(t => t.abzug === id).reduce((s, t) => s + t.anrechnung, 0);
+        const vorsorge = [
+          zeile('Basisabsicherung Krankenversicherung und Pflegepflichtversicherung', geld(vg('basis')), 'Beiträge laut Bescheinigung der Gesellschaft'),
+          zeile('Beiträge zur Altersvorsorge, Rürup und freiwillige Rentenversicherung', geld(vg('altersvorsorge')), ''),
+          zeile('Riester — Anlage AV', geld(vg('riester')), ''),
+          zeile('Sonstige Vorsorgeaufwendungen', geld(vg('sonstige')), 'Haftpflicht, Berufsunfähigkeit, Risikoleben, Zusatzversicherungen'),
+          zeile('Beitragsrückerstattung der Krankenversicherung', geld(Number(gesJ.rueck) || 0), 'mindert die Basisbeiträge im Jahr der Auszahlung')
+        ].filter(z => z.wert !== '0,00 €');
+        if (vorsorge.length) bloecke.push({ titel: 'Anlage Vorsorgeaufwand', hinweis: 'Erfasst werden die gezahlten Beiträge. Höchstbeträge und Günstigerprüfung übernimmt die Software.', zeilen: vorsorge });
+        const kinder = btAuswertung.gruppen.map(g => zeile('Kinderbetreuungskosten für ' + g.kind, geld(g.basis), 'volle Aufwendungen ohne Verpflegung — die 80 % und den Höchstbetrag rechnet die Software'));
+        if (kinder.length) bloecke.push({ titel: 'Anlage Kind — Betreuungskosten', hinweis: 'Je Kind eine eigene Anlage. Nötig sind Rechnung und unbare Zahlung.', zeilen: kinder });
+        const haus = [
+          zeile('Handwerkerleistungen — Arbeits- und Fahrtkosten', geld(hwk.basis), 'ohne Material, 20 % ermäßigen die Steuer'),
+          zeile('Haushaltsnahe Dienstleistungen', geld(hhn.basis), '')
+        ].filter(z => z.wert !== '0,00 €');
+        if (haus.length) bloecke.push({ titel: 'Anlage Haushaltsnahe Aufwendungen', hinweis: 'Voraussetzung ist die Zahlung per Überweisung.', zeilen: haus });
+        const sonder = [
+          zeile('Spenden und Mitgliedsbeiträge', geld(vg('spenden') + alleBelege.filter(x => x.p.kat === 'spenden').reduce((s, x) => s + x.wert, 0)), '')
+        ].filter(z => z.wert !== '0,00 €');
+        if (sonder.length) bloecke.push({ titel: 'Anlage Sonderausgaben', hinweis: '', zeilen: sonder });
+        const agb = [
+          zeile('Krankheitskosten, selbst getragen', geld(Number(gesJ.selbst) || 0), 'nach Abzug aller Erstattungen'),
+          zeile('Von der Versicherung erstattet', geld(Number(gesJ.erstattet) || 0), 'nur zur Kontrolle, nicht einzutragen')
+        ].filter(z => z.wert !== '0,00 €');
+        if (agb.length) bloecke.push({ titel: 'Außergewöhnliche Belastungen', hinweis: 'Die zumutbare Belastung zieht die Software selbst ab.', zeilen: agb });
+        return bloecke;
+      })(),
+      monate, wochenZeilen, monatsBalken, kontrollen,
       kontrollText: kontrollen.length ? 'Diese Wochen und Tage stimmen nicht mit den Werktagen überein.' : 'Jede Woche ist vollständig erfasst.',
       jahresSummen: KAT.map(k => ({ name: k.name, farbe: k.farbe, auf: k.auf, code: k.code, pfad: IKON[k.id], tage: String(zaehler[k.id]) })),
       hoSatz: String(satz), km: String(km),
@@ -1611,6 +3787,10 @@ class Component extends DCLogic {
         });
         this._merken({ tage });
       },
+      pkvPin: S.pkvPin,
+      pkvPinTippen: e => this.setState({ pkvPin: e.target.value }),
+      pkvHinweis: S.pkvHinweis || '',
+
       importHinweis: S.importHinweis || '',
       importieren: e => {
         const f = e.target.files && e.target.files[0];
@@ -1629,6 +3809,11 @@ class Component extends DCLogic {
             notizen: daten.notizen || {},
             belege: daten.belege || {},
             posten: daten.posten || {},
+            vertraege: daten.vertraege || {},
+            gesundheit: daten.gesundheit || {},
+            betreuung: daten.betreuung || {},
+            telekom: daten.telekom || {},
+            dienstwagen: daten.dienstwagen || {},
             settings: { ...S.settings, hoSatz: (daten.settings && daten.settings.hoSatz) ?? S.settings.hoSatz, km: (daten.settings && daten.settings.km) ?? S.settings.km }
           });
           this.setState({ importHinweis: anzahl + ' Tage eingelesen' });
