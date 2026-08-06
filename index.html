@@ -433,6 +433,23 @@
               </div>
               <p style="margin:var(--space-2) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ gesGrenze }}</p>
             </div>
+            <sc-if value="{{ gesHatPersonen }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-divider)">
+                <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Nach Person</div>
+                <p class="text-muted" style="margin:2px 0 var(--space-2);font-size:11px;text-wrap:pretty">Kosten für Kinder mit Kindergeldanspruch und für die Ehefrau bei Zusammenveranlagung zählen bei dir mit. Wer nicht dazugehört, wird hier abgewählt.</p>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <sc-for list="{{ gesPersonen }}" as="p" hint-placeholder-count="2">
+                    <button data-nodruck="1" onClick="{{ p.umschalten }}" title="{{ p.titel }}" style="display:flex;align-items:center;gap:var(--space-3);width:100%;min-height:34px;padding:4px 6px;border:0;border-radius:0;background:transparent;cursor:pointer;text-align:left" style-hover="background: color-mix(in srgb, var(--color-text) 5%, transparent)">
+                      <span style="width:13px;height:13px;flex:none;border:1px solid var(--color-text);background: {{ p.hakenBg }};color: {{ p.hakenFg }};font-size:10px;line-height:11px;text-align:center">{{ p.haken }}</span>
+                      <span style="flex:1;min-width:0;font-size:13px;color: {{ p.fg }}">{{ p.name }}</span>
+                      <span class="text-muted" style="font-size:11px;font-variant-numeric:tabular-nums">{{ p.posten }}</span>
+                      <span style="font-family:var(--font-heading);font-size:15px;font-variant-numeric:tabular-nums;color: {{ p.fg }}">{{ p.selbst }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+                <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px;text-wrap:pretty">{{ gesAusHinweis }}</p>
+              </div>
+            </sc-if>
             <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ gesQuelle }}</p>
             <p class="text-muted" style="margin:2px 0 0;font-size:11px;text-wrap:pretty">{{ gesArten }}</p>
             <p class="text-muted" style="margin:2px 0 0;font-size:11px;text-wrap:pretty">{{ gesWartend }}</p>
@@ -1845,13 +1862,17 @@ function gesundheitLesen(stand, jahr) {
   const zahl = v => { const n = Number(String(v == null ? 0 : v).replace(',', '.')); return isFinite(n) ? n : 0; };
   const imJahr = eintraege.filter(e => (Number(e.jahr) || Number(String(e.datum || '').slice(0, 4))) === jahr);
   let gesamt = 0, erstattet = 0, wartend = 0, selbst = 0;
-  const nachArt = {};
+  const nachArt = {}, nachPerson = {};
+  const fuerPerson = name => (nachPerson[name] = nachPerson[name] || { name, selbst: 0, erstattet: 0, wartend: 0, posten: 0 });
   imJahr.forEach(e => {
     const b = zahl(e.betrag), er = zahl(e.erstattet);
+    const pp = fuerPerson(e.patient || 'Ohne Angabe');
     gesamt += b; erstattet += er;
-    if (e.eingereicht && !(er > 0)) { wartend += b; return; }
+    pp.erstattet += er; pp.posten += 1;
+    if (e.eingereicht && !(er > 0)) { wartend += b; pp.wartend += b; return; }
     const eigen = Math.max(0, b - er);
     selbst += eigen;
+    pp.selbst += eigen;
     const a = e.art || 'Sonstiges';
     nachArt[a] = (nachArt[a] || 0) + eigen;
   });
@@ -1864,7 +1885,13 @@ function gesundheitLesen(stand, jahr) {
     const wert = intakt && j >= 1 ? PKV_STAFFEL[j - 1] : 0;
     if (wert) { rueck += wert; rueckDetail.push(p.name + ' ' + wert + ' €'); }
   });
-  return { gesamt, erstattet, wartend, selbst, rueck, rueckDetail, posten: imJahr.length, nachArt };
+  const rund = n => Math.round(n * 100) / 100;
+  return {
+    gesamt, erstattet, wartend, selbst, rueck, rueckDetail, posten: imJahr.length, nachArt,
+    personen: Object.values(nachPerson)
+      .map(p => ({ name: p.name, selbst: rund(p.selbst), erstattet: rund(p.erstattet), wartend: rund(p.wartend), posten: p.posten }))
+      .sort((a, b) => b.selbst - a.selbst)
+  };
 }
 /** Verträge eines Jahres, aufgeteilt in ihre steuerlichen Bestandteile. */
 function vertragsPosten(vertraege, jahr, person) {
@@ -2774,6 +2801,20 @@ class Component extends DCLogic {
     const alt = (this.state.gesundheit || {})[jahr] || {};
     this._merken({ gesundheit: { ...this.state.gesundheit, [jahr]: { ...alt, ...patch } } });
   }
+  /** Eine Person aus den Behandlungskosten nehmen oder wieder aufnehmen. */
+  _gesPersonUmschalten(name) {
+    const j = this.state.gesundheit[this.state.jahr] || {};
+    const liste = j.personen || [];
+    const aus = (j.aus || []).includes(name) ? (j.aus || []).filter(x => x !== name) : [...(j.aus || []), name];
+    const drin = liste.filter(p => !aus.includes(p.name));
+    const rund = n => Math.round(n * 100) / 100;
+    this._gesundheitSetzen({
+      aus,
+      selbst: rund(drin.reduce((s, p) => s + p.selbst, 0)),
+      erstattet: rund(drin.reduce((s, p) => s + p.erstattet, 0)),
+      wartend: rund(drin.reduce((s, p) => s + p.wartend, 0))
+    });
+  }
   async _pkvHolen() {
     const jahr = this.state.jahr;
     if (!this.sync || !this.sync.cfg.token) { this.setState({ pkvHinweis: 'Erst Token in Abschnitt 02 hinterlegen.' }); return; }
@@ -2801,6 +2842,8 @@ class Component extends DCLogic {
         erstattet: Math.round(g.erstattet * 100) / 100,
         rueck: Math.round(g.rueck * 100) / 100,
         wartend: Math.round(g.wartend * 100) / 100,
+        personen: g.personen,
+        aus: [],
         quelle: g.posten + (g.posten === 1 ? ' Eintrag' : ' Einträge') + ' aus dem PKV-Projekt',
         felder: arten.join(' · '),
         rueckDetail: g.rueckDetail.join(', '),
@@ -3667,6 +3710,24 @@ class Component extends DCLogic {
       gesWartend: Number(gesJ.wartend) > 0.004 ? eur(gesJ.wartend) + ' sind eingereicht und noch nicht abgerechnet — erst nach der Abrechnung steht fest, was davon selbst getragen bleibt.' : '',
       gesRueckHinweis: Number(gesJ.rueck) > 0
         ? 'Die Beitragsrückerstattung von ' + eur(gesJ.rueck) + (gesJ.rueckDetail ? ' (' + gesJ.rueckDetail + ')' : '') + ' mindert im Jahr der Auszahlung den Sonderausgabenabzug der Basisbeiträge. Sie wird hier nicht automatisch abgezogen.'
+        : '',
+      gesHatPersonen: (gesJ.personen || []).length > 1,
+      gesPersonen: (gesJ.personen || []).map(p => {
+        const drin = !(gesJ.aus || []).includes(p.name);
+        return {
+          name: p.name,
+          posten: p.posten + (p.posten === 1 ? ' Beleg' : ' Belege'),
+          selbst: eur(p.selbst),
+          haken: drin ? '✓' : '',
+          hakenBg: drin ? 'var(--color-text)' : 'transparent',
+          hakenFg: drin ? 'var(--color-bg)' : 'transparent',
+          fg: drin ? 'var(--color-text)' : 'color-mix(in srgb, var(--color-text) 40%, transparent)',
+          titel: drin ? 'Nicht mitzählen' : 'Wieder mitzählen',
+          umschalten: () => this._gesPersonUmschalten(p.name)
+        };
+      }),
+      gesAusHinweis: (gesJ.aus || []).length
+        ? (gesJ.aus || []).join(', ') + ' ' + ((gesJ.aus || []).length === 1 ? 'ist' : 'sind') + ' nicht mitgerechnet.'
         : '',
       pkvHolen: () => this._pkvHolen(),
       uebergabe: !istUebergabe ? [] : (() => {
