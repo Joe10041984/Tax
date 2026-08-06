@@ -1857,29 +1857,74 @@ const PKV_STAFFEL = [300, 400, 500, 600, 700, 800]; // Beitragsrückerstattung a
  * Gibt null zurück, wenn der Stand nicht so aussieht.
  */
 function gesundheitLesen(stand, jahr) {
-  const eintraege = stand && Array.isArray(stand.eintraege) ? stand.eintraege : null;
-  if (!eintraege) return null;
-  const zahl = v => { const n = Number(String(v == null ? 0 : v).replace(',', '.')); return isFinite(n) ? n : 0; };
-  const imJahr = eintraege.filter(e => (Number(e.jahr) || Number(String(e.datum || '').slice(0, 4))) === jahr);
+  if (!stand || typeof stand !== 'object') return null;
+  /* Der Stand kann die Einträge unter verschiedenen Namen führen, als Liste oder als Objekt. */
+  const kandidaten = ['eintraege', 'einträge', 'entries', 'belege', 'posten', 'rechnungen', 'kosten', 'behandlungen'];
+  let roh = null;
+  for (const k of kandidaten) {
+    const v = stand[k];
+    if (Array.isArray(v) && v.length) { roh = v; break; }
+    if (v && typeof v === 'object' && Object.keys(v).length) { roh = Object.values(v); break; }
+  }
+  if (!roh) {
+    const gross = Object.values(stand).filter(v => Array.isArray(v) && v.length && typeof v[0] === 'object');
+    if (gross.length) roh = gross.sort((a, b) => b.length - a.length)[0];
+  }
+  if (!roh) return null;
+  const zahl = v => {
+    if (v == null || v === '') return 0;
+    let s = String(v).replace(/[^0-9,.\-]/g, '');
+    if (s.includes(',') && s.includes('.')) s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+    else if (s.includes(',')) s = s.replace(',', '.');
+    const n = Number(s);
+    return isFinite(n) ? n : 0;
+  };
+  const feld = (e, namen) => { for (const n of namen) if (e[n] != null && e[n] !== '') return e[n]; return null; };
+  const jahrVon = e => {
+    const j = Number(feld(e, ['jahr', 'year']));
+    if (j >= 1990 && j <= 2100) return j;
+    const d = String(feld(e, ['datum', 'date', 'belegdatum', 'rechnungsdatum', 'leistungsdatum', 'erstelltAm', 'created']) || '');
+    const iso = d.match(/(\d{4})-\d{2}-\d{2}/);
+    if (iso) return Number(iso[1]);
+    const de = d.match(/\d{1,2}[.\/]\d{1,2}[.\/](\d{4})/);
+    if (de) return Number(de[1]);
+    const irgendwo = d.match(/(19|20)\d{2}/);
+    return irgendwo ? Number(irgendwo[0]) : null;
+  };
+  /* Rechnungen mit Einzelpositionen werden aufgelöst, damit Medikamente einzeln zählen. */
+  const eintraege = [];
+  roh.forEach(e => {
+    if (!e || typeof e !== 'object') return;
+    const unter = ['positionen', 'posten', 'leistungen', 'zeilen', 'items'].map(k => e[k]).find(v => Array.isArray(v) && v.length);
+    if (unter) unter.forEach(u => eintraege.push({ ...e, ...u, patient: u.patient || e.patient, datum: u.datum || e.datum, jahr: u.jahr || e.jahr }));
+    else eintraege.push(e);
+  });
+  const jahre = {};
+  let ohneJahr = 0;
+  eintraege.forEach(e => { const j = jahrVon(e); if (j == null) ohneJahr++; else jahre[j] = (jahre[j] || 0) + 1; });
+  const imJahr = eintraege.filter(e => jahrVon(e) === jahr);
   let gesamt = 0, erstattet = 0, wartend = 0, selbst = 0;
   const nachArt = {}, nachPerson = {};
   const fuerPerson = name => (nachPerson[name] = nachPerson[name] || { name, selbst: 0, erstattet: 0, wartend: 0, posten: 0 });
+  /* Selbst getragen ist alles Gezahlte abzüglich der bereits erhaltenen Erstattung.
+     Eingereichte, noch nicht abgerechnete Rechnungen zählen mit — sie sind bezahlt.
+     Sie werden zusätzlich als offener Betrag ausgewiesen, weil eine spätere
+     Erstattung den Ansatz im Jahr der Auszahlung wieder mindert. */
   imJahr.forEach(e => {
-    const b = zahl(e.betrag), er = zahl(e.erstattet);
-    const pp = fuerPerson(e.patient || 'Ohne Angabe');
-    gesamt += b; erstattet += er;
-    pp.erstattet += er; pp.posten += 1;
-    if (e.eingereicht && !(er > 0)) { wartend += b; pp.wartend += b; return; }
+    const b = zahl(feld(e, ['betrag', 'summe', 'kosten', 'preis', 'rechnungsbetrag', 'gesamt', 'brutto']));
+    const er = zahl(feld(e, ['erstattet', 'erstattung', 'bezahlt', 'ersatz']));
+    const pp = fuerPerson(feld(e, ['patient', 'person', 'versicherter', 'name']) || 'Ohne Angabe');
+    const a = feld(e, ['art', 'kategorie', 'typ', 'leistungsart', 'bezeichnung']) || 'Sonstiges';
     const eigen = Math.max(0, b - er);
-    selbst += eigen;
-    pp.selbst += eigen;
-    const a = e.art || 'Sonstiges';
+    gesamt += b; erstattet += er; selbst += eigen;
+    pp.erstattet += er; pp.selbst += eigen; pp.posten += 1;
     nachArt[a] = (nachArt[a] || 0) + eigen;
+    if (e.eingereicht && !(er > 0)) { wartend += b; pp.wartend += b; }
   });
   let rueck = 0;
   const rueckDetail = [];
   if (jahr >= 2026) ((stand.settings && stand.settings.personen) || []).forEach(p => {
-    const eigene = imJahr.filter(e => e.patient === p.name);
+    const eigene = imJahr.filter(e => (feld(e, ['patient', 'person', 'versicherter', 'name']) || '') === p.name);
     const intakt = !eigene.some(e => e.eingereicht && !e.vorsorge);
     const j = Math.min(6, Math.max(0, Number(p.jahre) || 0));
     const wert = intakt && j >= 1 ? PKV_STAFFEL[j - 1] : 0;
@@ -1888,6 +1933,7 @@ function gesundheitLesen(stand, jahr) {
   const rund = n => Math.round(n * 100) / 100;
   return {
     gesamt, erstattet, wartend, selbst, rueck, rueckDetail, posten: imJahr.length, nachArt,
+    diagnose: { gesamtEintraege: eintraege.length, ohneJahr, jahre },
     personen: Object.values(nachPerson)
       .map(p => ({ name: p.name, selbst: rund(p.selbst), erstattet: rund(p.erstattet), wartend: rund(p.wartend), posten: p.posten }))
       .sort((a, b) => b.selbst - a.selbst)
@@ -2835,8 +2881,14 @@ class Component extends DCLogic {
       if (res.gesperrt) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Der Stand ließ sich mit dieser PIN nicht öffnen.' }); return; }
       const g = gesundheitLesen(res.stand, jahr);
       if (!g) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Der Gist enthält keine Einträge im erwarteten Format.' }); return; }
-      if (!g.posten) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Gelesen — für ' + jahr + ' ist dort kein Eintrag erfasst.' }); return; }
+      const d = g.diagnose || {};
+      const jahreListe = Object.entries(d.jahre || {}).sort((a, b) => b[0].localeCompare(a[0])).map(([j, n]) => j + ': ' + n).join(', ');
+      const bericht = 'Im Gist stehen ' + (d.gesamtEintraege || 0) + ' Einträge'
+        + (jahreListe ? ' (' + jahreListe + ')' : '')
+        + (d.ohneJahr ? ', davon ' + d.ohneJahr + ' ohne erkennbares Datum' : '') + '.';
+      if (!g.posten) { this.setState({ pkvLaeuft: false, pkvHinweis: 'Gelesen, aber für ' + jahr + ' war nichts dabei. ' + bericht }); return; }
       const arten = Object.entries(g.nachArt).sort((a, b) => b[1] - a[1]).map(([a, w]) => a + ' ' + eur(w));
+
       this._gesundheitSetzen({
         selbst: Math.round(g.selbst * 100) / 100,
         erstattet: Math.round(g.erstattet * 100) / 100,
@@ -3707,7 +3759,9 @@ class Component extends DCLogic {
         ? 'Bis zu einem Gesamtbetrag der Einkünfte von ' + eur(Math.floor(einkuenfteGrenze(Number(gesJ.selbst), (ZB_MAP[S.settings.zbGruppe || 'einzeln'] || ZB_MAP.einzeln).saetze)))
           + ' übersteigen ' + eur(gesJ.selbst) + ' die zumutbare Belastung. Wer mehr verdient, setzt von diesen Kosten nichts ab.'
         : 'Sobald hier ein selbst getragener Betrag steht, rechnet die App aus, bis zu welchen Einkünften er sich auswirkt.',
-      gesWartend: Number(gesJ.wartend) > 0.004 ? eur(gesJ.wartend) + ' sind eingereicht und noch nicht abgerechnet — erst nach der Abrechnung steht fest, was davon selbst getragen bleibt.' : '',
+      gesWartend: Number(gesJ.wartend) > 0.004
+        ? 'Davon sind ' + eur(gesJ.wartend) + ' eingereicht und noch nicht abgerechnet. Sie zählen mit, weil du sie gezahlt hast — kommt die Erstattung später, mindert sie den Ansatz im Jahr der Auszahlung.'
+        : '',
       gesRueckHinweis: Number(gesJ.rueck) > 0
         ? 'Die Beitragsrückerstattung von ' + eur(gesJ.rueck) + (gesJ.rueckDetail ? ' (' + gesJ.rueckDetail + ')' : '') + ' mindert im Jahr der Auszahlung den Sonderausgabenabzug der Basisbeiträge. Sie wird hier nicht automatisch abgezogen.'
         : '',
