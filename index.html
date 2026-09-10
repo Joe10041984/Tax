@@ -220,7 +220,7 @@
           <section data-katbox="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
             <div data-katkopf="1" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Werkzeug</div>
             <h2 data-katkopf="1" style="margin:0 0 var(--space-1);font-family:var(--font-heading);font-size:17px">Kategorie</h2>
-            <p data-katkopf="1" class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">Auswählen, dann Tage anklicken. Nochmal klicken löscht den Tag.</p>
+            <p data-katkopf="1" class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">Auswählen, dann Tage anklicken. Nochmal klicken löscht den Tag. Beim Kindergarten wechselt jeder Klick: offen, du, Ehefrau, weg.</p>
             <div data-katliste="1" style="display:flex;flex-direction:column;gap:2px">
               <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
                 <button onClick="{{ k.klick }}" style="display:flex;align-items:center;gap:var(--space-3);min-height:38px;padding:var(--space-2);border:1px solid {{ k.rand }};border-radius:0;background: {{ k.bg }};text-align:left;cursor:pointer;width:100%">
@@ -241,6 +241,37 @@
               </div>
             </div>
           </section>
+
+          <sc-if value="{{ gewaehlt }}" hint-placeholder-val="{{ null }}">
+            <section class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Tag</div>
+              <div style="font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:17px;line-height:1.2">{{ gewaehltLabel }}</div>
+              <div class="text-muted" style="margin:2px 0 var(--space-3);font-size:12px">{{ gewaehltKat }}</div>
+              <sc-if value="{{ gewaehltKiga }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Kindergarten geschlossen · wer übernimmt</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin:var(--space-2) 0 var(--space-3)">
+                  <sc-for list="{{ kigaWahl }}" as="w" hint-placeholder-count="3">
+                    <button onClick="{{ w.klick }}" style="display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:4px 6px;border:1px solid {{ w.rand }};border-radius:0;background: {{ w.bg }};color: {{ w.fg }};font-size:12px;cursor:pointer"><span style="width:8px;height:8px;flex:0 0 auto;border-radius:50%;background: {{ w.punkt }}"></span>{{ w.name }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <textarea class="input" placeholder="Notiz zum Tag" value="{{ gewaehltNotiz }}" onChange="{{ notizTippen }}" rows="3" style="min-height:70px"></textarea>
+              <div style="margin-top:var(--space-3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Belege</div>
+              <div style="display:flex;flex-direction:column;gap:var(--space-1);margin:var(--space-2) 0">
+                <sc-for list="{{ gewaehltBelege }}" as="b" hint-placeholder-count="0">
+                  <div style="display:flex;align-items:center;gap:var(--space-2);font-size:13px">
+                    <button class="btn btn-ghost" onClick="{{ b.oeffnen }}" style="flex:1;justify-content:flex-start;text-decoration:underline;text-underline-offset:2px">{{ b.name }}</button>
+                    <button class="btn btn-secondary" onClick="{{ b.loeschen }}" style="border-radius:0;min-height:28px;font-size:12px">Weg</button>
+                  </div>
+                </sc-for>
+              </div>
+              <label class="btn btn-secondary" style="border-radius:0;border-style:dashed;min-height:36px;font-size:13px;cursor:pointer">
+                Datei anhängen
+                <input type="file" onChange="{{ belegWaehlen }}" style="display:none">
+              </label>
+              <div class="text-muted" style="margin-top:var(--space-2);font-size:11px">{{ belegHinweis }}</div>
+            </section>
+          </sc-if>
 
           <section data-nodruck="1" data-kzbox="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
             <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Kindergarten</div>
@@ -278,36 +309,6 @@
             <div class="text-muted" style="margin-top:var(--space-2);min-height:16px;font-size:11px">{{ kzFehler }}</div>
           </section>
 
-          <sc-if value="{{ gewaehlt }}" hint-placeholder-val="{{ null }}">
-            <section class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
-              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Tag</div>
-              <div style="font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:17px;line-height:1.2">{{ gewaehltLabel }}</div>
-              <div class="text-muted" style="margin:2px 0 var(--space-3);font-size:12px">{{ gewaehltKat }}</div>
-              <sc-if value="{{ gewaehltKiga }}" hint-placeholder-val="{{ false }}">
-                <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Kindergarten geschlossen · wer übernimmt</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin:var(--space-2) 0 var(--space-3)">
-                  <sc-for list="{{ kigaWahl }}" as="w" hint-placeholder-count="3">
-                    <button onClick="{{ w.klick }}" style="display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:4px 6px;border:1px solid {{ w.rand }};border-radius:0;background: {{ w.bg }};color: {{ w.fg }};font-size:12px;cursor:pointer"><span style="width:8px;height:8px;flex:0 0 auto;border-radius:50%;background: {{ w.punkt }}"></span>{{ w.name }}</button>
-                  </sc-for>
-                </div>
-              </sc-if>
-              <textarea class="input" placeholder="Notiz zum Tag" value="{{ gewaehltNotiz }}" onChange="{{ notizTippen }}" rows="3" style="min-height:70px"></textarea>
-              <div style="margin-top:var(--space-3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Belege</div>
-              <div style="display:flex;flex-direction:column;gap:var(--space-1);margin:var(--space-2) 0">
-                <sc-for list="{{ gewaehltBelege }}" as="b" hint-placeholder-count="0">
-                  <div style="display:flex;align-items:center;gap:var(--space-2);font-size:13px">
-                    <button class="btn btn-ghost" onClick="{{ b.oeffnen }}" style="flex:1;justify-content:flex-start;text-decoration:underline;text-underline-offset:2px">{{ b.name }}</button>
-                    <button class="btn btn-secondary" onClick="{{ b.loeschen }}" style="border-radius:0;min-height:28px;font-size:12px">Weg</button>
-                  </div>
-                </sc-for>
-              </div>
-              <label class="btn btn-secondary" style="border-radius:0;border-style:dashed;min-height:36px;font-size:13px;cursor:pointer">
-                Datei anhängen
-                <input type="file" onChange="{{ belegWaehlen }}" style="display:none">
-              </label>
-              <div class="text-muted" style="margin-top:var(--space-2);font-size:11px">{{ belegHinweis }}</div>
-            </section>
-          </sc-if>
         </aside>
       </div>
     </sc-if>
@@ -2480,8 +2481,11 @@ class Component extends DCLogic {
     this._merken({ kiga, settings: { ...this.state.settings, kigaZeiten: liste } });
   }
   _kigaKlick(datum) {
+    // Reihum: offen → du → Ehefrau → entfernt
     const kiga = { ...(this.state.kiga || {}) };
-    if (kiga[datum]) delete kiga[datum]; else kiga[datum] = 'offen';
+    const folge = ['offen', 'ich', 'frau'];
+    const i = folge.indexOf(kiga[datum]);
+    if (i === -1) kiga[datum] = 'offen'; else if (i === folge.length - 1) delete kiga[datum]; else kiga[datum] = folge[i + 1];
     this._merken({ kiga, gewaehlt: datum });
   }
   _kigaSetzen(datum, wer) {
