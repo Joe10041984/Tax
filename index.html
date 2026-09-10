@@ -58,6 +58,8 @@
     [data-katliste] { flex-direction: row !important; flex-wrap: wrap; gap: 6px !important; }
     [data-katliste] > button { width: auto !important; flex: 0 0 auto; padding: 6px 10px !important; }
     [data-katliste] > button > span:nth-child(3) { display: none; }
+    [data-katliste] > [data-kigawerkzeug] { margin-top: 0 !important; }
+    [data-kigazaehler] { display: none !important; }
     [data-katbox] { position: fixed !important; left: 0; right: 0; bottom: 0; z-index: 30; padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)) !important; background: var(--color-bg) !important; border-top: 1px solid var(--color-text); box-shadow: 0 -6px 16px rgba(0,0,0,0.10); max-height: 40vh; overflow-y: auto; }
     [data-katbox] > .corner { display: none; }
     [data-katkopf] { display: none !important; }
@@ -199,8 +201,12 @@
                     <button data-tagfeld="1" onClick="{{ d.klick }}" title="{{ d.titel }}" style="position:relative;aspect-ratio:1;min-height:30px;padding:0;border:1px solid {{ d.rand }};border-radius:0;background: {{ d.bg }};color: {{ d.fg }};font-family:var(--font-heading);font-size:12px;font-variant-numeric:tabular-nums;cursor: {{ d.cursor }};display:flex;align-items:center;justify-content:center;overflow:hidden">
                       <span style="position:absolute;top:1px;left:3px;font-size:10px;line-height:1;opacity:0.9">{{ d.nrEcke }}</span>
                       <span>{{ d.nrMitte }}</span>
+                      <sc-if value="{{ d.kiga }}" hint-placeholder-val="{{ false }}">
+                        <span style="position:absolute;left:0;right:0;bottom:0;height:3px;background: {{ d.kigaFarbe }}"></span>
+                        <span style="position:absolute;top:2px;right:2px;display:flex"><svg viewBox="0 0 24 24" width="11" height="11" fill="{{ d.kigaFarbe }}" stroke="none"><path d="M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10ZM4 21a8 8 0 0 1 16 0Z"></path></svg></span>
+                      </sc-if>
                       <sc-if value="{{ d.hatKat }}" hint-placeholder-val="{{ false }}">
-                        <span style="display:flex;margin-top:3px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="{{ d.pfad }}"></path></svg></span>
+                        <span style="display:flex;margin-top:3px;margin-right: {{ d.iconVersatz }}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="{{ d.pfad }}"></path></svg></span>
                       </sc-if>
                     </button>
                   </sc-for>
@@ -223,7 +229,53 @@
                   <span style="font-family:var(--font-heading);font-size:14px;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ k.anzahl }}</span>
                 </button>
               </sc-for>
+              <button data-kigawerkzeug="1" onClick="{{ kigaWerkzeug }}" style="display:flex;align-items:center;gap:var(--space-3);min-height:38px;padding:var(--space-2);margin-top:6px;border:1px solid {{ kigaRand }};border-radius:0;background: {{ kigaBg }};text-align:left;cursor:pointer;width:100%">
+                <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex:0 0 auto;background:#b8860b;color:#fff"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" stroke="none"><path d="M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10ZM4 21a8 8 0 0 1 16 0Z"></path></svg></span>
+                <span style="flex:1;font-size:14px">Kindergarten geschlossen</span>
+                <span style="font-family:var(--font-heading);font-size:14px;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ kigaAnzahl }}</span>
+              </button>
+              <div data-kigazaehler="1" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;font-size:11px;text-align:center">
+                <sc-for list="{{ kigaZaehler }}" as="z" hint-placeholder-count="3">
+                  <div style="padding:5px 4px;border:1px solid {{ z.rand }};background: {{ z.bg }};color: {{ z.farbe }}"><div style="font-family:var(--font-heading);font-size:15px;font-variant-numeric:tabular-nums">{{ z.wert }}</div><div style="opacity:0.7">{{ z.name }}</div></div>
+                </sc-for>
+              </div>
             </div>
+          </section>
+
+          <section data-nodruck="1" data-kzbox="1" class="blueprint" style="position:relative;padding:var(--space-4);background:transparent">
+            <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Kindergarten</div>
+            <h2 style="margin:0 0 var(--space-1);font-family:var(--font-heading);font-size:17px">Schließzeiten {{ jahr }}</h2>
+            <p class="text-muted" style="margin:0 0 var(--space-3);font-size:12px">Ein Zeitraum markiert alle Werktage ohne Feiertag als offen. Aufteilung dann im Tag.</p>
+            <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:var(--space-3)">
+              <sc-for list="{{ kzListe }}" as="z" hint-placeholder-count="0">
+                <div style="display:grid;grid-template-columns:1fr auto auto;gap:var(--space-2);align-items:center;padding:6px 8px;border:1px solid var(--color-divider);font-size:12px">
+                  <div><div>{{ z.name }}</div><div class="text-muted" style="font-size:11px">{{ z.zeit }}</div></div>
+                  <div style="font-family:var(--font-heading);font-size:14px;font-variant-numeric:tabular-nums">{{ z.tage }}</div>
+                  <button class="btn btn-ghost" onClick="{{ z.loeschen }}" title="Zeitraum entfernen" style="min-height:28px;padding:0 6px;font-size:12px">Weg</button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ kzLeer }}" hint-placeholder-val="{{ true }}">
+                <div class="text-muted" style="font-size:12px;padding:4px 0">Noch keine Schließzeit eingetragen.</div>
+              </sc-if>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+              <input class="input" type="date" value="{{ kzVon }}" onChange="{{ kzVonTippen }}" title="Von" style="min-height:38px;border-radius:0;font-size:13px">
+              <input class="input" type="date" value="{{ kzBis }}" onChange="{{ kzBisTippen }}" title="Bis" style="min-height:38px;border-radius:0;font-size:13px">
+              <input class="input" type="text" placeholder="Bezeichnung, z. B. Sommer" value="{{ kzName }}" onChange="{{ kzNameTippen }}" style="grid-column:1 / -1;min-height:38px;border-radius:0;font-size:13px">
+              <button class="btn btn-secondary" onClick="{{ kzAnlegen }}" style="grid-column:1 / -1;border-radius:0;min-height:38px">Zeitraum eintragen</button>
+            </div>
+            <sc-if value="{{ kzHatTage }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:var(--space-3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Kalenderdatei</div>
+              <button class="btn btn-secondary" onClick="{{ kzIcsAlle }}" title="Alle Schließtage des Jahres als .ics" style="width:100%;margin-top:var(--space-2);border-radius:0;min-height:36px;font-size:13px">Kalenderdatei {{ jahr }} erzeugen</button>
+              <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px">Öffnet sich in Apple, Google oder Outlook Kalender. Am Handy direkt teilen, am Rechner als Mailanhang schicken.</p>
+              <div style="margin-top:var(--space-3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Per Mail</div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-2);margin-top:var(--space-2)">
+                <input class="input" type="text" inputMode="email" placeholder="Empfänger, mit Komma trennen" value="{{ kzMailAn }}" onChange="{{ kzMailTippen }}" style="min-height:36px;border-radius:0;font-size:13px">
+                <button class="btn btn-secondary" onClick="{{ kzMail }}" title="Mailprogramm mit Betreff und Tagesliste öffnen" style="border-radius:0;min-height:36px;font-size:13px">Entwurf</button>
+              </div>
+              <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px">Öffnet dein Mailprogramm mit Betreff und Tagesliste. Die Kalenderdatei hängst du selbst an.</p>
+            </sc-if>
+            <div class="text-muted" style="margin-top:var(--space-2);min-height:16px;font-size:11px">{{ kzFehler }}</div>
           </section>
 
           <sc-if value="{{ gewaehlt }}" hint-placeholder-val="{{ null }}">
@@ -231,6 +283,14 @@
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Tag</div>
               <div style="font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:17px;line-height:1.2">{{ gewaehltLabel }}</div>
               <div class="text-muted" style="margin:2px 0 var(--space-3);font-size:12px">{{ gewaehltKat }}</div>
+              <sc-if value="{{ gewaehltKiga }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Kindergarten geschlossen · wer übernimmt</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin:var(--space-2) 0 var(--space-3)">
+                  <sc-for list="{{ kigaWahl }}" as="w" hint-placeholder-count="3">
+                    <button onClick="{{ w.klick }}" style="display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:4px 6px;border:1px solid {{ w.rand }};border-radius:0;background: {{ w.bg }};color: {{ w.fg }};font-size:12px;cursor:pointer"><span style="width:8px;height:8px;flex:0 0 auto;border-radius:50%;background: {{ w.punkt }}"></span>{{ w.name }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
               <textarea class="input" placeholder="Notiz zum Tag" value="{{ gewaehltNotiz }}" onChange="{{ notizTippen }}" rows="3" style="min-height:70px"></textarea>
               <div style="margin-top:var(--space-3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Belege</div>
               <div style="display:flex;flex-direction:column;gap:var(--space-1);margin:var(--space-2) 0">
@@ -1645,9 +1705,16 @@ const KAT = [
   { id: 'feiertag',   name: 'Feiertag',     code: 'F', farbe: '#8a7f5c', auf: HELL }
 ];
 const KAT_MAP = Object.fromEntries(KAT.map(k => [k.id, k]));
+const KIGA_PFAD = 'M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10ZM4 21a8 8 0 0 1 16 0Z';
+const KIGA_WER = [
+  { id: 'ich',   name: 'du',        farbe: 'var(--color-accent-500)' },
+  { id: 'frau',  name: 'Ehefrau',   farbe: '#b0722c' },
+  { id: 'offen', name: 'offen',     farbe: '#9e4b45' }
+];
+const KIGA_MAP = Object.fromEntries(KIGA_WER.map(w => [w.id, w]));
 const MONATE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const TABS = [['kalender','Kalender'],['wochen','Wochen'],['belege','Belege'],['vertraege','Versicherungen'],['betreuung','Betreuung'],['telekom','Telekom'],['dienstwagen','Dienstwagen'],['auswertung','Auswertung'],['uebergabe','Übergabe'],['einstellungen','Einstellungen']];
-const BAU_STAND = '06.08.2026 · Versicherungen, § 35a, AfA';
+const BAU_STAND = '10.09.2026 · Kindergarten-Schließtage, Kalenderdatei';
 const AUSGABE_KAT = [
   { id: 'arbeitsmittel',  name: 'Arbeitsmittel',              art: 'Werbungskosten' },
   { id: 'fachliteratur',  name: 'Fachliteratur',              art: 'Werbungskosten' },
@@ -2140,7 +2207,7 @@ class Component extends DCLogic {
   state = {
     jahr: new Date().getFullYear(),
     tab: 'kalender',
-    tage: {}, notizen: {}, belege: {}, posten: {}, vertraege: {}, gesundheit: {}, betreuung: {}, telekom: {}, dienstwagen: {},
+    tage: {}, kiga: {}, notizen: {}, belege: {}, posten: {}, vertraege: {}, gesundheit: {}, betreuung: {}, telekom: {}, dienstwagen: {},
     settings: { sperreHash: null, hoSatz: 6, km: 0, personen: 'Ich, Konrad, Ehefrau' },
     belegForm: { ...LEER_BELEG },
     belegPerson: 'alle', belegText: '', ocrHinweis: '', belegFehler: '',
@@ -2151,6 +2218,7 @@ class Component extends DCLogic {
     telekomForm: { ...LEER_TELEKOM }, telekomFehler: '', telekomHinweis: '',
     dwForm: { ...LEER_DW }, dwFehler: '', dwHinweis: '',
     aktiveKat: 'praesenz', markiereKw: null,
+    kzForm: { von: '', bis: '', name: '' }, kzFehler: '',
     gewaehlt: null,
     gesperrt: false,
     pinEingabe: '', neuePin: '', pinFehler: '',
@@ -2196,6 +2264,7 @@ class Component extends DCLogic {
     const nochNichtEingerichtet = frisch && !(sync && sync.cfg.gistId);
     this.setState({
       tage,
+      kiga: (lokal && lokal.kiga) || {},
       notizen: (lokal && lokal.notizen) || {},
       belege: (lokal && lokal.belege) || {},
       posten: (lokal && lokal.posten) || {},
@@ -2235,7 +2304,7 @@ class Component extends DCLogic {
   // ---------- Speichern ----------
   _stand(patch) {
     const s = { ...this.state, ...(patch || {}) };
-    return { tage: s.tage, notizen: s.notizen, belege: s.belege, posten: s.posten, vertraege: s.vertraege, gesundheit: s.gesundheit, betreuung: s.betreuung, telekom: s.telekom, dienstwagen: s.dienstwagen, settings: s.settings, gespeichert: new Date().toISOString() };
+    return { tage: s.tage, kiga: s.kiga || {}, notizen: s.notizen, belege: s.belege, posten: s.posten, vertraege: s.vertraege, gesundheit: s.gesundheit, betreuung: s.betreuung, telekom: s.telekom, dienstwagen: s.dienstwagen, settings: s.settings, gespeichert: new Date().toISOString() };
   }
   _merken(patch, still) {
     if (!still) this._bearbeitet = true;
@@ -2304,7 +2373,7 @@ class Component extends DCLogic {
         this._version = (this._version || 0) + 1;
         const zusammen = { ...fern, settings: { ...this.state.settings, ...(fern.settings || {}) } };
         this.setState({
-          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {}, posten: fern.posten || {}, vertraege: fern.vertraege || {}, gesundheit: fern.gesundheit || {}, betreuung: fern.betreuung || {}, telekom: fern.telekom || {}, dienstwagen: fern.dienstwagen || {},
+          tage: fern.tage || {}, kiga: fern.kiga || {}, notizen: fern.notizen || {}, belege: fern.belege || {}, posten: fern.posten || {}, vertraege: fern.vertraege || {}, gesundheit: fern.gesundheit || {}, betreuung: fern.betreuung || {}, telekom: fern.telekom || {}, dienstwagen: fern.dienstwagen || {},
           settings: zusammen.settings,
           gespeichert: fern.gespeichert, syncStatus: fernTage + ' Tage geladen', frisch: false
         });
@@ -2315,7 +2384,7 @@ class Component extends DCLogic {
       if ((fern.gespeichert || '') > lokalTs) {
         this._version = (this._version || 0) + 1;
         this.setState({
-          tage: fern.tage || {}, notizen: fern.notizen || {}, belege: fern.belege || {}, posten: fern.posten || {}, vertraege: fern.vertraege || {}, gesundheit: fern.gesundheit || {}, betreuung: fern.betreuung || {}, telekom: fern.telekom || {}, dienstwagen: fern.dienstwagen || {},
+          tage: fern.tage || {}, kiga: fern.kiga || {}, notizen: fern.notizen || {}, belege: fern.belege || {}, posten: fern.posten || {}, vertraege: fern.vertraege || {}, gesundheit: fern.gesundheit || {}, betreuung: fern.betreuung || {}, telekom: fern.telekom || {}, dienstwagen: fern.dienstwagen || {},
           settings: { ...this.state.settings, ...(fern.settings || {}) },
           gespeichert: fern.gespeichert, syncStatus: 'Stand von GitHub geladen', frisch: false
         });
@@ -2341,7 +2410,91 @@ class Component extends DCLogic {
       this.setState({ syncStatus: e.message });
     }
   }
+  _kigaZeitraumAnlegen() {
+    const f = this.state.kzForm, von = f.von, bis = f.bis || f.von;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(von) || !/^\d{4}-\d{2}-\d{2}$/.test(bis) || bis < von) { this.setState({ kzFehler: 'Bitte Von und Bis als Datum eintragen.' }); return; }
+    const ft = this._feiertage(Number(von.slice(0, 4)));
+    const kiga = { ...(this.state.kiga || {}) };
+    let n = 0;
+    for (let t = new Date(von + 'T00:00:00Z'); iso(t) <= bis; t = new Date(t.getTime() + TAG)) {
+      const d = iso(t), wd = t.getUTCDay();
+      if (wd === 0 || wd === 6 || ft.has(d) || kiga[d]) continue;
+      kiga[d] = 'offen'; n++;
+    }
+    const liste = [...((this.state.settings.kigaZeiten) || []), { von, bis, name: f.name.trim() || 'Schließzeit' }].sort((a, b) => a.von < b.von ? -1 : 1);
+    this._merken({ kiga, settings: { ...this.state.settings, kigaZeiten: liste }, kzForm: { von: '', bis: '', name: '' }, kzFehler: n ? '' : 'Keine neuen Werktage im Zeitraum.' });
+  }
+  /** Kalenderdatei mit allen zugewiesenen Schließtagen des Jahres; zusammenhängende Tage derselben Person werden ein Termin. */
+  _kigaIcs(jahr, nurWer) {
+    const kiga = this.state.kiga || {};
+    const tage = Object.keys(kiga).filter(d => d.slice(0, 4) === String(jahr) && (!nurWer || kiga[d] === nurWer)).sort();
+    if (!tage.length) { this.setState({ kzFehler: 'Keine Schließtage zum Exportieren.' }); return; }
+    const bloecke = [];
+    tage.forEach(d => {
+      const l = bloecke[bloecke.length - 1];
+      const vortag = l && iso(new Date(new Date(l.bis + 'T00:00:00Z').getTime() + TAG));
+      const naechsterWerktag = l && (() => { let t = new Date(l.bis + 'T00:00:00Z'); do { t = new Date(t.getTime() + TAG); } while (t.getUTCDay() === 0 || t.getUTCDay() === 6); return iso(t); })();
+      if (l && (d === vortag || d === naechsterWerktag)) l.bis = d; else bloecke.push({ von: d, bis: d });
+    });
+    const stempel = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const komp = s => s.replace(/-/g, '');
+    const zeilen = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Steuerakte//Kindergarten//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+    bloecke.forEach((b, i) => {
+      const ende = komp(iso(new Date(new Date(b.bis + 'T00:00:00Z').getTime() + TAG)));
+      const zeit = (this.state.settings.kigaZeiten || []).find(z => b.von >= z.von && b.bis <= z.bis);
+      const titel = 'Kindergarten geschlossen' + (zeit ? ' · ' + zeit.name : '');
+      zeilen.push('BEGIN:VEVENT', 'UID:kiga-' + b.von + '-' + komp(b.bis) + '@steuerakte', 'DTSTAMP:' + stempel, 'DTSTART;VALUE=DATE:' + komp(b.von), 'DTEND;VALUE=DATE:' + ende,
+        'SUMMARY:' + titel, 'DESCRIPTION:Kindergarten-Schließtage Konrad.', 'TRANSP:TRANSPARENT', 'END:VEVENT');
+    });
+    zeilen.push('END:VCALENDAR');
+    const blob = new Blob([zeilen.join('\r\n') + '\r\n'], { type: 'text/calendar;charset=utf-8' });
+    const name = 'kindergarten-' + jahr + (nurWer ? '-' + nurWer : '') + '.ics';
+    const datei = new File([blob], name, { type: 'text/calendar' });
+    if (navigator.canShare && navigator.canShare({ files: [datei] })) {
+      navigator.share({ files: [datei], title: 'Kindergarten-Schließtage ' + jahr }).catch(() => {});
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    this.setState({ kzFehler: bloecke.length + (bloecke.length === 1 ? ' Termin' : ' Termine') + ' als Kalenderdatei gespeichert.' });
+  }
+  _kigaMail(jahr) {
+    const kiga = this.state.kiga || {};
+    const tage = Object.keys(kiga).filter(d => d.slice(0, 4) === String(jahr)).sort();
+    if (!tage.length) { this.setState({ kzFehler: 'Keine Schließtage für die Mail.' }); return; }
+    const de = d => d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4);
+    const zeiten = (this.state.settings.kigaZeiten || []).filter(z => z.von.slice(0, 4) === String(jahr));
+    const einzeln = tage.filter(d => !zeiten.some(z => d >= z.von && d <= z.bis));
+    const zeilen = ['Hallo,', '', 'die Kindergarten-Schließtage ' + jahr + ' für Konrad:', ''];
+    zeiten.forEach(z => zeilen.push('· ' + z.name + ': ' + (z.von === z.bis ? de(z.von) : de(z.von) + ' bis ' + de(z.bis))));
+    einzeln.forEach(d => zeilen.push('· ' + de(d)));
+    const offen = tage.filter(d => kiga[d] === 'offen');
+    zeilen.push('', tage.length + ' Werktage insgesamt' + (offen.length ? ', davon ' + offen.length + ' noch nicht aufgeteilt' : '') + '.', '', 'Die Kalenderdatei zum Eintragen hängt an.', '');
+    const an = (this.state.settings.kigaMail || '').trim();
+    const url = 'mailto:' + encodeURIComponent(an).replace(/%2C/g, ',').replace(/%40/g, '@') + '?subject=' + encodeURIComponent('Kindergarten-Schließtage ' + jahr) + '&body=' + encodeURIComponent(zeilen.join('\n'));
+    window.location.href = url;
+    this.setState({ kzFehler: 'Mailentwurf geöffnet. Kalenderdatei bitte anhängen.' });
+  }
+  _kigaZeitraumLoeschen(i) {
+    const liste = [...(this.state.settings.kigaZeiten || [])];
+    const z = liste.splice(i, 1)[0];
+    const kiga = { ...(this.state.kiga || {}) };
+    Object.keys(kiga).forEach(d => { if (d >= z.von && d <= z.bis) delete kiga[d]; });
+    this._merken({ kiga, settings: { ...this.state.settings, kigaZeiten: liste } });
+  }
+  _kigaKlick(datum) {
+    const kiga = { ...(this.state.kiga || {}) };
+    if (kiga[datum]) delete kiga[datum]; else kiga[datum] = 'offen';
+    this._merken({ kiga, gewaehlt: datum });
+  }
+  _kigaSetzen(datum, wer) {
+    const kiga = { ...(this.state.kiga || {}) };
+    if (wer) kiga[datum] = wer; else delete kiga[datum];
+    this._merken({ kiga });
+  }
   _tagKlick(datum) {
+    if (this.state.aktiveKat === 'kiga') return this._kigaKlick(datum);
     const kat = this.state.aktiveKat;
     const tage = { ...this.state.tage };
     if (tage[datum] === kat) delete tage[datum]; else tage[datum] = kat;
@@ -3179,11 +3332,15 @@ class Component extends DCLogic {
     KAT.forEach(k => zaehler[k.id] = 0);
     Object.keys(S.tage).forEach(d => { if (d.slice(0, 4) === String(jahr) && zaehler[S.tage[d]] !== undefined) zaehler[S.tage[d]]++; });
 
+    const kigaJ = {};
+    Object.keys(S.kiga || {}).forEach(d => { if (d.slice(0, 4) === String(jahr)) kigaJ[d] = S.kiga[d]; });
+    const kigaZahl = { ich: 0, frau: 0, offen: 0 };
+    Object.values(kigaJ).forEach(w => { kigaZahl[w in kigaZahl ? w : 'offen']++; });
     const monate = !istKalender ? [] : MONATE.map((name, mi) => {
       const erster = utc(jahr, mi, 1);
       const start = new Date(erster.getTime() - ((erster.getUTCDay() + 6) % 7) * TAG);
       const wochen = [];
-      let ftAnzahl = 0;
+      let ftAnzahl = 0, kigaAnzahl = 0;
       for (let w = 0; w < 6; w++) {
         const zeile = [];
         let sichtbar = false;
@@ -3193,11 +3350,16 @@ class Component extends DCLogic {
           if (imMonat) sichtbar = true;
           const wd = d.getUTCDay(), we = wd === 0 || wd === 6;
           const k = imMonat && S.tage[datum] ? KAT_MAP[S.tage[datum]] : null;
+          const kg = imMonat && kigaJ[datum] ? (KIGA_MAP[kigaJ[datum]] || KIGA_MAP.offen) : null;
+          if (kg) kigaAnzahl++;
           if (imMonat && ft.has(datum) && !we) ftAnzahl++;
           zeile.push({
             nr: imMonat ? String(d.getUTCDate()) : '',
             code: imMonat && k ? k.code : '',
             hatKat: !!(imMonat && k),
+            kiga: !!kg,
+            kigaFarbe: kg ? kg.farbe : 'transparent',
+            iconVersatz: kg ? '8px' : '0',
             nrEcke: imMonat && k ? String(d.getUTCDate()) : '',
             nrMitte: imMonat && !k ? String(d.getUTCDate()) : '',
             pfad: imMonat && k ? (k.id === 'feiertag' && FT_IKON[ft.get(datum)] ? FT_IKON[ft.get(datum)] : IKON[k.id]) : '',
@@ -3205,7 +3367,7 @@ class Component extends DCLogic {
             fg: !imMonat ? 'transparent' : k ? k.auf : we ? ink(35) : ink(80),
             rand: !imMonat ? 'transparent' : datum === S.gewaehlt ? 'var(--color-text)' : datum === heute ? 'var(--color-accent)' : k ? 'transparent' : 'var(--color-divider)',
             cursor: imMonat ? 'pointer' : 'default',
-            titel: imMonat ? (ft.get(datum) ? datum + ' — ' + ft.get(datum) : datum) + (we ? ' · Wochenende' : '') + (S.notizen[datum] ? ' · Notiz' : '') : '',
+            titel: imMonat ? (ft.get(datum) ? datum + ' — ' + ft.get(datum) : datum) + (we ? ' · Wochenende' : '') + (kg ? ' · Kindergarten geschlossen (' + kg.name + ')' : '') + (S.notizen[datum] ? ' · Notiz' : '') : '',
             klick: !imMonat ? () => {} : we ? () => this._wochenendKlick(datum) : () => this._tagKlick(datum)
           });
         }
@@ -3214,7 +3376,7 @@ class Component extends DCLogic {
           wochen.push({ kw: String(idx < 1 ? vorjahrKw + idx : idx > anzahlKw ? idx - anzahlKw : idx), tage: zeile });
         }
       }
-      return { id: 'monat-' + mi, name, info: ftAnzahl ? ftAnzahl + ' Feiertag' + (ftAnzahl > 1 ? 'e' : '') : '', wochen };
+      return { id: 'monat-' + mi, name, info: [ftAnzahl ? ftAnzahl + ' Feiertag' + (ftAnzahl > 1 ? 'e' : '') : '', kigaAnzahl ? 'KiGa ' + kigaAnzahl : ''].filter(Boolean).join(' · '), wochen };
     });
 
     const wochen = this._wochenDaten(jahr);
@@ -3353,6 +3515,16 @@ class Component extends DCLogic {
           bg: tint(farbe, fehlend >= 2 || fehlend < 0 ? 14 : 18), rand: tint(farbe, 45), fg: farbe,
           klick: () => this._zurKw(w.kw)
         });
+      });
+      Object.keys(kigaJ).sort().forEach(d => {
+        if (kigaJ[d] !== 'offen') return;
+        kontrollen.push({ label: d + ' — Kindergarten geschlossen, noch nicht aufgeteilt', bg: tint('#9e4b45', 12), rand: tint('#9e4b45', 45), fg: '#9e4b45', klick: () => this.setState({ tab: 'kalender', gewaehlt: d }) });
+      });
+      Object.keys(kigaJ).sort().forEach(d => {
+        if (kigaJ[d] !== 'ich') return;
+        const k = S.tage[d];
+        if (k === 'urlaub' || k === 'surlaub' || k === 'kindkrank' || k === 'feiertag') return;
+        kontrollen.push({ label: d + ' — Kindergarten geschlossen, du übernimmst, aber ' + (k ? KAT_MAP[k].name : 'kein Eintrag'), bg: tint('#b0722c', 14), rand: tint('#b0722c', 45), fg: '#b0722c', klick: () => this.setState({ tab: 'kalender', gewaehlt: d }) });
       });
       Object.keys(S.tage).forEach(d => {
         if (d.slice(0, 4) !== String(jahr)) return;
@@ -3938,6 +4110,35 @@ class Component extends DCLogic {
       gewaehlt: gew || null,
       gewaehltLabel: gew ? new Date(gew + 'T00:00:00Z').toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '',
       gewaehltKat: gew ? (ft.get(gew) ? gewKat + ' · ' + ft.get(gew) : gewKat) : '',
+      gewaehltKiga: !!(gew && S.kiga && S.kiga[gew]),
+      kigaWahl: KIGA_WER.map(w => {
+        const aktiv = gew && S.kiga && (S.kiga[gew] || 'offen') === w.id;
+        return { name: w.name, bg: aktiv ? tint(w.farbe, 22) : 'transparent', rand: aktiv ? w.farbe : 'var(--color-divider)', fg: aktiv ? 'var(--color-text)' : ink(60), punkt: w.farbe, klick: () => this._kigaSetzen(gew, w.id) };
+      }),
+      kigaEntfernen: () => this._kigaSetzen(gew, null),
+      kigaAktiv: S.aktiveKat === 'kiga',
+      kigaBg: S.aktiveKat === 'kiga' ? tint('#b8860b', 16) : 'transparent',
+      kigaRand: S.aktiveKat === 'kiga' ? 'var(--color-text)' : 'var(--color-divider)',
+      kigaAnzahl: String(kigaZahl.ich + kigaZahl.frau + kigaZahl.offen),
+      kigaZaehler: KIGA_WER.map(w => ({ name: w.name, wert: String(kigaZahl[w.id]), farbe: w.id === 'offen' && kigaZahl.offen ? w.farbe : 'var(--color-text)', rand: w.id === 'offen' && kigaZahl.offen ? w.farbe : 'var(--color-divider)', bg: w.id === 'offen' && kigaZahl.offen ? tint(w.farbe, 10) : 'transparent' })),
+      kigaWerkzeug: () => this.setState({ aktiveKat: 'kiga' }),
+      kzVon: S.kzForm.von, kzBis: S.kzForm.bis, kzName: S.kzForm.name, kzFehler: S.kzFehler,
+      kzVonTippen: e => this.setState({ kzForm: { ...S.kzForm, von: e.target.value } }),
+      kzBisTippen: e => this.setState({ kzForm: { ...S.kzForm, bis: e.target.value } }),
+      kzNameTippen: e => this.setState({ kzForm: { ...S.kzForm, name: e.target.value } }),
+      kzAnlegen: () => this._kigaZeitraumAnlegen(),
+      kzListe: (S.settings.kigaZeiten || []).filter(z => z.von.slice(0, 4) === String(jahr)).map(z => {
+        const i = (S.settings.kigaZeiten || []).indexOf(z);
+        const de = d => d.slice(8, 10) + '.' + d.slice(5, 7) + '.';
+        let n = 0; Object.keys(kigaJ).forEach(d => { if (d >= z.von && d <= z.bis) n++; });
+        return { name: z.name, zeit: z.von === z.bis ? de(z.von) : de(z.von) + ' – ' + de(z.bis), tage: String(n), loeschen: () => this._kigaZeitraumLoeschen(i) };
+      }),
+      kzLeer: !(S.settings.kigaZeiten || []).some(z => z.von.slice(0, 4) === String(jahr)),
+      kzHatTage: Object.keys(kigaJ).length > 0,
+      kzIcsAlle: () => this._kigaIcs(jahr, null),
+      kzMail: () => this._kigaMail(jahr),
+      kzMailAn: S.settings.kigaMail || '',
+      kzMailTippen: e => this._merken({ settings: { ...S.settings, kigaMail: e.target.value } }),
       gewaehltNotiz: gew ? (S.notizen[gew] || '') : '',
       gewaehltBelege: gew ? (S.belege[gew] || []).map(b => ({
         name: b.name, oeffnen: () => this._belegOeffnen(b), loeschen: () => this._belegWeg(gew, b.pfad)
