@@ -267,7 +267,7 @@
             <sc-if value="{{ kzHatTage }}" hint-placeholder-val="{{ false }}">
               <div style="margin-top:var(--space-3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Kalenderdatei</div>
               <button class="btn btn-secondary" onClick="{{ kzIcsAlle }}" title="Alle Schließtage des Jahres als .ics" style="width:100%;margin-top:var(--space-2);border-radius:0;min-height:36px;font-size:13px">Kalenderdatei {{ jahr }} erzeugen</button>
-              <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px">Öffnet sich in Apple, Google oder Outlook Kalender. Am Handy direkt teilen, am Rechner als Mailanhang schicken.</p>
+              <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px">Lädt eine .ics-Datei herunter. Doppelklick trägt die Termine in Apple, Google oder Outlook Kalender ein.</p>
               <div style="margin-top:var(--space-3);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Per Mail</div>
               <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-2);margin-top:var(--space-2)">
                 <input class="input" type="text" inputMode="email" placeholder="Empfänger, mit Komma trennen" value="{{ kzMailAn }}" onChange="{{ kzMailTippen }}" style="min-height:36px;border-radius:0;font-size:13px">
@@ -2449,14 +2449,10 @@ class Component extends DCLogic {
     zeilen.push('END:VCALENDAR');
     const blob = new Blob([zeilen.join('\r\n') + '\r\n'], { type: 'text/calendar;charset=utf-8' });
     const name = 'kindergarten-' + jahr + (nurWer ? '-' + nurWer : '') + '.ics';
-    const datei = new File([blob], name, { type: 'text/calendar' });
-    if (navigator.canShare && navigator.canShare({ files: [datei] })) {
-      navigator.share({ files: [datei], title: 'Kindergarten-Schließtage ' + jahr }).catch(() => {});
-      return;
-    }
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    const a = document.createElement('a'); a.href = url; a.download = name; a.rel = 'noopener'; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
     this.setState({ kzFehler: bloecke.length + (bloecke.length === 1 ? ' Termin' : ' Termine') + ' als Kalenderdatei gespeichert.' });
   }
   _kigaMail(jahr) {
