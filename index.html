@@ -18,7 +18,8 @@ window.__resources = {
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js': 'vendor/react/react.production.min.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js': 'vendor/react/react-dom.production.min.js'
 };
-if (/\.github\.io$/.test(location.hostname)) {
+// Auf der veröffentlichten Seite (eigene Domain oder github.io), nicht in der eingebetteten Vorschau.
+if (location.protocol === 'https:' && window.top === window.self) {
   const m = document.createElement('meta');
   m.httpEquiv = 'Content-Security-Policy';
   m.content = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' blob: data: https://api.github.com https://gist.githubusercontent.com https://raw.githubusercontent.com https://objects.githubusercontent.com; worker-src 'self' blob:; frame-src blob:; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'";
@@ -2277,7 +2278,7 @@ class Component extends DCLogic {
     const settings = { ...this.state.settings, ...((lokal && lokal.settings) || {}) };
     let sync = null, offen = false, fehler = '';
     try {
-      const { SecureSync } = await import('./secure-sync.js');
+      const { SecureSync } = await import('./secure-sync.js?v=12');
       sync = new SecureSync({
         ns: 'hotracker',
         header: 'HOTENC1',
@@ -3099,7 +3100,7 @@ class Component extends DCLogic {
     if (!pin) { this.setState({ pkvHinweis: 'PIN des PKV-Projekts eingeben.' }); return; }
     this.setState({ pkvLaeuft: true, pkvHinweis: 'sucht den Gist des PKV-Projekts …' });
     try {
-      const { SecureSync } = await import('./secure-sync.js');
+      const { SecureSync } = await import('./secure-sync.js?v=12');
       const fremd = new SecureSync({ ns: 'pkvimport', header: 'PKVIMP1', gistFile: 'pkv-stand.json' });
       await fremd.unlock(pin, null);
       await fremd.setConfig({ token: this.sync.cfg.token });
