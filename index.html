@@ -12,6 +12,19 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#5980a6">
+<meta name="referrer" content="no-referrer">
+<script>
+window.__resources = {
+  'https://unpkg.com/react@18.3.1/umd/react.production.min.js': 'vendor/react/react.production.min.js',
+  'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js': 'vendor/react/react-dom.production.min.js'
+};
+if (/\.github\.io$/.test(location.hostname)) {
+  const m = document.createElement('meta');
+  m.httpEquiv = 'Content-Security-Policy';
+  m.content = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' blob: data: https://api.github.com https://gist.githubusercontent.com https://raw.githubusercontent.com https://objects.githubusercontent.com; worker-src 'self' blob:; frame-src blob:; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'";
+  document.head.appendChild(m);
+}
+</script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -20,9 +33,7 @@
 <meta name="omelette-owns-print" content="1">
 <link rel="stylesheet" href="_ds/industry-39c6ab8f-d45f-4d87-9391-83152ddb3fe2/styles.css">
 <script src="_ds/industry-39c6ab8f-d45f-4d87-9391-83152ddb3fe2/_ds_bundle.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/fonts.css">
 <style>
   html, body { margin: 0; padding: 0; }
   * { box-sizing: border-box; }
@@ -1579,6 +1590,15 @@
           </form>
           <div style="margin-top:var(--space-2);min-height:18px;font-size:12px;color:var(--color-accent-800)">{{ pinFehler }}</div>
           <p class="text-muted" style="margin:0;font-size:11px">PIN vergessen heißt Daten verloren. Vorher unten einen Klartext-Export ziehen.</p>
+          <div style="margin-top:var(--space-4);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)">
+            <span style="font-size:12px">Automatisch sperren nach</span>
+            <div class="seg" style="border-color:var(--color-divider)">
+              <sc-for list="{{ sperreOptionen }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.klick }}" style="min-height:32px;padding:var(--space-1) var(--space-3);border:0;border-left:1px solid var(--color-divider);background: {{ o.bg }};color: {{ o.fg }};font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-variant-numeric:tabular-nums;cursor:pointer">{{ o.name }}</button>
+              </sc-for>
+            </div>
+            <button class="btn btn-secondary" onClick="{{ jetztSperren }}" disabled="{{ sperrenAus }}" style="border-radius:0;min-height:32px;margin-left:auto">Jetzt sperren</button>
+          </div>
         </section>
 
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
@@ -1616,7 +1636,7 @@
           <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">04</div>
           <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Personen</h3>
           <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Namen mit Komma trennen. Jeder Beleg wird einer Person zugeordnet, der Kalender bleibt allein deiner.</p>
-          <input class="input" type="text" placeholder="Ich, Konrad, Ehefrau" value="{{ personenFeld }}" onChange="{{ personenTippen }}" style="min-height:40px;border-radius:0">
+          <input class="input" type="text" placeholder="Ich, Kind, Ehefrau" value="{{ personenFeld }}" onChange="{{ personenTippen }}" style="min-height:40px;border-radius:0">
         </section>
 
         <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
@@ -2176,6 +2196,15 @@ async function bildKlein(datei, max, guete) {
   } catch (e) { return datei; }
 }
 const KEY = 'hotracker.stand.v1';
+// Texterkennung komplett vom eigenen Server: kein Abruf bei jsDelivr, kein Blob-Worker.
+const ocrPfade = () => {
+  const abs = p => new URL(p, location.href).href;
+  return { workerPath: abs('vendor/tesseract/worker.min.js'), corePath: abs('vendor/tesseract/core/'), langPath: abs('vendor/tesseract/lang'), gzip: false, workerBlobURL: false, cacheMethod: 'none' };
+};
+const SRI = {
+  'vendor/tesseract/tesseract.min.js': 'sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F',
+  'vendor/pdfjs/pdf.min.js': 'sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e'
+};
 const TAG = 864e5;
 const tint = (farbe, p) => 'color-mix(in srgb, ' + farbe + ' ' + p + '%, transparent)';
 const ink = p => 'color-mix(in srgb, var(--color-text) ' + p + '%, transparent)';
@@ -2209,7 +2238,7 @@ class Component extends DCLogic {
     jahr: new Date().getFullYear(),
     tab: 'kalender',
     tage: {}, kiga: {}, notizen: {}, belege: {}, posten: {}, vertraege: {}, gesundheit: {}, betreuung: {}, telekom: {}, dienstwagen: {},
-    settings: { sperreHash: null, hoSatz: 6, km: 0, personen: 'Ich, Konrad, Ehefrau' },
+    settings: { sperreHash: null, hoSatz: 6, km: 0, personen: 'Ich, Kind, Ehefrau' },
     belegForm: { ...LEER_BELEG },
     belegPerson: 'alle', belegText: '', ocrHinweis: '', belegFehler: '',
     vertragForm: { ...LEER_VERTRAG },
@@ -2297,9 +2326,28 @@ class Component extends DCLogic {
     };
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') this._abschicken(); });
     window.addEventListener('pagehide', this._abschicken);
+    this._aktiv = Date.now();
+    ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => window.addEventListener(ev, () => { this._aktiv = Date.now(); }, { passive: true }));
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this._autoSperre(); });
+    this._sperrTakt = setInterval(() => this._autoSperre(), 30000);
     if (sync && sync.verschluesselt && !offen) return;
     if (sync && sync.cfg.token) await this._autoLaden();
     if (!nochNichtEingerichtet) this._feiertageAuffuellen(this.state.jahr);
+  }
+
+  // ---------- Sperre ----------
+  _autoSperre() {
+    if (!this.sync || !this.sync.verschluesselt || this.state.gesperrt) return;
+    const min = this.state.settings.sperreMin ?? 15;
+    if (!min || Date.now() - (this._aktiv || 0) < min * 60000) return;
+    this._sperren();
+  }
+  async _sperren() {
+    if (!this.sync || !this.sync.verschluesselt) return;
+    if (this._t) { clearTimeout(this._t); this._t = null; try { await this._hochladen(true); } catch (e) {} }
+    this.sync.lock();
+    this._vomGist = false;
+    this.setState({ gesperrt: true, tokenEingabe: '', pinEingabe: '', neuePin: '', pkvPin: '', pinFehler: '' });
   }
 
   // ---------- Speichern ----------
@@ -2445,7 +2493,7 @@ class Component extends DCLogic {
       const zeit = (this.state.settings.kigaZeiten || []).find(z => b.von >= z.von && b.bis <= z.bis);
       const titel = 'Kindergarten geschlossen' + (zeit ? ' · ' + zeit.name : '');
       zeilen.push('BEGIN:VEVENT', 'UID:kiga-' + b.von + '-' + komp(b.bis) + '@steuerakte', 'DTSTAMP:' + stempel, 'DTSTART;VALUE=DATE:' + komp(b.von), 'DTEND;VALUE=DATE:' + ende,
-        'SUMMARY:' + titel, 'DESCRIPTION:Kindergarten-Schließtage Konrad.', 'TRANSP:TRANSPARENT', 'END:VEVENT');
+        'SUMMARY:' + titel, 'DESCRIPTION:Kindergarten-Schließtage ' + this._kindName() + '.', 'TRANSP:TRANSPARENT', 'END:VEVENT');
     });
     zeilen.push('END:VCALENDAR');
     const blob = new Blob([zeilen.join('\r\n') + '\r\n'], { type: 'text/calendar;charset=utf-8' });
@@ -2463,7 +2511,7 @@ class Component extends DCLogic {
     const de = d => d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4);
     const zeiten = (this.state.settings.kigaZeiten || []).filter(z => z.von.slice(0, 4) === String(jahr));
     const einzeln = tage.filter(d => !zeiten.some(z => d >= z.von && d <= z.bis));
-    const zeilen = ['Hallo,', '', 'die Kindergarten-Schließtage ' + jahr + ' für Konrad:', ''];
+    const zeilen = ['Hallo,', '', 'die Kindergarten-Schließtage ' + jahr + ' für ' + this._kindName() + ':', ''];
     zeiten.forEach(z => zeilen.push('· ' + z.name + ': ' + (z.von === z.bis ? de(z.von) : de(z.von) + ' bis ' + de(z.bis))));
     einzeln.forEach(d => zeilen.push('· ' + de(d)));
     const offen = tage.filter(d => kiga[d] === 'offen');
@@ -2659,6 +2707,10 @@ class Component extends DCLogic {
     const roh = String(this.state.settings.personen || 'Ich').split(',').map(s => s.trim()).filter(Boolean);
     return roh.length ? roh : ['Ich'];
   }
+  _kindName() {
+    const n = this._personen().find(p => !/^(ich|du|ehefrau|ehemann|frau|mann|partner(in)?)$/i.test(p));
+    return n || 'Kind';
+  }
   _formSetzen(patch) {
     this.setState({ belegForm: { ...this.state.belegForm, ...patch } });
   }
@@ -2697,7 +2749,7 @@ class Component extends DCLogic {
     zeilen.push('prüfe …'); zeige();
     zeilen.length = 0;
     try {
-      await this._skript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js', () => window.Tesseract, 'nicht ladbar');
+      await this._skript('vendor/tesseract/tesseract.min.js', () => window.Tesseract, 'nicht ladbar');
       zeilen.push('Texterkennung geladen'); zeige();
       const c = document.createElement('canvas');
       c.width = 620; c.height = 120;
@@ -2707,13 +2759,13 @@ class Component extends DCLogic {
       x.fillText('Testbeleg 12.05.2026', 20, 50);
       x.fillText('Gesamtbetrag 123,45', 20, 100);
       const blob = await new Promise(ok => c.toBlob(ok, 'image/png'));
-      const res = await window.Tesseract.recognize(blob, 'deu');
+      const res = await window.Tesseract.recognize(blob, 'deu', ocrPfade());
       const g = belegAusText((res && res.data && res.data.text) || '');
       zeilen.push(g.betrag === 123.45 ? 'Bilderkennung liest richtig' : 'Bilderkennung ungenau: ' + JSON.stringify(g));
     } catch (e) { zeilen.push('Texterkennung: ' + e.message); }
     zeige();
     try {
-      await this._skript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js', () => window.pdfjsLib, 'nicht ladbar');
+      await this._skript('vendor/pdfjs/pdf.min.js', () => window.pdfjsLib, 'nicht ladbar');
       zeilen.push('PDF-Leser geladen');
     } catch (e) { zeilen.push('PDF-Leser: ' + e.message); }
     zeilen.push(this.sync && this.sync.cfg.repo ? 'Beleg-Repo hinterlegt' : 'kein Beleg-Repo hinterlegt — Dateien werden nicht gespeichert');
@@ -2723,6 +2775,8 @@ class Component extends DCLogic {
     if (pruefen()) return;
     await new Promise((ok, weg) => {
       const s = document.createElement('script');
+      if (SRI[url]) { s.integrity = SRI[url]; s.crossOrigin = 'anonymous'; }
+      s.referrerPolicy = 'no-referrer';
       s.src = url;
       s.onload = ok;
       s.onerror = () => weg(new Error(fehler));
@@ -2732,10 +2786,10 @@ class Component extends DCLogic {
   }
   /** Rohtext aus der Textebene eines PDFs. */
   async _pdfRohtext(datei, maxSeiten) {
-    await this._skript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
-      () => window.pdfjsLib, 'PDF-Leser konnte nicht geladen werden (keine Verbindung?)');
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-    const pdf = await window.pdfjsLib.getDocument({ data: await datei.arrayBuffer() }).promise;
+    await this._skript('vendor/pdfjs/pdf.min.js',
+      () => window.pdfjsLib, 'PDF-Leser konnte nicht geladen werden');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs/pdf.worker.min.js';
+    const pdf = await window.pdfjsLib.getDocument({ data: await datei.arrayBuffer(), isEvalSupported: false }).promise;
     let text = '';
     for (let s = 1; s <= Math.min(pdf.numPages, maxSeiten || 4); s++) {
       const seite = await pdf.getPage(s);
@@ -2767,10 +2821,11 @@ class Component extends DCLogic {
   async _ocr(datei) {
     try {
       this.setState({ ocrHinweis: 'lädt Texterkennung …' });
-      await this._skript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
-        () => window.Tesseract, 'Texterkennung konnte nicht geladen werden (keine Verbindung?)');
+      await this._skript('vendor/tesseract/tesseract.min.js',
+        () => window.Tesseract, 'Texterkennung konnte nicht geladen werden');
       this.setState({ ocrHinweis: 'erkennt Text …' });
       const res = await window.Tesseract.recognize(datei, 'deu', {
+        ...ocrPfade(),
         logger: m => { if (m.status === 'recognizing text') this.setState({ ocrHinweis: 'erkennt Text … ' + Math.round(m.progress * 100) + '%' }); }
       });
       const text = (res && res.data && res.data.text) || '';
@@ -3046,8 +3101,8 @@ class Component extends DCLogic {
     try {
       const { SecureSync } = await import('./secure-sync.js');
       const fremd = new SecureSync({ ns: 'pkvimport', header: 'PKVIMP1', gistFile: 'pkv-stand.json' });
-      await fremd.setConfig({ token: this.sync.cfg.token });
       await fremd.unlock(pin, null);
+      await fremd.setConfig({ token: this.sync.cfg.token });
       /* Mehrere Gists können pkv-stand.json führen. Der zuletzt beschriebene ist der aktuelle. */
       let kandidaten = [];
       try {
@@ -4157,7 +4212,7 @@ class Component extends DCLogic {
         if (S.setupBlob) {
           if (pin.length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
           try {
-            await this.sync.unlock(pin, null);
+            if (!await this.sync.unlock(pin, null)) throw new Error('pin');
             await this.sync.setupAnwenden(pin, S.setupBlob);
           } catch (err) { this.setState({ pinFehler: 'PIN stimmt nicht.' }); return; }
           const h = await this.sync.pinHash(pin);
@@ -4172,7 +4227,7 @@ class Component extends DCLogic {
         }
         if (!pin) { this.setState({ pinFehler: 'Bitte PIN eingeben.' }); return; }
         if (pin.length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
-        await this.sync.unlock(pin, null);
+        if (!await this.sync.unlock(pin, null)) { this.setState({ pinFehler: 'PIN passt nicht zum gespeicherten Zugang.' }); return; }
         const hash = await this.sync.pinHash(pin);
         await this.sync.setConfig({ token, repo: (S.repoEingabe || '').trim(), gistId: gist });
         this._merken({ settings: { ...S.settings, sperreHash: hash } }, true);
@@ -4181,6 +4236,12 @@ class Component extends DCLogic {
         this._feiertageAuffuellen(jahr);
       },
       pinStatus: S.settings.sperreHash ? 'Eine PIN ist gesetzt. Neue PIN eintragen wechselt sie — die Daten auf GitHub bleiben lesbar.' : 'Noch keine PIN. Ohne PIN liegen Token und Daten unverschlüsselt.',
+      sperreOptionen: [5, 15, 30, 0].map(m => {
+        const an = (S.settings.sperreMin ?? 15) === m;
+        return { name: m ? m + ' Min' : 'nie', bg: an ? 'var(--color-accent)' : 'transparent', fg: an ? 'var(--color-bg)' : 'var(--color-text)', klick: () => this._merken({ settings: { ...S.settings, sperreMin: m } }, true) };
+      }),
+      sperrenAus: !(this.sync && this.sync.verschluesselt),
+      jetztSperren: () => this._sperren(),
       pinAbsenden: async e => {
         e.preventDefault();
         if (!this.sync) return;
@@ -4193,7 +4254,9 @@ class Component extends DCLogic {
         e.preventDefault();
         if (!this.sync) return;
         if ((S.neuePin || '').length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
-        const hash = S.settings.sperreHash ? await this.sync.changePin(S.neuePin) : (await this.sync.unlock(S.neuePin, null), await this.sync.pinHash(S.neuePin));
+        let hash;
+        if (S.settings.sperreHash || this.sync.entsperrt) hash = await this.sync.changePin(S.neuePin);
+        else { if (!await this.sync.unlock(S.neuePin, null)) { this.setState({ pinFehler: 'PIN passt nicht zum gespeicherten Zugang.' }); return; } hash = await this.sync.pinHash(S.neuePin); }
         this._merken({ settings: { ...S.settings, sperreHash: hash } });
         this.setState({ neuePin: '', pinFehler: '', syncStatus: 'PIN gespeichert' });
       },
@@ -4224,6 +4287,7 @@ class Component extends DCLogic {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
         a.download = 'setup.json'; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
       },
       feiertagListe: [...ft.values()].join(' · '),
       feiertageSetzen: () => {
@@ -4251,8 +4315,10 @@ class Component extends DCLogic {
           const anzahl = Object.keys(daten.tage).length;
           if (!window.confirm(anzahl + ' Tage einlesen? Der bisherige Stand auf diesem Gerät wird ersetzt.')) return;
           this._version = (this._version || 0) + 1;
+          const ds = daten.settings || {};
           this._merken({
             tage: daten.tage,
+            kiga: daten.kiga || {},
             notizen: daten.notizen || {},
             belege: daten.belege || {},
             posten: daten.posten || {},
@@ -4261,16 +4327,18 @@ class Component extends DCLogic {
             betreuung: daten.betreuung || {},
             telekom: daten.telekom || {},
             dienstwagen: daten.dienstwagen || {},
-            settings: { ...S.settings, hoSatz: (daten.settings && daten.settings.hoSatz) ?? S.settings.hoSatz, km: (daten.settings && daten.settings.km) ?? S.settings.km }
+            settings: { ...S.settings, hoSatz: ds.hoSatz ?? S.settings.hoSatz, km: ds.km ?? S.settings.km, personen: ds.personen ?? S.settings.personen, kigaZeiten: ds.kigaZeiten ?? S.settings.kigaZeiten, kigaMail: ds.kigaMail ?? S.settings.kigaMail }
           });
           this.setState({ importHinweis: anzahl + ' Tage eingelesen' });
         };
         leser.readAsText(f);
       },
       exportieren: () => {
+        const st = this._stand(); st.settings = { ...st.settings }; delete st.settings.sperreHash;
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([JSON.stringify(this._stand(), null, 1)], { type: 'application/json' }));
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(st, null, 1)], { type: 'application/json' }));
         a.download = 'anwesenheit-export.json'; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
       },
       drucken: () => window.print()
     };

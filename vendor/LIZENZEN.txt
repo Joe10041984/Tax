@@ -1,0 +1,5 @@
+React 18.3.1 – MIT
+PDF.js 3.11.174 – Apache-2.0
+Tesseract.js 5.1.1, tesseract.js-core 5.1.1 – Apache-2.0
+Tessdata deu (4.0.0_best_int) – Apache-2.0
+Barlow, Barlow Condensed – SIL Open Font License 1.1

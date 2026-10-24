@@ -54,23 +54,36 @@ export class SecureSync {
     const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64ab(saltB64), iterations: ITER_PIN, hash: 'SHA-256' }, mat, 256);
     return this._import(new Uint8Array(bits));
   }
+  /** Prüfwert der PIN. PBKDF2 statt einfachem SHA-256, damit er sich nicht in Millisekunden durchprobieren lässt. */
   async pinHash(pin) {
+    const mat = await crypto.subtle.importKey('raw', enc(pin), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: enc('pinpruef:' + this.ns), iterations: ITER_PIN, hash: 'SHA-256' }, mat, 256);
+    return 'p2$' + [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  async _pinHashAlt(pin) {
     const buf = await crypto.subtle.digest('SHA-256', enc(this.ns + ':' + pin));
     return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   /** PIN prüfen (gegen den Hash aus deinen Settings) und Schlüssel aufbauen. */
   async unlock(pin, sperreHash) {
-    if (sperreHash && await this.pinHash(pin) !== sperreHash) return false;
-    this._pin = pin;
     const roh = this._raw('sync');
+    // Liegt ein verschlüsselter Zugang vor, prüft die Entschlüsselung selbst die PIN.
+    if (!(roh && roh.enc) && sperreHash) {
+      const h = sperreHash.startsWith('p2$') ? await this.pinHash(pin) : await this._pinHashAlt(pin);
+      if (h !== sperreHash) return false;
+    }
     if (roh && roh.enc) {
       const k = await this._fromPin(pin, roh.salt);
-      const klar = JSON.parse(dec(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ab(roh.iv) }, k.key, b64ab(roh.enc))));
+      let klar;
+      try { klar = JSON.parse(dec(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ab(roh.iv) }, k.key, b64ab(roh.enc)))); }
+      catch (e) { return false; }
+      this._pin = pin;
       this._pinKey = k.key; this._pinSalt = roh.salt;
       this.cfg = { token: klar.token || '', aiKey: klar.aiKey || '', gistId: roh.gistId || '', repo: roh.repo || '' };
       sessionStorage.setItem(this.ns + '.schluessel', k.raw);
     } else {
+      this._pin = pin;
       const salt = b64(crypto.getRandomValues(new Uint8Array(16)));
       const k = await this._fromPin(pin, salt);
       this._pinKey = k.key; this._pinSalt = salt;
@@ -254,7 +267,7 @@ export class SecureSync {
     if (key) {
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc(JSON.stringify({ ...stand, gespeichert })));
-      inhalt = JSON.stringify({ verschluesselt: true, gespeichert, sperreHash: sperreHash || null, tresor: this.tresorRoh(), iv: b64(iv), daten: b64(new Uint8Array(ct)) }, null, 1);
+      inhalt = JSON.stringify({ verschluesselt: true, gespeichert, sperreHash: null, tresor: this.tresorRoh(), iv: b64(iv), daten: b64(new Uint8Array(ct)) }, null, 1);
     } else {
       inhalt = JSON.stringify({ ...stand, gespeichert }, null, 1);
     }
@@ -319,7 +332,7 @@ export class SecureSync {
     let sha = null;
     const g = await fetch(url, { headers: this._headers() });
     if (g.ok) sha = (await g.json()).sha;
-    const r = await fetch(url, { method: 'PUT', headers: this._headers(), body: JSON.stringify({ message: 'Datei: ' + pfad, content: inhalt, ...(sha ? { sha } : {}) }) });
+    const r = await fetch(url, { method: 'PUT', headers: this._headers(), body: JSON.stringify({ message: 'Datei', content: inhalt, ...(sha ? { sha } : {}) }) });
     if (!r.ok) throw new Error('GitHub-Fehler ' + r.status + (r.status === 404 ? ' — Repo falsch oder Token ohne Contents-Recht?' : ''));
     return true;
   }
@@ -353,7 +366,7 @@ export class SecureSync {
     const g = await fetch(url, { headers: this._headers() });
     if (!g.ok) return false;
     const sha = (await g.json()).sha;
-    const r = await fetch(url, { method: 'DELETE', headers: this._headers(), body: JSON.stringify({ message: 'Löschen: ' + pfad, sha }) });
+    const r = await fetch(url, { method: 'DELETE', headers: this._headers(), body: JSON.stringify({ message: 'Löschen', sha }) });
     return r.ok;
   }
 
