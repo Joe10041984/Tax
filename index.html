@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Steuerakte</title>
+<title>Steuertracker</title>
 <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%235980a6'/%3E%3Cpath d='M16 10h32v40l-6-5-5 5-5-5-5 5-5-5-6 5z' fill='%23f2f2f3'/%3E%3Cg stroke='%235980a6' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M23 21h18M23 30h18M23 39h11'/%3E%3C/g%3E%3C/svg%3E">
-<meta name="apple-mobile-web-app-title" content="Steuerakte">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231F4E79'/%3E%3Cpath d='M16 10h32v40l-6-5-5 5-5-5-5 5-5-5-6 5z' fill='%23ffffff'/%3E%3Cg stroke='%231F4E79' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M23 21h18M23 30h18M23 39h11'/%3E%3C/g%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-title" content="Steuertracker">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#5980a6">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1F4E79">
 <meta name="referrer" content="no-referrer">
 <script>
 window.__resources = {
@@ -35,11 +35,13 @@ if (location.protocol === 'https:' && window.top === window.self) {
 <link rel="stylesheet" href="_ds/industry-39c6ab8f-d45f-4d87-9391-83152ddb3fe2/styles.css">
 <script src="_ds/industry-39c6ab8f-d45f-4d87-9391-83152ddb3fe2/_ds_bundle.js"></script>
 <link rel="stylesheet" href="vendor/fonts.css">
+<link rel="stylesheet" href="vendor/fonts-cockpit.css">
+<link rel="stylesheet" href="vendor/cockpit.css">
 <style>
   html, body { margin: 0; padding: 0; }
   * { box-sizing: border-box; }
-  a { color: var(--color-accent-700); text-decoration: underline; text-underline-offset: 2px; }
-  a:hover { color: var(--color-accent-900); }
+  a { color: var(--arbeit); text-decoration: underline; text-underline-offset: 2px; }
+  a:hover { color: var(--color-accent-800); }
   input, select, button, textarea { font: inherit; color: inherit; }
   [data-nurdruck] { display: none; }
   [data-nurschmal] { display: none; }
@@ -92,7 +94,7 @@ if (location.protocol === 'https:' && window.top === window.self) {
   }
 </style>
 </helmet>
-<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px;line-height:1.55">
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:14px;line-height:1.5">
 
   <sc-if value="{{ gesperrt }}" hint-placeholder-val="{{ false }}">
     <div style="position:fixed;inset:0;z-index:50;background:var(--color-bg);display:flex;align-items:center;justify-content:center;padding:var(--space-6)">
@@ -143,31 +145,27 @@ if (location.protocol === 'https:' && window.top === window.self) {
       </div>
     </sc-if>
 
-  <header class="nav" data-nodruck="1" style="position:sticky;top:0;z-index:20;background:var(--color-bg);border-bottom:1px solid var(--color-divider)">
-    <div data-kopf="1" style="margin:0 auto;padding:var(--space-3) var(--space-6);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-6);width:100%">
-      <h1 class="nav-brand" style="margin:0;display:flex;align-items:center;gap:var(--space-3);font-size:19px;letter-spacing:0.01em;text-transform:uppercase">
-        <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true" style="flex:0 0 auto;display:block">
-          <rect width="64" height="64" fill="var(--color-accent)"></rect>
-          <path d="M16 10h32v40l-6-5-5 5-5-5-5 5-5-5-6 5z" fill="var(--color-bg)"></path>
-          <g stroke="var(--color-accent)" stroke-width="3" stroke-linecap="square">
-            <path d="M23 21h18M23 30h18M23 39h11"></path>
-          </g>
-        </svg>
-        Steuerakte <span style="color:color-mix(in srgb, var(--color-text) 45%, transparent)">/</span> {{ bereich }}
-      </h1>
-      <div class="seg" style="border-color:var(--color-divider)">
+  <header data-kopfbereich="1" data-nodruck="1">
+    <div data-kopfzeile="1">
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0;margin-right:auto">
+        <h1 style="margin:0;font-size:22px;font-weight:700;line-height:1.2;color:#fff">Steuertracker</h1>
+        <div style="font-size:13px;font-weight:500;color:var(--marke-hell)">{{ kopfUntertitel }}</div>
+      </div>
+      <div data-kopfseg="1">
         <sc-for list="{{ jahre }}" as="j" hint-placeholder-count="3">
-          <button onClick="{{ j.klick }}" style="min-height:32px;padding:var(--space-1) var(--space-4);border:0;border-left:1px solid var(--color-divider);background: {{ j.bg }};color: {{ j.fg }};font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-variant-numeric:tabular-nums;cursor:pointer">{{ j.jahr }}</button>
+          <button onClick="{{ j.klick }}" style="background: {{ j.bg }};color: {{ j.fg }}">{{ j.jahr }}</button>
         </sc-for>
       </div>
-      <nav data-tabs="1" style="display:flex;gap:var(--space-6);margin-left:auto">
-        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
-          <button onClick="{{ t.klick }}" style="min-height:32px;padding:var(--space-1) 0;border:0;border-bottom:2px solid {{ t.linie }};background:transparent;color: {{ t.fg }};font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:15px;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer">{{ t.name }}</button>
-        </sc-for>
-      </nav>
-      <div data-status="1" class="text-muted" style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;min-width:130px;text-align:right">{{ syncStatus }}</div>
     </div>
+    <nav data-kopftabs="1">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="10">
+        <button onClick="{{ t.klick }}" data-aktiv="{{ t.aktiv }}" style="background: {{ t.bg }};color: {{ t.fg }}">{{ t.name }}</button>
+      </sc-for>
+    </nav>
   </header>
+  <button data-fab="1" data-nodruck="1" onClick="{{ fabKlick }}" aria-label="Beleg erfassen" title="Beleg erfassen">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
+  </button>
 
   <div data-druckbereich="1" data-inhalt="1" style="margin:0 auto;padding:var(--space-6)">
 
@@ -2263,7 +2261,7 @@ class Component extends DCLogic {
   };
 
   _kopfMessen = () => {
-    const k = document.querySelector('header.nav');
+    const k = document.querySelector('header[data-kopfbereich]');
     if (k) document.documentElement.style.setProperty('--kopf-h', Math.round(k.getBoundingClientRect().height) + 'px');
   };
 
@@ -3952,16 +3950,19 @@ class Component extends DCLogic {
       personenTippen: e => this._merken({ settings: { ...S.settings, personen: e.target.value } }),
       jahre: [jahr - 1, jahr, jahr + 1].map(j => ({
         jahr: String(j),
-        bg: j === jahr ? 'var(--color-accent)' : 'transparent',
-        fg: j === jahr ? 'var(--color-bg)' : ink(60),
+        bg: j === jahr ? '#fff' : 'transparent',
+        fg: j === jahr ? 'var(--marke)' : 'var(--marke-hell)',
         klick: () => { this.setState({ jahr: j, gewaehlt: null }); queueMicrotask(() => this._feiertageAuffuellen(j)); }
       })),
       tabs: TABS.map(([id, name]) => ({
         name,
-        fg: S.tab === id ? 'var(--color-text)' : ink(55),
-        linie: S.tab === id ? 'var(--color-accent)' : 'transparent',
+        aktiv: S.tab === id ? '1' : '0',
+        bg: S.tab === id ? 'var(--color-bg)' : 'transparent',
+        fg: S.tab === id ? 'var(--marke)' : 'var(--marke-hell2)',
         klick: () => this.setState({ tab: id })
       })),
+      kopfUntertitel: 'Steuerjahr ' + jahr + (S.syncStatus ? ' · ' + S.syncStatus : ''),
+      fabKlick: () => { this.setState({ tab: 'belege' }); window.scrollTo({ top: 0, behavior: 'smooth' }); },
       katListe: KAT.map(k => ({
         name: k.name, farbe: k.farbe, auf: k.auf, code: k.code, pfad: IKON[k.id], anzahl: String(zaehler[k.id]),
         jahrFarbe: zaehler[k.id] > 0 ? 'var(--color-text)' : 'color-mix(in srgb, var(--color-text) 35%, transparent)',

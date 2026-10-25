@@ -1,11 +1,11 @@
 {
-  "name": "Steuerakte",
-  "short_name": "Steuerakte",
+  "name": "Steuertracker",
+  "short_name": "Steuertracker",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f2f2f3",
-  "theme_color": "#5980a6",
+  "background_color": "#F5F6F7",
+  "theme_color": "#1F4E79",
   "icons": [
     { "src": "favicon.png", "sizes": "64x64", "type": "image/png" },
     { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
