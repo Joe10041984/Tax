@@ -151,6 +151,7 @@ if (location.protocol === 'https:' && window.top === window.self) {
       </div>
     </sc-if>
 
+  <sc-if value="{{ appZeigen }}" hint-placeholder-val="{{ true }}">
   <header data-kopfbereich="1" data-nodruck="1">
     <div data-kopfzeile="1">
       <div style="display:flex;flex-direction:column;gap:2px;min-width:0;margin-right:auto">
@@ -1690,6 +1691,7 @@ if (location.protocol === 'https:' && window.top === window.self) {
       </div>
     </sc-if>
   </div>
+  </sc-if>
 </div>
 
 </x-dc>
@@ -2201,6 +2203,7 @@ async function bildKlein(datei, max, guete) {
   } catch (e) { return datei; }
 }
 const KEY = 'hotracker.stand.v1';
+const PIN_MIN = 10;
 // Texterkennung komplett vom eigenen Server: kein Abruf bei jsDelivr, kein Blob-Worker.
 const ocrPfade = () => {
   const abs = p => new URL(p, location.href).href;
@@ -2267,6 +2270,9 @@ class Component extends DCLogic {
     geladen: false
   };
 
+  componentDidUpdate(_, vorher) {
+    if (vorher && (vorher.gesperrt !== this.state.gesperrt || vorher.frisch !== this.state.frisch)) requestAnimationFrame(this._kopfMessen);
+  }
   _kopfMessen = () => {
     const k = document.querySelector('header[data-kopfbereich]');
     if (k) document.documentElement.style.setProperty('--kopf-h', Math.round(k.getBoundingClientRect().height) + 'px');
@@ -2277,13 +2283,10 @@ class Component extends DCLogic {
     window.addEventListener('resize', this._kopfMessen);
     let lokal = null;
     try { lokal = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
-    let tage = lokal && lokal.tage;
     const frisch = !lokal;
-    if (!tage) tage = {};
-    const settings = { ...this.state.settings, ...((lokal && lokal.settings) || {}) };
     let sync = null, offen = false, fehler = '';
     try {
-      const { SecureSync } = await import('./secure-sync.js?v=15');
+      const { SecureSync } = await import('./secure-sync.js?v=16');
       sync = new SecureSync({
         ns: 'hotracker',
         header: 'HOTENC1',
@@ -2296,6 +2299,14 @@ class Component extends DCLogic {
     } catch (e) {
       fehler = 'secure-sync.js nicht geladen';
     }
+    // Verschlüsselter lokaler Stand: nur mit offenem Schlüssel lesbar, sonst nach dem Entsperren.
+    if (lokal && lokal.lokalEnc) {
+      const blob = lokal; lokal = null;
+      if (sync && offen) { try { lokal = await sync.lokalAuspacken(blob); } catch (e) {} }
+      else this._lokalOffen = blob;
+    }
+    const tage = (lokal && lokal.tage) || {};
+    const settings = { ...this.state.settings, ...((lokal && lokal.settings) || {}) };
     this._version = (this._version || 0) + 1;
     const nochNichtEingerichtet = frisch && !(sync && sync.cfg.gistId);
     this.setState({
@@ -2320,6 +2331,7 @@ class Component extends DCLogic {
       repoEingabe: (sync && sync.cfg.repo) || '',
       gistEingabe: (sync && sync.cfg.gistId) || ''
     });
+    if (sync && sync.verschluesselt && offen && lokal && !lokal.lokalEnc) this._lokalSchreiben({ ...this._stand(), gespeichert: this.state.gespeichert });
     if (nochNichtEingerichtet && sync) {
       const blob = await sync.setupHolen();
       if (blob) this.setState({ setupBlob: blob });
@@ -2361,12 +2373,36 @@ class Component extends DCLogic {
     const s = { ...this.state, ...(patch || {}) };
     return { tage: s.tage, kiga: s.kiga || {}, notizen: s.notizen, belege: s.belege, posten: s.posten, vertraege: s.vertraege, gesundheit: s.gesundheit, betreuung: s.betreuung, telekom: s.telekom, dienstwagen: s.dienstwagen, settings: s.settings, gespeichert: new Date().toISOString() };
   }
+  /** Lokalen Stand schreiben — mit PIN verschlüsselt, ohne PIN im Klartext. Gesperrt wird nichts überschrieben. */
+  async _lokalSchreiben(stand) {
+    const nr = this._lokalNr = (this._lokalNr || 0) + 1;
+    let text = null;
+    if (this.sync && this.sync.verschluesselt) {
+      try { text = await this.sync.lokalVerpacken(stand); } catch (e) {}
+      if (!text) return;
+    } else text = JSON.stringify(stand);
+    if (nr !== this._lokalNr) return;
+    try { localStorage.setItem(KEY, text); } catch (e) {}
+  }
+  _lokalPatch(l) {
+    return {
+      tage: l.tage || {}, kiga: l.kiga || {}, notizen: l.notizen || {}, belege: l.belege || {}, posten: l.posten || {}, vertraege: l.vertraege || {}, gesundheit: l.gesundheit || {}, betreuung: l.betreuung || {}, telekom: l.telekom || {}, dienstwagen: l.dienstwagen || {},
+      settings: { ...this.state.settings, ...(l.settings || {}) }, gespeichert: l.gespeichert || null
+    };
+  }
+  /** Nach jedem Entsperren: verschlüsselten Stand öffnen oder einen alten Klartext-Stand verschlüsseln. */
+  async _nachEntsperren() {
+    if (this._lokalOffen) {
+      const blob = this._lokalOffen; this._lokalOffen = null;
+      try { const l = await this.sync.lokalAuspacken(blob); this._version = (this._version || 0) + 1; this.setState(this._lokalPatch(l)); } catch (e) {}
+    } else if (this.state.geladen) this._lokalSchreiben({ ...this._stand(), gespeichert: this.state.gespeichert });
+  }
   _merken(patch, still) {
     if (!still) this._bearbeitet = true;
     this._version = (this._version || 0) + 1;
     const stand = this._stand(patch);
     this.setState({ ...(patch || {}), gespeichert: stand.gespeichert });
-    try { localStorage.setItem(KEY, JSON.stringify(stand)); } catch (e) {}
+    this._lokalSchreiben(stand);
     if (still) return;
     clearTimeout(this._t);
     this._t = setTimeout(() => { this._t = null; this._hochladen(true); }, 2500);
@@ -2432,7 +2468,7 @@ class Component extends DCLogic {
           settings: zusammen.settings,
           gespeichert: fern.gespeichert, syncStatus: fernTage + ' Tage geladen', frisch: false
         });
-        try { localStorage.setItem(KEY, JSON.stringify(zusammen)); } catch (e) {}
+        this._lokalSchreiben(zusammen);
         return;
       }
       const lokalTs = this.state.gespeichert || '';
@@ -2443,7 +2479,7 @@ class Component extends DCLogic {
           settings: { ...this.state.settings, ...(fern.settings || {}) },
           gespeichert: fern.gespeichert, syncStatus: 'Stand von GitHub geladen', frisch: false
         });
-        try { localStorage.setItem(KEY, JSON.stringify(fern)); } catch (e) {}
+        this._lokalSchreiben(fern);
       } else if (lokalTs > (fern.gespeichert || '')) {
         this._hochladen(true);
       } else {
@@ -3105,7 +3141,7 @@ class Component extends DCLogic {
     if (!pin) { this.setState({ pkvHinweis: 'PIN des PKV-Projekts eingeben.' }); return; }
     this.setState({ pkvLaeuft: true, pkvHinweis: 'sucht den Gist des PKV-Projekts …' });
     try {
-      const { SecureSync } = await import('./secure-sync.js?v=15');
+      const { SecureSync } = await import('./secure-sync.js?v=16');
       const fremd = new SecureSync({ ns: 'pkvimport', header: 'PKVIMP1', gistFile: 'pkv-stand.json' });
       await fremd.unlock(pin, null);
       await fremd.setConfig({ token: this.sync.cfg.token });
@@ -3599,7 +3635,7 @@ class Component extends DCLogic {
     const gewKat = gew && S.tage[gew] ? KAT_MAP[S.tage[gew]].name : 'nicht erfasst';
 
     return {
-      jahr: String(jahr), gesperrt: S.gesperrt, frisch: S.frisch,
+      jahr: String(jahr), gesperrt: S.gesperrt, frisch: S.frisch, appZeigen: !S.gesperrt && !S.frisch,
       nie: !S.setupBlob,
       setupFrage: !!(S.setupBlob && S.setupFrage),
       setupPass: S.setupPass,
@@ -4224,6 +4260,7 @@ class Component extends DCLogic {
         const zuruecksetzen = () => { this.sync.lock(); this.sync.cfg = { token: '', gistId: '', repo: '', aiKey: '' }; try { localStorage.removeItem(this.sync._k('sync')); localStorage.removeItem(this.sync._k('tresor')); } catch (x) {} };
         if (S.setupBlob) {
           if (pin.length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
+          this.setState({ pinKurz: pin.length < PIN_MIN });
           const pass = S.setupFrage ? (S.setupPass || '') : pin;
           this.setState({ pinFehler: 'prüft …' });
           try {
@@ -4249,12 +4286,16 @@ class Component extends DCLogic {
             neuePin: '', pinFehler: '', frisch: false,
             tokenEingabe: this.sync.cfg.token || '', repoEingabe: this.sync.cfg.repo || '', gistEingabe: this.sync.cfg.gistId || ''
           });
+          await this._nachEntsperren();
           await this._autoLaden(true);
           this._feiertageAuffuellen(this.state.jahr);
           return;
         }
         if (!pin) { this.setState({ pinFehler: 'Bitte PIN eingeben.' }); return; }
         if (pin.length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
+        // Neuer Datenstand: lange PIN Pflicht. Mit vorhandenem Gist gilt die bisherige PIN weiter.
+        if (!gist && pin.length < PIN_MIN) { this.setState({ pinFehler: 'Neue PIN: mindestens ' + PIN_MIN + ' Zeichen, am besten ein kurzer Satz.' }); return; }
+        this.setState({ pinKurz: pin.length < PIN_MIN });
         if (!await this.sync.unlock(pin, null)) { this.setState({ pinFehler: 'PIN passt nicht zum gespeicherten Zugang.' }); return; }
         const hash = await this.sync.pinHash(pin);
         await this.sync.setConfig({ token, repo: (S.repoEingabe || '').trim(), gistId: gist });
@@ -4269,10 +4310,11 @@ class Component extends DCLogic {
         }
         this._merken({ settings: { ...S.settings, sperreHash: hash } }, true);
         this.setState({ neuePin: '', pinFehler: '', frisch: false });
+        await this._nachEntsperren();
         if (token) await this._autoLaden(true);
         this._feiertageAuffuellen(jahr);
       },
-      pinStatus: S.settings.sperreHash ? 'Eine PIN ist gesetzt. Neue PIN eintragen wechselt sie — die Daten auf GitHub bleiben lesbar.' : 'Noch keine PIN. Ohne PIN liegen Token und Daten unverschlüsselt.',
+      pinStatus: S.settings.sperreHash ? 'Eine PIN ist gesetzt. Neue PIN eintragen wechselt sie — die Daten auf GitHub bleiben lesbar.' + (S.pinKurz ? ' Deine PIN ist kürzer als ' + PIN_MIN + ' Zeichen und lässt sich durchprobieren. Bitte eine längere vergeben.' : '') : 'Noch keine PIN. Ohne PIN liegen Token und Daten unverschlüsselt.',
       sperreOptionen: [5, 15, 30, 0].map(m => {
         const an = (S.settings.sperreMin ?? 15) === m;
         return { name: m ? m + ' Min' : 'nie', bg: an ? 'var(--color-accent)' : 'transparent', fg: an ? 'var(--color-bg)' : 'var(--color-text)', klick: () => this._merken({ settings: { ...S.settings, sperreMin: m } }, true) };
@@ -4284,18 +4326,19 @@ class Component extends DCLogic {
         if (!this.sync) return;
         const ok = await this.sync.unlock(S.pinEingabe, S.settings.sperreHash);
         if (!ok) { this.setState({ pinFehler: 'PIN stimmt nicht.' }); return; }
-        this.setState({ gesperrt: false, pinEingabe: '', pinFehler: '', tokenEingabe: this.sync.cfg.token || '', repoEingabe: this.sync.cfg.repo || '', gistEingabe: this.sync.cfg.gistId || '' });
+        await this._nachEntsperren();
+        this.setState({ gesperrt: false, pinKurz: (S.pinEingabe || '').length < PIN_MIN, pinEingabe: '', pinFehler: '', tokenEingabe: this.sync.cfg.token || '', repoEingabe: this.sync.cfg.repo || '', gistEingabe: this.sync.cfg.gistId || '' });
         this._autoLaden();
       },
       pinSetzen: async e => {
         e.preventDefault();
         if (!this.sync) return;
-        if ((S.neuePin || '').length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
+        if ((S.neuePin || '').length < PIN_MIN) { this.setState({ pinFehler: 'Mindestens ' + PIN_MIN + ' Zeichen, am besten ein kurzer Satz.' }); return; }
         let hash;
         if (S.settings.sperreHash || this.sync.entsperrt) hash = await this.sync.changePin(S.neuePin);
         else { if (!await this.sync.unlock(S.neuePin, null)) { this.setState({ pinFehler: 'PIN passt nicht zum gespeicherten Zugang.' }); return; } hash = await this.sync.pinHash(S.neuePin); }
         this._merken({ settings: { ...S.settings, sperreHash: hash } });
-        this.setState({ neuePin: '', pinFehler: '', syncStatus: 'PIN gespeichert' });
+        this.setState({ neuePin: '', pinFehler: '', pinKurz: false, syncStatus: 'PIN gespeichert' });
       },
       syncFelder: [
         { label: 'Token', typ: 'password', platzhalter: 'github_pat_…', wert: S.tokenEingabe, aendern: e => this.setState({ tokenEingabe: e.target.value }) },
@@ -4318,8 +4361,9 @@ class Component extends DCLogic {
       },
       setupBauen: async () => {
         if (!this.sync) return;
-        const pass = window.prompt('Passwort für setup.json (min. 8 Zeichen). Ist es gleich deiner PIN, fragt ein neues Gerät nur nach der PIN; sonst nach beidem.');
-        if (!pass || pass.length < 8) return;
+        const pass = window.prompt('Passwort für setup.json (min. 12 Zeichen). Die Datei liegt öffentlich neben der App und schützt deinen GitHub-Token. Ist das Passwort gleich deiner PIN, fragt ein neues Gerät nur nach der PIN; sonst nach beidem.');
+        if (!pass) return;
+        if (pass.length < 12) { window.alert('Zu kurz: mindestens 12 Zeichen. Es wurde keine setup.json erzeugt.'); return; }
         const text = await this.sync.setupErzeugen(pass);
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));

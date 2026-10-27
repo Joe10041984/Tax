@@ -212,6 +212,21 @@ export class SecureSync {
   }
   tresorRoh() { return this._raw('tresor'); }
 
+  // ---------- Lokaler Datenstand (localStorage) ----------
+  /** Verschlüsselt den Stand mit dem Datenschlüssel. null, wenn gesperrt. */
+  async lokalVerpacken(obj) {
+    const key = this._dataKey || await this.dataKey(null).catch(() => null);
+    if (!key) return null;
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc(JSON.stringify(obj)));
+    return JSON.stringify({ lokalEnc: 1, iv: b64(iv), daten: b64(new Uint8Array(ct)) });
+  }
+  async lokalAuspacken(blob) {
+    const key = this._dataKey || await this.dataKey(null);
+    if (!key) throw new Error('gesperrt');
+    return JSON.parse(dec(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ab(blob.iv) }, key, b64ab(blob.daten))));
+  }
+
   // ---------- GitHub ----------
   _headers(extra) { return { Authorization: 'Bearer ' + this.cfg.token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', ...(extra || {}) }; }
 
