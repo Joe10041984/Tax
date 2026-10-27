@@ -342,35 +342,35 @@ if (location.protocol === 'https:' && window.top === window.self) {
           </div>
         </section>
         <div data-scrollbox="1" data-klebbox="1" class="blueprint" style="position:relative;padding:0 var(--space-4) var(--space-4);background:transparent">
-          <table data-tabelle="1" class="table" style="min-width:860px">
-            <thead>
-              <tr>
-                <th data-erstespalte="1" data-klebkopf="1" style="white-space:nowrap;vertical-align:bottom;padding-top:var(--space-4)">KW</th>
-                <th data-nurbreit="1" data-klebkopf="1" style="vertical-align:bottom;padding-top:var(--space-4)">Monat</th>
+          <sc-raw-table data-tabelle="1" class="table" style="min-width:860px">
+            <sc-raw-thead>
+              <sc-raw-tr>
+                <sc-raw-th data-erstespalte="1" data-klebkopf="1" style="white-space:nowrap;vertical-align:bottom;padding-top:var(--space-4)">KW</sc-raw-th>
+                <sc-raw-th data-nurbreit="1" data-klebkopf="1" style="vertical-align:bottom;padding-top:var(--space-4)">Monat</sc-raw-th>
                 <sc-for list="{{ katListe }}" as="k" hint-placeholder-count="8">
-                  <th data-klebkopf="1" style="text-align:center;white-space:nowrap;vertical-align:bottom;padding-top:var(--space-4)">
+                  <sc-raw-th data-klebkopf="1" style="text-align:center;white-space:nowrap;vertical-align:bottom;padding-top:var(--space-4)">
                     <span data-nurbreit="1">{{ k.name }}</span><span data-nurschmal="1">{{ k.code }}</span>
                     <span style="display:block;margin-top:2px;font-family:var(--font-heading);font-size:15px;font-variant-numeric:tabular-nums;color: {{ k.jahrFarbe }}">{{ k.anzahl }}</span>
-                  </th>
+                  </sc-raw-th>
                 </sc-for>
-              </tr>
-            </thead>
-            <tbody>
+              </sc-raw-tr>
+            </sc-raw-thead>
+            <sc-raw-tbody>
               <sc-for list="{{ wochenZeilen }}" as="z" hint-placeholder-count="12">
-                <tr id="{{ z.id }}" style="background: {{ z.zeilenBg }};box-shadow: {{ z.zeilenRahmen }}">
-                  <td style="padding:0">
+                <sc-raw-tr id="{{ z.id }}" style="background: {{ z.zeilenBg }};box-shadow: {{ z.zeilenRahmen }}">
+                  <sc-raw-td style="padding:0">
                     <button onClick="{{ z.zumKalender }}" title="Diese Woche im Kalender öffnen" style="width:100%;min-height:34px;padding:4px 6px;border:0;border-radius:0;background:transparent;font-family:var(--font-heading);font-size:15px;font-variant-numeric:tabular-nums;font-weight: {{ z.kwGewicht }};color: {{ z.kwFarbe }};text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px" style-hover="text-decoration-color: currentColor">{{ z.kw }}</button>
-                  </td>
-                  <td data-nurbreit="1" style="white-space:nowrap">{{ z.monat }}<span class="text-muted" style="display:block;font-size:10px;font-variant-numeric:tabular-nums">{{ z.fehlt }}</span></td>
+                  </sc-raw-td>
+                  <sc-raw-td data-nurbreit="1" style="white-space:nowrap">{{ z.monat }}<span class="text-muted" style="display:block;font-size:10px;font-variant-numeric:tabular-nums">{{ z.fehlt }}</span></sc-raw-td>
                   <sc-for list="{{ z.zellen }}" as="c" hint-placeholder-count="8">
-                    <td style="text-align:center;padding:3px 4px">
+                    <sc-raw-td style="text-align:center;padding:3px 4px">
                       <input data-zahlfeld="1" class="input" type="number" min="0" max="7" value="{{ c.wert }}" onChange="{{ c.aendern }}" style="width:46px;min-height:30px;padding:3px;border-radius:0;border-color:transparent;background: {{ c.bg }};text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;color: {{ c.fg }}">
-                    </td>
+                    </sc-raw-td>
                   </sc-for>
-                </tr>
+                </sc-raw-tr>
               </sc-for>
-            </tbody>
-          </table>
+            </sc-raw-tbody>
+          </sc-raw-table>
         </div>
       </div>
     </sc-if>
@@ -403,16 +403,16 @@ if (location.protocol === 'https:' && window.top === window.self) {
               <input class="input" type="number" step="0.5" min="0" value="{{ hoSatz }}" onChange="{{ hoSatzAendern }}" style="width:78px;border-radius:0;font-family:var(--font-heading);font-variant-numeric:tabular-nums">
               <span class="text-muted" style="font-size:12px">€</span>
             </div>
-            <table class="table">
-              <tbody>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
                 <sc-for list="{{ hoZeilen }}" as="r" hint-placeholder-count="4">
-                  <tr>
-                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
-                  </tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
-              </tbody>
-            </table>
+              </sc-raw-tbody>
+            </sc-raw-table>
           </section>
 
           <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
@@ -424,16 +424,16 @@ if (location.protocol === 'https:' && window.top === window.self) {
               <input class="input" type="number" step="1" min="0" value="{{ km }}" onChange="{{ kmAendern }}" style="width:78px;border-radius:0;font-family:var(--font-heading);font-variant-numeric:tabular-nums">
               <span class="text-muted" style="font-size:12px">km</span>
             </div>
-            <table class="table">
-              <tbody>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
                 <sc-for list="{{ fahrtZeilen }}" as="r" hint-placeholder-count="3">
-                  <tr>
-                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
-                  </tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
-              </tbody>
-            </table>
+              </sc-raw-tbody>
+            </sc-raw-table>
           </section>
         </div>
 
@@ -445,20 +445,20 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <sc-if value="{{ belegAnsatzLeer }}" hint-placeholder-val="{{ false }}">
               <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist noch kein Beleg erfasst.</p>
             </sc-if>
-            <table class="table">
-              <tbody>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
                 <sc-for list="{{ belegArtZeilen }}" as="r" hint-placeholder-count="3">
-                  <tr>
-                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
-                  </tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
-                <tr>
-                  <td style="font-weight:600">Ansatz</td>
-                  <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600">{{ belegAnsatzGesamt }}</td>
-                </tr>
-              </tbody>
-            </table>
+                <sc-raw-tr>
+                  <sc-raw-td style="font-weight:600">Ansatz</sc-raw-td>
+                  <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600">{{ belegAnsatzGesamt }}</sc-raw-td>
+                </sc-raw-tr>
+              </sc-raw-tbody>
+            </sc-raw-table>
             <button data-nodruck="1" class="btn btn-ghost" onClick="{{ zuBelege }}" style="margin-top:var(--space-3);padding:2px 0;border-radius:0;min-height:28px;font-size:12px;text-decoration:underline;text-underline-offset:2px">Zu den Belegen</button>
           </section>
 
@@ -469,20 +469,20 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <sc-if value="{{ versAnsatzLeer }}" hint-placeholder-val="{{ false }}">
               <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist noch keine Versicherung erfasst.</p>
             </sc-if>
-            <table class="table">
-              <tbody>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
                 <sc-for list="{{ versArtZeilen }}" as="r" hint-placeholder-count="3">
-                  <tr>
-                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
-                  </tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
-                <tr>
-                  <td style="font-weight:600">Ansatz</td>
-                  <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600">{{ versAnsatzGesamt }}</td>
-                </tr>
-              </tbody>
-            </table>
+                <sc-raw-tr>
+                  <sc-raw-td style="font-weight:600">Ansatz</sc-raw-td>
+                  <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600">{{ versAnsatzGesamt }}</sc-raw-td>
+                </sc-raw-tr>
+              </sc-raw-tbody>
+            </sc-raw-table>
             <p class="text-muted" style="margin:var(--space-2) 0 0;font-size:11px">{{ versNichtText }}</p>
             <button data-nodruck="1" class="btn btn-ghost" onClick="{{ zuVersicherungen }}" style="margin-top:var(--space-1);padding:2px 0;border-radius:0;min-height:28px;font-size:12px;text-decoration:underline;text-underline-offset:2px">Zu den Versicherungen</button>
           </section>
@@ -502,11 +502,11 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <div style="margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-divider)">
               <div class="field">
                 <label>Zumutbare Belastung nach</label>
-                <select class="input" value="{{ zbGruppe }}" onChange="{{ zbGruppeAendern }}" style="min-height:38px;border-radius:0">
+                <sc-raw-select class="input" value="{{ zbGruppe }}" onChange="{{ zbGruppeAendern }}" style="min-height:38px;border-radius:0">
                   <sc-for list="{{ zbOptionen }}" as="o" hint-placeholder-count="4">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
               <p style="margin:var(--space-2) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ gesGrenze }}</p>
             </div>
@@ -540,16 +540,16 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 10 EStG</div>
             <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Sonderausgaben zusammen</h3>
             <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Vorsorgeaufwendungen und übrige Sonderausgaben in einer Zeile.</p>
-            <table class="table">
-              <tbody>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
                 <sc-for list="{{ saZeilen }}" as="r" hint-placeholder-count="5">
-                  <tr>
-                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
-                  </tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
-              </tbody>
-            </table>
+              </sc-raw-tbody>
+            </sc-raw-table>
             <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ saUrteil }}</p>
             <p style="margin:var(--space-2) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ gsErsparnisSa }}</p>
           </section>
@@ -558,16 +558,16 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 9a Satz 1 Nr. 1a EStG</div>
             <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Werbungskosten zusammen</h3>
             <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Pauschalen und beruflich veranlasste Beträge in einer Zeile.</p>
-            <table class="table">
-              <tbody>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
                 <sc-for list="{{ wkZeilen }}" as="r" hint-placeholder-count="5">
-                  <tr>
-                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
-                  </tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
-              </tbody>
-            </table>
+              </sc-raw-tbody>
+            </sc-raw-table>
             <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ wkUrteil }}</p>
             <p style="margin:var(--space-2) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ gsErsparnisWk }}</p>
           </section>
@@ -576,16 +576,16 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">§ 35a EStG</div>
             <h3 style="margin:0;font-family:var(--font-heading);font-size:18px">Haushalt und Handwerker</h3>
             <p class="text-muted" style="margin:0 0 var(--space-4);font-size:12px">Steuerermäßigung, keine Ausgabe — sie mindert die Steuer direkt.</p>
-            <table class="table">
-              <tbody>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
                 <sc-for list="{{ hwZeilen }}" as="r" hint-placeholder-count="5">
-                  <tr>
-                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
-                  </tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">{{ r.label }}</sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
-              </tbody>
-            </table>
+              </sc-raw-tbody>
+            </sc-raw-table>
             <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ hwUrteil }}</p>
           </section>
 
@@ -596,22 +596,22 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <sc-if value="{{ dwLeer }}" hint-placeholder-val="{{ false }}">
               <p class="text-muted" style="margin:0;font-size:13px">Kein Fahrzeug erfasst.</p>
             </sc-if>
-            <table class="table">
-              <tbody>
-                <tr>
-                  <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Arbeitsweg pauschal</td>
-                  <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ dwPausch }}</td>
-                </tr>
-                <tr>
-                  <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">bei {{ dwFahrten }} Fahrten</td>
-                  <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ dwEinzel }}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600">Korrektur des Arbeitslohns</td>
-                  <td style="text-align:right;font-family:var(--font-heading);font-weight:600;font-variant-numeric:tabular-nums;font-size:16px">{{ dwKorrektur }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
+                <sc-raw-tr>
+                  <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Arbeitsweg pauschal</sc-raw-td>
+                  <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ dwPausch }}</sc-raw-td>
+                </sc-raw-tr>
+                <sc-raw-tr>
+                  <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">bei {{ dwFahrten }} Fahrten</sc-raw-td>
+                  <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ dwEinzel }}</sc-raw-td>
+                </sc-raw-tr>
+                <sc-raw-tr>
+                  <sc-raw-td style="font-weight:600">Korrektur des Arbeitslohns</sc-raw-td>
+                  <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-weight:600;font-variant-numeric:tabular-nums;font-size:16px">{{ dwKorrektur }}</sc-raw-td>
+                </sc-raw-tr>
+              </sc-raw-tbody>
+            </sc-raw-table>
             <p style="margin:var(--space-3) 0 0;font-size:12px;line-height:1.45;color:var(--color-accent-800);text-wrap:pretty">{{ dwErsparnis }}</p>
             <p class="text-muted" style="margin:2px 0 0;font-size:11px;text-wrap:pretty">{{ dwGrenzeHinweis }}</p>
           </section>
@@ -623,23 +623,23 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <sc-if value="{{ btKarteLeer }}" hint-placeholder-val="{{ false }}">
               <p class="text-muted" style="margin:0;font-size:13px">Für {{ jahr }} ist keine Betreuung erfasst.</p>
             </sc-if>
-            <table class="table">
-              <tbody>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
                 <sc-for list="{{ btKarte }}" as="r" hint-placeholder-count="1">
-                  <tr>
-                    <td>
+                  <sc-raw-tr>
+                    <sc-raw-td>
                       <div>{{ r.kind }}</div>
                       <div class="text-muted" style="font-size:11px">{{ r.basis }} · {{ r.hinweis }}</div>
-                    </td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ r.ansatz }}</td>
-                  </tr>
+                    </sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ r.ansatz }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
-                <tr>
-                  <td style="font-weight:600">Als Sonderausgaben</td>
-                  <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600">{{ btKarteSumme }}</td>
-                </tr>
-              </tbody>
-            </table>
+                <sc-raw-tr>
+                  <sc-raw-td style="font-weight:600">Als Sonderausgaben</sc-raw-td>
+                  <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600">{{ btKarteSumme }}</sc-raw-td>
+                </sc-raw-tr>
+              </sc-raw-tbody>
+            </sc-raw-table>
             <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ btKarteUrteil }}</p>
           </section>
 
@@ -650,25 +650,25 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <sc-if value="{{ afaLeer }}" hint-placeholder-val="{{ false }}">
               <p class="text-muted" style="margin:0;font-size:13px">Kein Gegenstand mit Nutzungsdauer über einem Jahr erfasst.</p>
             </sc-if>
-            <table class="table">
-              <tbody>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
                 <sc-for list="{{ afaZeilen }}" as="r" hint-placeholder-count="2">
-                  <tr>
-                    <td>
+                  <sc-raw-tr>
+                    <sc-raw-td>
                       <div>{{ r.bez }}</div>
                       <div class="text-muted" style="font-size:11px">{{ r.jahrText }}</div>
-                    </td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ r.rate }}</td>
-                  </tr>
+                    </sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ r.rate }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
                 <sc-for list="{{ afaKommend }}" as="r" hint-placeholder-count="2">
-                  <tr>
-                    <td style="color:color-mix(in srgb, var(--color-text) 55%, transparent)">noch offen in {{ r.label }}</td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ r.wert }}</td>
-                  </tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 55%, transparent)">noch offen in {{ r.label }}</sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ r.wert }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
-              </tbody>
-            </table>
+              </sc-raw-tbody>
+            </sc-raw-table>
           </section>
 
           <section class="blueprint" style="position:relative;padding:var(--space-6);background:transparent">
@@ -678,17 +678,17 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <sc-if value="{{ beitragLeer }}" hint-placeholder-val="{{ false }}">
               <p class="text-muted" style="margin:0;font-size:13px">Noch keine Versicherung erfasst.</p>
             </sc-if>
-            <table class="table">
-              <tbody>
+            <sc-raw-table class="table">
+              <sc-raw-tbody>
                 <sc-for list="{{ beitragZeilen }}" as="r" hint-placeholder-count="3">
-                  <tr>
-                    <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent);font-weight: {{ r.gewicht }}">{{ r.label }}</td>
-                    <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-size:12px;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ r.delta }}</td>
-                    <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</td>
-                  </tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent);font-weight: {{ r.gewicht }}">{{ r.label }}</sc-raw-td>
+                    <sc-raw-td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-size:12px;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ r.delta }}</sc-raw-td>
+                    <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px;font-weight: {{ r.gewicht }}">{{ r.wert }}</sc-raw-td>
+                  </sc-raw-tr>
                 </sc-for>
-              </tbody>
-            </table>
+              </sc-raw-tbody>
+            </sc-raw-table>
           </section>
         </div>
 
@@ -746,58 +746,58 @@ if (location.protocol === 'https:' && window.top === window.self) {
                   <span style="margin-left:auto;font-family:var(--font-heading);font-size:19px;font-variant-numeric:tabular-nums">{{ g.summe }}</span>
                 </div>
                 <div data-scrollbox="1" style="overflow-x:auto">
-                  <table data-tabelle="1" class="table">
-                    <thead>
-                      <tr>
-                        <th data-erstespalte="1" style="width:34px">Nr</th>
-                        <th style="white-space:nowrap">Datum</th>
-                        <th>Beleg</th>
-                        <th data-nurbreit="1">Person</th>
-                        <th style="text-align:right;white-space:nowrap">Betrag</th>
-                        <th style="text-align:right;white-space:nowrap">Absetzbar</th>
-                        <th data-nodruck="1"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <sc-raw-table data-tabelle="1" class="table">
+                    <sc-raw-thead>
+                      <sc-raw-tr>
+                        <sc-raw-th data-erstespalte="1" style="width:34px">Nr</sc-raw-th>
+                        <sc-raw-th style="white-space:nowrap">Datum</sc-raw-th>
+                        <sc-raw-th>Beleg</sc-raw-th>
+                        <sc-raw-th data-nurbreit="1">Person</sc-raw-th>
+                        <sc-raw-th style="text-align:right;white-space:nowrap">Betrag</sc-raw-th>
+                        <sc-raw-th style="text-align:right;white-space:nowrap">Absetzbar</sc-raw-th>
+                        <sc-raw-th data-nodruck="1"></sc-raw-th>
+                      </sc-raw-tr>
+                    </sc-raw-thead>
+                    <sc-raw-tbody>
                       <sc-for list="{{ g.zeilen }}" as="z" hint-placeholder-count="2">
-                        <tr>
-                          <td style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ z.nr }}</td>
-                          <td style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.datum }}</td>
-                          <td>
+                        <sc-raw-tr>
+                          <sc-raw-td style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 55%, transparent)">{{ z.nr }}</sc-raw-td>
+                          <sc-raw-td style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.datum }}</sc-raw-td>
+                          <sc-raw-td>
                             <div>{{ z.bez }}</div>
                             <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.detail }}</div>
-                          </td>
-                          <td data-nurbreit="1" style="white-space:nowrap">{{ z.person }}</td>
-                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.betrag }}</td>
-                          <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.absetzbar }}</td>
-                          <td data-nodruck="1" style="text-align:right;white-space:nowrap">
+                          </sc-raw-td>
+                          <sc-raw-td data-nurbreit="1" style="white-space:nowrap">{{ z.person }}</sc-raw-td>
+                          <sc-raw-td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.betrag }}</sc-raw-td>
+                          <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.absetzbar }}</sc-raw-td>
+                          <sc-raw-td data-nodruck="1" style="text-align:right;white-space:nowrap">
                             <button class="btn btn-ghost" onClick="{{ z.bearbeiten }}" style="min-height:30px;padding:2px 8px;border-radius:0">Ändern</button>
                             <button class="btn btn-ghost" onClick="{{ z.loeschen }}" style="min-height:30px;padding:2px 8px;border-radius:0">Löschen</button>
-                          </td>
-                        </tr>
+                          </sc-raw-td>
+                        </sc-raw-tr>
                       </sc-for>
-                    </tbody>
-                  </table>
+                    </sc-raw-tbody>
+                  </sc-raw-table>
                 </div>
               </section>
             </sc-for>
 
             <section style="border:1px solid var(--color-text);padding:var(--space-4)">
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
-              <table class="table" style="margin-top:var(--space-2)">
-                <tbody>
+              <sc-raw-table class="table" style="margin-top:var(--space-2)">
+                <sc-raw-tbody>
                   <sc-for list="{{ artSummen }}" as="a" hint-placeholder-count="2">
-                    <tr>
-                      <td>{{ a.art }}</td>
-                      <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ a.summe }}</td>
-                    </tr>
+                    <sc-raw-tr>
+                      <sc-raw-td>{{ a.art }}</sc-raw-td>
+                      <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ a.summe }}</sc-raw-td>
+                    </sc-raw-tr>
                   </sc-for>
-                  <tr>
-                    <td style="font-weight:600">Alle Belege — {{ belegAnzahl }} Stück</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ belegGesamt }}</td>
-                  </tr>
-                </tbody>
-              </table>
+                  <sc-raw-tr>
+                    <sc-raw-td style="font-weight:600">Alle Belege — {{ belegAnzahl }} Stück</sc-raw-td>
+                    <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ belegGesamt }}</sc-raw-td>
+                  </sc-raw-tr>
+                </sc-raw-tbody>
+              </sc-raw-table>
             </section>
           </div>
 
@@ -835,11 +835,11 @@ if (location.protocol === 'https:' && window.top === window.self) {
               </sc-for>
               <div class="field">
                 <label>Kategorie</label>
-                <select class="input" value="{{ bfKat }}" onChange="{{ bfKatAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ bfKat }}" onChange="{{ bfKatAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ katOptionen }}" as="o" hint-placeholder-count="9">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
               <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ bfKatHinweis }}</div>
               <sc-if value="{{ bfArbeitSichtbar }}" hint-placeholder-val="{{ false }}">
@@ -850,11 +850,11 @@ if (location.protocol === 'https:' && window.top === window.self) {
               </sc-if>
               <div class="field">
                 <label>Person</label>
-                <select class="input" value="{{ bfPerson }}" onChange="{{ bfPersonAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ bfPerson }}" onChange="{{ bfPersonAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ personOptionen }}" as="o" hint-placeholder-count="2">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
               <div class="field">
                 <label>Notiz</label>
@@ -911,60 +911,60 @@ if (location.protocol === 'https:' && window.top === window.self) {
                 </div>
                 <p class="text-muted" style="margin:2px 0 var(--space-3);font-size:11px;max-width:62ch;text-wrap:pretty">{{ g.grenze }}</p>
                 <div data-scrollbox="1" style="overflow-x:auto">
-                  <table data-tabelle="1" class="table">
-                    <thead>
-                      <tr>
-                        <th data-erstespalte="1">Vertrag</th>
-                        <th data-nurbreit="1">Person</th>
-                        <th data-nurbreit="1" style="white-space:nowrap">Laufzeit</th>
-                        <th style="text-align:right;white-space:nowrap">Jahresbeitrag</th>
-                        <th style="text-align:right;white-space:nowrap">Anteil</th>
-                        <th style="text-align:right;white-space:nowrap">Absetzbar</th>
-                        <th data-nodruck="1"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <sc-raw-table data-tabelle="1" class="table">
+                    <sc-raw-thead>
+                      <sc-raw-tr>
+                        <sc-raw-th data-erstespalte="1">Vertrag</sc-raw-th>
+                        <sc-raw-th data-nurbreit="1">Person</sc-raw-th>
+                        <sc-raw-th data-nurbreit="1" style="white-space:nowrap">Laufzeit</sc-raw-th>
+                        <sc-raw-th style="text-align:right;white-space:nowrap">Jahresbeitrag</sc-raw-th>
+                        <sc-raw-th style="text-align:right;white-space:nowrap">Anteil</sc-raw-th>
+                        <sc-raw-th style="text-align:right;white-space:nowrap">Absetzbar</sc-raw-th>
+                        <sc-raw-th data-nodruck="1"></sc-raw-th>
+                      </sc-raw-tr>
+                    </sc-raw-thead>
+                    <sc-raw-tbody>
                       <sc-for list="{{ g.zeilen }}" as="z" hint-placeholder-count="2">
-                        <tr>
-                          <td>
+                        <sc-raw-tr>
+                          <sc-raw-td>
                             <div>{{ z.bez }}</div>
                             <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.gesellschaft }} · {{ z.detail }}</div>
-                          </td>
-                          <td data-nurbreit="1" style="white-space:nowrap">{{ z.person }}</td>
-                          <td data-nurbreit="1" style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.laufzeit }}</td>
-                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.beitrag }}</td>
-                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 60%, transparent)">{{ z.anteil }}</td>
-                          <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.anrechnung }}</td>
-                          <td data-nodruck="1" style="text-align:right;white-space:nowrap">
+                          </sc-raw-td>
+                          <sc-raw-td data-nurbreit="1" style="white-space:nowrap">{{ z.person }}</sc-raw-td>
+                          <sc-raw-td data-nurbreit="1" style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.laufzeit }}</sc-raw-td>
+                          <sc-raw-td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.beitrag }}</sc-raw-td>
+                          <sc-raw-td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 60%, transparent)">{{ z.anteil }}</sc-raw-td>
+                          <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.anrechnung }}</sc-raw-td>
+                          <sc-raw-td data-nodruck="1" style="text-align:right;white-space:nowrap">
                             <button class="btn btn-ghost" onClick="{{ z.bearbeiten }}" style="min-height:30px;padding:2px 8px;border-radius:0">Ändern</button>
                             <button class="btn btn-ghost" onClick="{{ z.loeschen }}" style="min-height:30px;padding:2px 8px;border-radius:0">Löschen</button>
-                          </td>
-                        </tr>
+                          </sc-raw-td>
+                        </sc-raw-tr>
                       </sc-for>
-                    </tbody>
-                  </table>
+                    </sc-raw-tbody>
+                  </sc-raw-table>
                 </div>
               </section>
             </sc-for>
 
             <section style="border:1px solid var(--color-text);padding:var(--space-4)">
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
-              <table class="table" style="margin-top:var(--space-2)">
-                <tbody>
-                  <tr>
-                    <td>Beitragslast je Monat</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ vertragMonatlich }}</td>
-                  </tr>
-                  <tr>
-                    <td>Beitrag im Jahr — {{ vertragAnzahl }} Verträge im Bestand</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ vertragBeitragGesamt }}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight:600">Davon steuerlich ansetzbar</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ vertragAbsetzbar }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <sc-raw-table class="table" style="margin-top:var(--space-2)">
+                <sc-raw-tbody>
+                  <sc-raw-tr>
+                    <sc-raw-td>Beitragslast je Monat</sc-raw-td>
+                    <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ vertragMonatlich }}</sc-raw-td>
+                  </sc-raw-tr>
+                  <sc-raw-tr>
+                    <sc-raw-td>Beitrag im Jahr — {{ vertragAnzahl }} Verträge im Bestand</sc-raw-td>
+                    <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ vertragBeitragGesamt }}</sc-raw-td>
+                  </sc-raw-tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="font-weight:600">Davon steuerlich ansetzbar</sc-raw-td>
+                    <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ vertragAbsetzbar }}</sc-raw-td>
+                  </sc-raw-tr>
+                </sc-raw-tbody>
+              </sc-raw-table>
               <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;max-width:62ch;text-wrap:pretty">Ansetzbar heißt erklärt, nicht erstattet. Was davon wirkt, entscheiden die Höchstbeträge der jeweiligen Gruppe.</p>
             </section>
           </div>
@@ -976,11 +976,11 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <div style="display:flex;flex-direction:column;gap:var(--space-2)">
               <div class="field">
                 <label>Art des Vertrags</label>
-                <select class="input" value="{{ vfArt }}" onChange="{{ vfArtAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ vfArt }}" onChange="{{ vfArtAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ artOptionen }}" as="o" hint-placeholder-count="12">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
               <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ vfArtHinweis }}</div>
 
@@ -1013,20 +1013,20 @@ if (location.protocol === 'https:' && window.top === window.self) {
 
               <div class="field">
                 <label>Zahlweise</label>
-                <select class="input" value="{{ vfRhythmus }}" onChange="{{ vfRhythmusAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ vfRhythmus }}" onChange="{{ vfRhythmusAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ rhythmusOptionen }}" as="o" hint-placeholder-count="4">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
 
               <div class="field">
                 <label>Person</label>
-                <select class="input" value="{{ vfPerson }}" onChange="{{ vfPersonAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ vfPerson }}" onChange="{{ vfPersonAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ personOptionen }}" as="o" hint-placeholder-count="2">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
 
               <div style="margin-top:var(--space-2);border:1px solid var(--color-text);padding:var(--space-3)">
@@ -1044,11 +1044,11 @@ if (location.protocol === 'https:' && window.top === window.self) {
                   <div style="display:flex;flex-direction:column;gap:var(--space-2);margin-top:var(--space-2);padding-top:var(--space-3);border-top:1px solid var(--color-divider)">
                     <div class="field">
                       <label>Zählt als</label>
-                      <select class="input" value="{{ vfAbzug }}" onChange="{{ vfAbzugAendern }}" style="min-height:40px;border-radius:0">
+                      <sc-raw-select class="input" value="{{ vfAbzug }}" onChange="{{ vfAbzugAendern }}" style="min-height:40px;border-radius:0">
                         <sc-for list="{{ abzugOptionen }}" as="o" hint-placeholder-count="7">
                           <option value="{{ o.id }}">{{ o.name }}</option>
                         </sc-for>
-                      </select>
+                      </sc-raw-select>
                     </div>
                     <div class="field">
                       <label>Absetzbarer Anteil %</label>
@@ -1101,52 +1101,52 @@ if (location.protocol === 'https:' && window.top === window.self) {
                 </div>
                 <p class="text-muted" style="margin:2px 0 var(--space-3);font-size:11px;text-wrap:pretty">{{ g.deckelHinweis }}</p>
                 <div data-scrollbox="1" style="overflow-x:auto">
-                  <table data-tabelle="1" class="table">
-                    <thead>
-                      <tr>
-                        <th data-erstespalte="1">Betreuung</th>
-                        <th data-nurbreit="1" style="white-space:nowrap">Laufzeit</th>
-                        <th style="text-align:right;white-space:nowrap">Gezahlt</th>
-                        <th style="text-align:right;white-space:nowrap">Betreuungsanteil</th>
-                        <th data-nodruck="1"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <sc-raw-table data-tabelle="1" class="table">
+                    <sc-raw-thead>
+                      <sc-raw-tr>
+                        <sc-raw-th data-erstespalte="1">Betreuung</sc-raw-th>
+                        <sc-raw-th data-nurbreit="1" style="white-space:nowrap">Laufzeit</sc-raw-th>
+                        <sc-raw-th style="text-align:right;white-space:nowrap">Gezahlt</sc-raw-th>
+                        <sc-raw-th style="text-align:right;white-space:nowrap">Betreuungsanteil</sc-raw-th>
+                        <sc-raw-th data-nodruck="1"></sc-raw-th>
+                      </sc-raw-tr>
+                    </sc-raw-thead>
+                    <sc-raw-tbody>
                       <sc-for list="{{ g.zeilen }}" as="z" hint-placeholder-count="1">
-                        <tr>
-                          <td>
+                        <sc-raw-tr>
+                          <sc-raw-td>
                             <div>{{ z.bez }}</div>
                             <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.einrichtung }} · {{ z.detail }}</div>
-                          </td>
-                          <td data-nurbreit="1" style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.laufzeit }}</td>
-                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.brutto }}</td>
-                          <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.basis }}</td>
-                          <td data-nodruck="1" style="text-align:right;white-space:nowrap">
+                          </sc-raw-td>
+                          <sc-raw-td data-nurbreit="1" style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.laufzeit }}</sc-raw-td>
+                          <sc-raw-td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.brutto }}</sc-raw-td>
+                          <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.basis }}</sc-raw-td>
+                          <sc-raw-td data-nodruck="1" style="text-align:right;white-space:nowrap">
                             <button class="btn btn-ghost" onClick="{{ z.bearbeiten }}" style="min-height:30px;padding:2px 8px;border-radius:0">Ändern</button>
                             <button class="btn btn-ghost" onClick="{{ z.loeschen }}" style="min-height:30px;padding:2px 8px;border-radius:0">Löschen</button>
-                          </td>
-                        </tr>
+                          </sc-raw-td>
+                        </sc-raw-tr>
                       </sc-for>
-                    </tbody>
-                  </table>
+                    </sc-raw-tbody>
+                  </sc-raw-table>
                 </div>
               </section>
             </sc-for>
 
             <section style="border:1px solid var(--color-text);padding:var(--space-4)">
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
-              <table class="table" style="margin-top:var(--space-2)">
-                <tbody>
-                  <tr>
-                    <td>Betreuungskosten ohne Verpflegung</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ btBasisGesamt }}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight:600">Als Sonderausgaben ansetzbar</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ btAnsatzGesamt }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <sc-raw-table class="table" style="margin-top:var(--space-2)">
+                <sc-raw-tbody>
+                  <sc-raw-tr>
+                    <sc-raw-td>Betreuungskosten ohne Verpflegung</sc-raw-td>
+                    <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ btBasisGesamt }}</sc-raw-td>
+                  </sc-raw-tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="font-weight:600">Als Sonderausgaben ansetzbar</sc-raw-td>
+                    <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ btAnsatzGesamt }}</sc-raw-td>
+                  </sc-raw-tr>
+                </sc-raw-tbody>
+              </sc-raw-table>
               <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;max-width:62ch;text-wrap:pretty">{{ btKarteUrteil }}</p>
             </section>
           </div>
@@ -1158,11 +1158,11 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <div style="display:flex;flex-direction:column;gap:var(--space-2)">
               <div class="field">
                 <label>Art der Betreuung</label>
-                <select class="input" value="{{ btArt }}" onChange="{{ btArtAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ btArt }}" onChange="{{ btArtAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ btArtOptionen }}" as="o" hint-placeholder-count="8">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
 
               <sc-for list="{{ btFelder }}" as="fd" hint-placeholder-count="6">
@@ -1174,11 +1174,11 @@ if (location.protocol === 'https:' && window.top === window.self) {
 
               <div class="field">
                 <label>Zahlweise</label>
-                <select class="input" value="{{ btRhythmus }}" onChange="{{ btRhythmusAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ btRhythmus }}" onChange="{{ btRhythmusAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ rhythmusOptionen }}" as="o" hint-placeholder-count="4">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
 
               <div style="margin-top:var(--space-1);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Beitragsänderungen</div>
@@ -1236,54 +1236,54 @@ if (location.protocol === 'https:' && window.top === window.self) {
                   <span style="margin-left:auto;font-family:var(--font-heading);font-size:19px;font-variant-numeric:tabular-nums">{{ g.ansatz }}</span>
                 </div>
                 <div data-scrollbox="1" style="overflow-x:auto">
-                  <table data-tabelle="1" class="table">
-                    <thead>
-                      <tr>
-                        <th data-erstespalte="1">Vertrag</th>
-                        <th data-nurbreit="1" style="white-space:nowrap">Laufzeit</th>
-                        <th style="text-align:right;white-space:nowrap">Gezahlt</th>
-                        <th style="text-align:right;white-space:nowrap">Anteil</th>
-                        <th style="text-align:right;white-space:nowrap">Absetzbar</th>
-                        <th data-nodruck="1"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <sc-raw-table data-tabelle="1" class="table">
+                    <sc-raw-thead>
+                      <sc-raw-tr>
+                        <sc-raw-th data-erstespalte="1">Vertrag</sc-raw-th>
+                        <sc-raw-th data-nurbreit="1" style="white-space:nowrap">Laufzeit</sc-raw-th>
+                        <sc-raw-th style="text-align:right;white-space:nowrap">Gezahlt</sc-raw-th>
+                        <sc-raw-th style="text-align:right;white-space:nowrap">Anteil</sc-raw-th>
+                        <sc-raw-th style="text-align:right;white-space:nowrap">Absetzbar</sc-raw-th>
+                        <sc-raw-th data-nodruck="1"></sc-raw-th>
+                      </sc-raw-tr>
+                    </sc-raw-thead>
+                    <sc-raw-tbody>
                       <sc-for list="{{ g.zeilen }}" as="z" hint-placeholder-count="1">
-                        <tr>
-                          <td>
+                        <sc-raw-tr>
+                          <sc-raw-td>
                             <div>{{ z.bez }}</div>
                             <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.anbieter }} · {{ z.detail }}</div>
-                          </td>
-                          <td data-nurbreit="1" style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.laufzeit }}</td>
-                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.brutto }}</td>
-                          <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 60%, transparent)">{{ z.anteil }}</td>
-                          <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.ansatz }}</td>
-                          <td data-nodruck="1" style="text-align:right;white-space:nowrap">
+                          </sc-raw-td>
+                          <sc-raw-td data-nurbreit="1" style="white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.laufzeit }}</sc-raw-td>
+                          <sc-raw-td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ z.brutto }}</sc-raw-td>
+                          <sc-raw-td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:color-mix(in srgb, var(--color-text) 60%, transparent)">{{ z.anteil }}</sc-raw-td>
+                          <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ z.ansatz }}</sc-raw-td>
+                          <sc-raw-td data-nodruck="1" style="text-align:right;white-space:nowrap">
                             <button class="btn btn-ghost" onClick="{{ z.bearbeiten }}" style="min-height:30px;padding:2px 8px;border-radius:0">Ändern</button>
                             <button class="btn btn-ghost" onClick="{{ z.loeschen }}" style="min-height:30px;padding:2px 8px;border-radius:0">Löschen</button>
-                          </td>
-                        </tr>
+                          </sc-raw-td>
+                        </sc-raw-tr>
                       </sc-for>
-                    </tbody>
-                  </table>
+                    </sc-raw-tbody>
+                  </sc-raw-table>
                 </div>
               </section>
             </sc-for>
 
             <section style="border:1px solid var(--color-text);padding:var(--space-4)">
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
-              <table class="table" style="margin-top:var(--space-2)">
-                <tbody>
-                  <tr>
-                    <td>Rechnungen im Jahr</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ tkBruttoGesamt }}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight:600">Als Werbungskosten ansetzbar</td>
-                    <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ tkAnsatzGesamt }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <sc-raw-table class="table" style="margin-top:var(--space-2)">
+                <sc-raw-tbody>
+                  <sc-raw-tr>
+                    <sc-raw-td>Rechnungen im Jahr</sc-raw-td>
+                    <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ tkBruttoGesamt }}</sc-raw-td>
+                  </sc-raw-tr>
+                  <sc-raw-tr>
+                    <sc-raw-td style="font-weight:600">Als Werbungskosten ansetzbar</sc-raw-td>
+                    <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums">{{ tkAnsatzGesamt }}</sc-raw-td>
+                  </sc-raw-tr>
+                </sc-raw-tbody>
+              </sc-raw-table>
               <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;max-width:62ch;text-wrap:pretty">Der Betrag zählt zu den Werbungskosten und wirkt erst über dem Pauschbetrag von 1.230 €.</p>
             </section>
           </div>
@@ -1295,11 +1295,11 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <div style="display:flex;flex-direction:column;gap:var(--space-2)">
               <div class="field">
                 <label>Art</label>
-                <select class="input" value="{{ tkArt }}" onChange="{{ tkArtAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ tkArt }}" onChange="{{ tkArtAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ tkArtOptionen }}" as="o" hint-placeholder-count="5">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
 
               <sc-for list="{{ tkFelder }}" as="fd" hint-placeholder-count="4">
@@ -1311,20 +1311,20 @@ if (location.protocol === 'https:' && window.top === window.self) {
 
               <div class="field">
                 <label>Zahlweise</label>
-                <select class="input" value="{{ tkRhythmus }}" onChange="{{ tkRhythmusAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ tkRhythmus }}" onChange="{{ tkRhythmusAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ rhythmusOptionen }}" as="o" hint-placeholder-count="4">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
 
               <div class="field">
                 <label>Person</label>
-                <select class="input" value="{{ tkPerson }}" onChange="{{ tkPersonAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ tkPerson }}" onChange="{{ tkPersonAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ personOptionen }}" as="o" hint-placeholder-count="2">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
 
               <div style="margin-top:var(--space-1);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Beitragsänderungen</div>
@@ -1342,11 +1342,11 @@ if (location.protocol === 'https:' && window.top === window.self) {
               <div style="margin-top:var(--space-2);border:1px solid var(--color-text);padding:var(--space-3)">
                 <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Beruflicher Anteil</div>
                 <div class="field" style="margin-top:var(--space-2)">
-                  <select class="input" value="{{ tkMethode }}" onChange="{{ tkMethodeAendern }}" style="min-height:40px;border-radius:0">
+                  <sc-raw-select class="input" value="{{ tkMethode }}" onChange="{{ tkMethodeAendern }}" style="min-height:40px;border-radius:0">
                     <sc-for list="{{ tkMethodeOptionen }}" as="o" hint-placeholder-count="2">
                       <option value="{{ o.id }}">{{ o.name }}</option>
                     </sc-for>
-                  </select>
+                  </sc-raw-select>
                 </div>
                 <div class="field" style="margin-top:var(--space-2)">
                   <label>Anteil %</label>
@@ -1405,26 +1405,26 @@ if (location.protocol === 'https:' && window.top === window.self) {
                   </span>
                 </div>
                 <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.laufzeit }} · {{ z.detail }}</div>
-                <table class="table" style="margin-top:var(--space-3)">
-                  <tbody>
-                    <tr>
-                      <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Privatnutzung, 1 % im Monat</td>
-                      <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ z.privat }}</td>
-                    </tr>
-                    <tr>
-                      <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Arbeitsweg pauschal, 0,03 %</td>
-                      <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ z.pausch }}</td>
-                    </tr>
-                    <tr>
-                      <td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Arbeitsweg je Fahrt, 0,002 %</td>
-                      <td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ z.einzel }}</td>
-                    </tr>
-                    <tr>
-                      <td style="font-weight:600">Unterschied</td>
-                      <td style="text-align:right;font-family:var(--font-heading);font-weight:600;font-variant-numeric:tabular-nums;font-size:16px">{{ z.diff }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <sc-raw-table class="table" style="margin-top:var(--space-3)">
+                  <sc-raw-tbody>
+                    <sc-raw-tr>
+                      <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Privatnutzung, 1 % im Monat</sc-raw-td>
+                      <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ z.privat }}</sc-raw-td>
+                    </sc-raw-tr>
+                    <sc-raw-tr>
+                      <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Arbeitsweg pauschal, 0,03 %</sc-raw-td>
+                      <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ z.pausch }}</sc-raw-td>
+                    </sc-raw-tr>
+                    <sc-raw-tr>
+                      <sc-raw-td style="color:color-mix(in srgb, var(--color-text) 70%, transparent)">Arbeitsweg je Fahrt, 0,002 %</sc-raw-td>
+                      <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:16px">{{ z.einzel }}</sc-raw-td>
+                    </sc-raw-tr>
+                    <sc-raw-tr>
+                      <sc-raw-td style="font-weight:600">Unterschied</sc-raw-td>
+                      <sc-raw-td style="text-align:right;font-family:var(--font-heading);font-weight:600;font-variant-numeric:tabular-nums;font-size:16px">{{ z.diff }}</sc-raw-td>
+                    </sc-raw-tr>
+                  </sc-raw-tbody>
+                </sc-raw-table>
               </section>
             </sc-for>
 
@@ -1438,28 +1438,28 @@ if (location.protocol === 'https:' && window.top === window.self) {
               </div>
               <p class="text-muted" style="margin:0 0 var(--space-3);font-size:11px;text-wrap:pretty">{{ dwKmHinweis }} Grün heißt: die Einzelbewertung ist in diesem Monat günstiger.</p>
               <div data-scrollbox="1" style="overflow-x:auto">
-                <table data-tabelle="1" class="table">
-                  <thead>
-                    <tr>
-                      <th data-erstespalte="1">Monat</th>
-                      <th style="text-align:center">Fahrten</th>
-                      <th style="text-align:right;white-space:nowrap">0,03 % pauschal</th>
-                      <th style="text-align:right;white-space:nowrap">0,002 % je Fahrt</th>
-                      <th style="text-align:right">Günstiger</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <sc-raw-table data-tabelle="1" class="table">
+                  <sc-raw-thead>
+                    <sc-raw-tr>
+                      <sc-raw-th data-erstespalte="1">Monat</sc-raw-th>
+                      <sc-raw-th style="text-align:center">Fahrten</sc-raw-th>
+                      <sc-raw-th style="text-align:right;white-space:nowrap">0,03 % pauschal</sc-raw-th>
+                      <sc-raw-th style="text-align:right;white-space:nowrap">0,002 % je Fahrt</sc-raw-th>
+                      <sc-raw-th style="text-align:right">Günstiger</sc-raw-th>
+                    </sc-raw-tr>
+                  </sc-raw-thead>
+                  <sc-raw-tbody>
                     <sc-for list="{{ dwMonate }}" as="r" hint-placeholder-count="12">
-                      <tr style="background: {{ r.bg }}">
-                        <td style="white-space:nowrap">{{ r.monat }}</td>
-                        <td style="text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px">{{ r.fahrten }}</td>
-                        <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ r.pausch }}</td>
-                        <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ r.einzel }}</td>
-                        <td style="text-align:right;white-space:nowrap;font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent)">{{ r.besser }}</td>
-                      </tr>
+                      <sc-raw-tr style="background: {{ r.bg }}">
+                        <sc-raw-td style="white-space:nowrap">{{ r.monat }}</sc-raw-td>
+                        <sc-raw-td style="text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px">{{ r.fahrten }}</sc-raw-td>
+                        <sc-raw-td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ r.pausch }}</sc-raw-td>
+                        <sc-raw-td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">{{ r.einzel }}</sc-raw-td>
+                        <sc-raw-td style="text-align:right;white-space:nowrap;font-size:12px;color:color-mix(in srgb, var(--color-text) 60%, transparent)">{{ r.besser }}</sc-raw-td>
+                      </sc-raw-tr>
                     </sc-for>
-                  </tbody>
-                </table>
+                  </sc-raw-tbody>
+                </sc-raw-table>
               </div>
               <p class="text-muted" style="margin:var(--space-3) 0 0;font-size:11px;text-wrap:pretty">{{ dwGrenzeHinweis }}</p>
             </section>
@@ -1467,27 +1467,27 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <section style="border:1px solid var(--color-text);padding:var(--space-4)">
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent)">Summen {{ jahr }}</div>
               <div data-scrollbox="1" style="overflow-x:auto">
-                <table data-tabelle="1" class="table" style="margin-top:var(--space-2)">
-                  <thead>
-                    <tr>
-                      <th data-erstespalte="1"></th>
-                      <th style="text-align:right;white-space:nowrap">Wie abgerechnet</th>
-                      <th style="text-align:right;white-space:nowrap">Mit Einzelbewertung</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <sc-raw-table data-tabelle="1" class="table" style="margin-top:var(--space-2)">
+                  <sc-raw-thead>
+                    <sc-raw-tr>
+                      <sc-raw-th data-erstespalte="1"></sc-raw-th>
+                      <sc-raw-th style="text-align:right;white-space:nowrap">Wie abgerechnet</sc-raw-th>
+                      <sc-raw-th style="text-align:right;white-space:nowrap">Mit Einzelbewertung</sc-raw-th>
+                    </sc-raw-tr>
+                  </sc-raw-thead>
+                  <sc-raw-tbody>
                     <sc-for list="{{ dwSummen }}" as="s" hint-placeholder-count="5">
-                      <tr>
-                        <td style="font-weight: {{ s.gewicht }}">
+                      <sc-raw-tr>
+                        <sc-raw-td style="font-weight: {{ s.gewicht }}">
                           <div>{{ s.label }}</div>
                           <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ s.note }}</div>
-                        </td>
-                        <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-weight: {{ s.gewicht }};font-size: {{ s.groesse }}">{{ s.a }}</td>
-                        <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-weight: {{ s.gewicht }};font-size: {{ s.groesse }};color: {{ s.bFarbe }}">{{ s.b }}</td>
-                      </tr>
+                        </sc-raw-td>
+                        <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-weight: {{ s.gewicht }};font-size: {{ s.groesse }}">{{ s.a }}</sc-raw-td>
+                        <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-weight: {{ s.gewicht }};font-size: {{ s.groesse }};color: {{ s.bFarbe }}">{{ s.b }}</sc-raw-td>
+                      </sc-raw-tr>
                     </sc-for>
-                  </tbody>
-                </table>
+                  </sc-raw-tbody>
+                </sc-raw-table>
               </div>
               <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-4);margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-text)">
                 <span style="font-weight:600">Arbeitslohn nach unten korrigieren um</span>
@@ -1512,11 +1512,11 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <div style="display:flex;flex-direction:column;gap:var(--space-2)">
               <div class="field">
                 <label>Antrieb</label>
-                <select class="input" value="{{ dwAntrieb }}" onChange="{{ dwAntriebAendern }}" style="min-height:40px;border-radius:0">
+                <sc-raw-select class="input" value="{{ dwAntrieb }}" onChange="{{ dwAntriebAendern }}" style="min-height:40px;border-radius:0">
                   <sc-for list="{{ dwAntriebOptionen }}" as="o" hint-placeholder-count="5">
                     <option value="{{ o.id }}">{{ o.name }}</option>
                   </sc-for>
-                </select>
+                </sc-raw-select>
               </div>
               <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ dwFormHinweis }}</div>
 
@@ -1561,19 +1561,19 @@ if (location.protocol === 'https:' && window.top === window.self) {
             <section style="border:1px solid var(--color-text);padding:var(--space-4)">
               <h3 style="margin:0;font-family:var(--font-heading);font-size:17px;letter-spacing:0.03em;text-transform:uppercase">{{ b.titel }}</h3>
               <p class="text-muted" style="margin:2px 0 var(--space-3);font-size:11px;max-width:70ch;text-wrap:pretty">{{ b.hinweis }}</p>
-              <table class="table">
-                <tbody>
+              <sc-raw-table class="table">
+                <sc-raw-tbody>
                   <sc-for list="{{ b.zeilen }}" as="z" hint-placeholder-count="4">
-                    <tr>
-                      <td>
+                    <sc-raw-tr>
+                      <sc-raw-td>
                         <div>{{ z.feld }}</div>
                         <div class="text-muted" style="font-size:11px;text-wrap:pretty">{{ z.note }}</div>
-                      </td>
-                      <td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-size:17px;font-variant-numeric:tabular-nums">{{ z.wert }}</td>
-                    </tr>
+                      </sc-raw-td>
+                      <sc-raw-td style="text-align:right;white-space:nowrap;font-family:var(--font-heading);font-size:17px;font-variant-numeric:tabular-nums">{{ z.wert }}</sc-raw-td>
+                    </sc-raw-tr>
                   </sc-for>
-                </tbody>
-              </table>
+                </sc-raw-tbody>
+              </sc-raw-table>
             </section>
           </sc-for>
         </div>
