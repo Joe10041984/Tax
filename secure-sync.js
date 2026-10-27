@@ -190,6 +190,9 @@ export class SecureSync {
         return this._dataKey;
       } catch (e) {}
     }
+    // Liegt ein fremder Umschlag vor, den die PIN nicht öffnet, darf kein neuer Schlüssel entstehen —
+    // sonst überschreibt der nächste Upload den Stand mit einem Schlüssel, den kein anderes Gerät kennt.
+    if (fremd) throw new Error('PIN passt nicht zum Datenstand auf GitHub.');
     if (this._pin) return this._dataKeyNeu();
     return null;
   }
@@ -296,6 +299,7 @@ export class SecureSync {
     if (!f) throw new Error(this.gistFile + ' nicht im Gist gefunden');
     let s = JSON.parse(f.truncated ? await (await fetch(f.raw_url)).text() : f.content);
     if (s && s.verschluesselt) {
+      if (!this._pin && !this._dataKey && !sessionStorage.getItem(this.ns + '.datenschluessel')) return { gesperrt: true, sperreHash: s.sperreHash || null };
       const key = await this.dataKey(s.tresor);
       if (!key) return { gesperrt: true, sperreHash: s.sperreHash || null };
       try {

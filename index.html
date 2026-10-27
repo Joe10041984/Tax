@@ -125,6 +125,12 @@ if (location.protocol === 'https:' && window.top === window.self) {
               <label for="pin-einrichten">PIN</label>
               <input class="input" id="pin-einrichten" name="password" type="password" autoComplete="current-password" enterKeyHint="go" placeholder="PIN oder Passphrase" value="{{ neuePin }}" onChange="{{ neuePinTippen }}" style="min-height:42px;border-radius:0;letter-spacing:0.18em">
             </div>
+            <sc-if value="{{ setupFrage }}" hint-placeholder-val="{{ false }}">
+              <div class="field">
+                <label for="setup-pass">Einrichtungs-Passwort (setup.json)</label>
+                <input class="input" id="setup-pass" type="password" autoComplete="off" placeholder="min. 8 Zeichen" value="{{ setupPass }}" onChange="{{ setupPassTippen }}" style="min-height:42px;border-radius:0;font-size:13px">
+              </div>
+            </sc-if>
             <sc-if value="{{ nie }}" hint-placeholder-val="{{ false }}">
               <div class="field">
                 <label>Token</label>
@@ -2257,6 +2263,7 @@ class Component extends DCLogic {
     frisch: !(function () { try { return !!localStorage.getItem(KEY); } catch (e) { return false; } })(),
     importHinweis: '',
     setupBlob: null,
+    setupPass: '', setupFrage: false,
     geladen: false
   };
 
@@ -2276,7 +2283,7 @@ class Component extends DCLogic {
     const settings = { ...this.state.settings, ...((lokal && lokal.settings) || {}) };
     let sync = null, offen = false, fehler = '';
     try {
-      const { SecureSync } = await import('./secure-sync.js?v=12');
+      const { SecureSync } = await import('./secure-sync.js?v=15');
       sync = new SecureSync({
         ns: 'hotracker',
         header: 'HOTENC1',
@@ -3098,7 +3105,7 @@ class Component extends DCLogic {
     if (!pin) { this.setState({ pkvHinweis: 'PIN des PKV-Projekts eingeben.' }); return; }
     this.setState({ pkvLaeuft: true, pkvHinweis: 'sucht den Gist des PKV-Projekts …' });
     try {
-      const { SecureSync } = await import('./secure-sync.js?v=12');
+      const { SecureSync } = await import('./secure-sync.js?v=15');
       const fremd = new SecureSync({ ns: 'pkvimport', header: 'PKVIMP1', gistFile: 'pkv-stand.json' });
       await fremd.unlock(pin, null);
       await fremd.setConfig({ token: this.sync.cfg.token });
@@ -3593,9 +3600,12 @@ class Component extends DCLogic {
 
     return {
       jahr: String(jahr), gesperrt: S.gesperrt, frisch: S.frisch,
-      nie: false,
+      nie: !S.setupBlob,
+      setupFrage: !!(S.setupBlob && S.setupFrage),
+      setupPass: S.setupPass,
+      setupPassTippen: e => this.setState({ setupPass: e.target.value }),
       einrichtenLabel: S.setupBlob ? 'Entsperren' : 'Einrichten',
-      einrichtenText: S.setupBlob ? 'Bitte PIN eingeben.' : 'Dieses Gerät kennt deinen Stand noch nicht.',
+      einrichtenText: S.setupBlob ? (S.setupFrage ? 'Die setup.json wurde mit einem anderen Passwort als deiner PIN erzeugt. Bitte beides eingeben.' : 'Bitte PIN eingeben.') : 'Dieses Gerät kennt deinen Stand noch nicht. PIN, Token und Gist-ID eingeben.',
       einrichtenHinweis: '',
       heuteLang: new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }),
       pinEingabe: S.pinEingabe, neuePin: S.neuePin, pinFehler: S.pinFehler, syncStatus: S.syncStatus,
@@ -4211,12 +4221,28 @@ class Component extends DCLogic {
         e.preventDefault();
         if (!this.sync) return;
         const pin = S.neuePin || '', token = (S.tokenEingabe || '').trim(), gist = (S.gistEingabe || '').trim();
+        const zuruecksetzen = () => { this.sync.lock(); this.sync.cfg = { token: '', gistId: '', repo: '', aiKey: '' }; try { localStorage.removeItem(this.sync._k('sync')); localStorage.removeItem(this.sync._k('tresor')); } catch (x) {} };
         if (S.setupBlob) {
           if (pin.length < 4) { this.setState({ pinFehler: 'Mindestens 4 Zeichen.' }); return; }
+          const pass = S.setupFrage ? (S.setupPass || '') : pin;
+          this.setState({ pinFehler: 'prüft …' });
           try {
-            if (!await this.sync.unlock(pin, null)) throw new Error('pin');
-            await this.sync.setupAnwenden(pin, S.setupBlob);
-          } catch (err) { this.setState({ pinFehler: 'PIN stimmt nicht.' }); return; }
+            await this.sync.unlock(pin, null);
+            await this.sync.setupAnwenden(pass, S.setupBlob);
+          } catch (err) {
+            zuruecksetzen();
+            this.setState(S.setupFrage
+              ? { pinFehler: 'Einrichtungs-Passwort stimmt nicht (oder die setup.json ist veraltet).' }
+              : { setupFrage: true, pinFehler: 'PIN öffnet die setup.json nicht. Falls du dafür ein eigenes Passwort vergeben hast, unten eintragen.' });
+            return;
+          }
+          try { await this.sync.downloadState(); }
+          catch (err) {
+            zuruecksetzen();
+            this.setState({ pinFehler: /PIN/.test(err.message) ? 'PIN stimmt nicht — sie passt nicht zum Datenstand auf GitHub.' : 'GitHub: ' + err.message });
+            return;
+          }
+          this.setState({ setupPass: '', setupFrage: false });
           const h = await this.sync.pinHash(pin);
           this._merken({ settings: { ...S.settings, sperreHash: h } }, true);
           this.setState({
@@ -4232,6 +4258,15 @@ class Component extends DCLogic {
         if (!await this.sync.unlock(pin, null)) { this.setState({ pinFehler: 'PIN passt nicht zum gespeicherten Zugang.' }); return; }
         const hash = await this.sync.pinHash(pin);
         await this.sync.setConfig({ token, repo: (S.repoEingabe || '').trim(), gistId: gist });
+        if (token && gist) {
+          this.setState({ pinFehler: 'prüft …' });
+          try { await this.sync.downloadState(); }
+          catch (err) {
+            zuruecksetzen();
+            this.setState({ pinFehler: /PIN/.test(err.message) ? 'PIN stimmt nicht — sie passt nicht zum Datenstand auf GitHub.' : 'GitHub: ' + err.message });
+            return;
+          }
+        }
         this._merken({ settings: { ...S.settings, sperreHash: hash } }, true);
         this.setState({ neuePin: '', pinFehler: '', frisch: false });
         if (token) await this._autoLaden(true);
@@ -4283,7 +4318,7 @@ class Component extends DCLogic {
       },
       setupBauen: async () => {
         if (!this.sync) return;
-        const pass = window.prompt('Passwort für setup.json — nimm dieselbe PIN, dann fragt ein neues Gerät nur danach (min. 8 Zeichen)');
+        const pass = window.prompt('Passwort für setup.json (min. 8 Zeichen). Ist es gleich deiner PIN, fragt ein neues Gerät nur nach der PIN; sonst nach beidem.');
         if (!pass || pass.length < 8) return;
         const text = await this.sync.setupErzeugen(pass);
         const a = document.createElement('a');
